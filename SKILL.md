@@ -1,21 +1,21 @@
----
-name: opensea-api
-description: Interact with the OpenSea NFT marketplace API. Use when fetching NFT metadata, collection info, listings, offers, events, or building NFT applications with OpenSea's REST and Stream APIs. Covers buying, selling, and monitoring NFT marketplace activity.
----
-
 # OpenSea API
 
-Query OpenSea REST endpoints, subscribe to real-time Stream events, and work with Seaport marketplace orders for NFT trading.
+Query NFT data, trade on the Seaport marketplace, and swap ERC20 tokens across Ethereum, Base, Arbitrum, Optimism, Polygon, and more.
 
 ## Quick start
 
 1. Set `OPENSEA_API_KEY` in your environment
 2. Run helper scripts in `scripts/` for common operations
-3. Use `scripts/opensea-get.sh` for any GET endpoint
-4. Use `scripts/opensea-post.sh` for POST endpoints (marketplace actions)
+3. Use the MCP server for token swaps and advanced queries
 
 ```bash
 export OPENSEA_API_KEY="your-api-key"
+
+# Token swap: ETH to token
+./scripts/opensea-swap.sh 0xTokenAddress 0.1 0xYourWallet 0xYourKey base
+
+# Token swap: Token to token (specify from_token as last arg)
+./scripts/opensea-swap.sh 0xToToken 100 0xYourWallet 0xYourKey base 0xFromToken
 
 # Get collection info
 ./scripts/opensea-collection.sh boredapeyachtclub
@@ -28,6 +28,18 @@ export OPENSEA_API_KEY="your-api-key"
 ```
 
 ## Task guide
+
+### Token swaps
+
+OpenSea's API includes a cross-chain DEX aggregator for swapping ERC20 tokens with optimal routing across all supported chains.
+
+| Task | Tool/Script |
+|------|-------------|
+| Get swap quote with calldata | `get_token_swap_quote` (MCP) or `opensea-swap.sh` |
+| Check token balances | `get_token_balances` (MCP) |
+| Search tokens | `search_tokens` (MCP) |
+| Get trending tokens | `get_trending_tokens` (MCP) |
+| Get top tokens by volume | `get_top_tokens` (MCP) |
 
 ### Reading NFT data
 
@@ -158,9 +170,15 @@ Creating new listings and offers requires wallet signatures. Use `opensea-post.s
 
 ## OpenSea MCP Server
 
-An official OpenSea MCP server is available for direct LLM integration. When enabled, Claude can use these tools directly without shell scripts.
+An official OpenSea MCP server provides direct LLM integration for token swaps and NFT operations. When enabled, Claude can execute swaps, query token data, and interact with NFT marketplaces directly.
 
 **Setup:**
+
+1. Go to the [OpenSea Developer Portal](https://opensea.io/settings/developer) and verify your email
+2. Generate a new API key for REST API access
+3. Generate a separate MCP token for the MCP server
+
+Add to your MCP config:
 ```json
 {
   "mcpServers": {
@@ -168,12 +186,22 @@ An official OpenSea MCP server is available for direct LLM integration. When ena
       "command": "npx",
       "args": ["-y", "@opensea/mcp-server"],
       "env": {
-        "OPENSEA_API_KEY": "your-api-key"
+        "OPENSEA_MCP_TOKEN": "your-mcp-token"
       }
     }
   }
 }
 ```
+
+### Token Swap Tools
+| MCP Tool | Purpose |
+|----------|---------|
+| `get_token_swap_quote` | **Get swap calldata for token trades** |
+| `get_token_balances` | Check wallet token holdings |
+| `search_tokens` | Find tokens by name/symbol |
+| `get_trending_tokens` | Hot tokens by momentum |
+| `get_top_tokens` | Top tokens by 24h volume |
+| `get_tokens` | Get detailed token info |
 
 ### NFT Tools
 | MCP Tool | Purpose |
@@ -187,16 +215,6 @@ An official OpenSea MCP server is available for direct LLM integration. When ena
 | `get_top_collections` | Top collections by volume |
 | `get_activity` | Trading activity for collections/items |
 | `get_upcoming_drops` | Upcoming NFT mints |
-
-### Token Tools (DEX Swaps!)
-| MCP Tool | Purpose |
-|----------|---------|
-| `get_token_swap_quote` | **Get swap calldata for token trades** |
-| `get_token_balances` | Check wallet token holdings |
-| `search_tokens` | Find tokens by name/symbol |
-| `get_trending_tokens` | Hot tokens by momentum |
-| `get_top_tokens` | Top tokens by 24h volume |
-| `get_tokens` | Get detailed token info |
 
 ### Profile & Utility Tools
 | MCP Tool | Purpose |
@@ -268,7 +286,10 @@ mcporter call opensea.get_token_balances --args '{
 
 ## Requirements
 
-- `OPENSEA_API_KEY` environment variable
+- `OPENSEA_API_KEY` environment variable (for REST API scripts)
+- `OPENSEA_MCP_TOKEN` environment variable (for MCP server, separate from API key)
 - `curl` for REST calls
 - `websocat` (optional) for Stream API
 - `jq` (recommended) for parsing JSON responses
+
+Get both credentials at [opensea.io/settings/developer](https://opensea.io/settings/developer).

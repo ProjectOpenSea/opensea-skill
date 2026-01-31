@@ -1,22 +1,21 @@
 #!/bin/bash
 # Swap tokens via OpenSea MCP
-# Usage: ./opensea-swap.sh <to_token_address> <amount> <wallet_address> <private_key> [chain]
+# Usage: ./opensea-swap.sh <to_token_address> <amount> <wallet_address> <private_key> [chain] [from_token]
 #
 # Example:
 #   ./opensea-swap.sh 0xb695559b26bb2c9703ef1935c37aeae9526bab07 0.02 0xYourWallet 0xYourKey base
+#   ./opensea-swap.sh 0xToToken 100 0xYourWallet 0xYourKey base 0xFromToken
 #
 # Requires: OPENSEA_API_KEY env var, mcporter, node with viem
 
-TO_TOKEN="${1:?Usage: $0 <to_token_address> <amount> <wallet_address> <private_key> [chain]}"
+TO_TOKEN="${1:?Usage: $0 <to_token_address> <amount> <wallet_address> <private_key> [chain] [from_token]}"
 AMOUNT="${2:?Amount required}"
 WALLET="${3:?Wallet address required}"
 PRIVATE_KEY="${4:?Private key required}"
 CHAIN="${5:-base}"
+FROM_TOKEN="${6:-0x0000000000000000000000000000000000000000}"
 
-# Native ETH address
-FROM_TOKEN="0x0000000000000000000000000000000000000000"
-
-echo "🔄 Getting swap quote: ${AMOUNT} ETH → token on ${CHAIN}..."
+echo "🔄 Getting swap quote: ${AMOUNT} tokens → token on ${CHAIN}..."
 
 # Get swap quote via mcporter
 QUOTE=$(mcporter call opensea.get_token_swap_quote --args "{
