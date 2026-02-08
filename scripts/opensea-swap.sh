@@ -1,19 +1,23 @@
 #!/bin/bash
 # Swap tokens via OpenSea MCP
-# Usage: ./opensea-swap.sh <to_token_address> <amount> <wallet_address> <private_key> [chain] [from_token]
+# Usage: PRIVATE_KEY=0xYourKey ./opensea-swap.sh <to_token_address> <amount> <wallet_address> [chain] [from_token]
 #
 # Example:
-#   ./opensea-swap.sh 0xb695559b26bb2c9703ef1935c37aeae9526bab07 0.02 0xYourWallet 0xYourKey base
-#   ./opensea-swap.sh 0xToToken 100 0xYourWallet 0xYourKey base 0xFromToken
+#   PRIVATE_KEY=0xYourKey ./opensea-swap.sh 0xb695559b26bb2c9703ef1935c37aeae9526bab07 0.02 0xYourWallet base
+#   PRIVATE_KEY=0xYourKey ./opensea-swap.sh 0xToToken 100 0xYourWallet base 0xFromToken
 #
-# Requires: OPENSEA_API_KEY env var, mcporter, node with viem
+# Requires: OPENSEA_API_KEY env var, PRIVATE_KEY env var, mcporter, node with viem
 
-TO_TOKEN="${1:?Usage: $0 <to_token_address> <amount> <wallet_address> <private_key> [chain] [from_token]}"
+TO_TOKEN="${1:?Usage: PRIVATE_KEY=0x... $0 <to_token_address> <amount> <wallet_address> [chain] [from_token]}"
 AMOUNT="${2:?Amount required}"
 WALLET="${3:?Wallet address required}"
-PRIVATE_KEY="${4:?Private key required}"
-CHAIN="${5:-base}"
-FROM_TOKEN="${6:-0x0000000000000000000000000000000000000000}"
+CHAIN="${4:-base}"
+FROM_TOKEN="${5:-0x0000000000000000000000000000000000000000}"
+
+if [ -z "$PRIVATE_KEY" ]; then
+  echo "❌ PRIVATE_KEY environment variable is required"
+  exit 1
+fi
 
 echo "🔄 Getting swap quote: ${AMOUNT} tokens → token on ${CHAIN}..."
 
@@ -45,7 +49,7 @@ import { readFileSync } from 'fs';
 const chains = { base, ethereum: mainnet, mainnet, matic: polygon, polygon, arbitrum, optimism };
 const chain = chains['${CHAIN}'] || base;
 
-const account = privateKeyToAccount('${PRIVATE_KEY}');
+const account = privateKeyToAccount(process.env.PRIVATE_KEY);
 const wallet = createWalletClient({ account, chain, transport: http() });
 const pub = createPublicClient({ chain, transport: http() });
 
@@ -53,7 +57,7 @@ const pub = createPublicClient({ chain, transport: http() });
 const raw = readFileSync('/tmp/opensea_swap_quote.json', 'utf8');
 let quote;
 try {
-  const wrapper = eval('(' + raw + ')');
+  const wrapper = JSON.parse(raw);
   quote = JSON.parse(wrapper.content[0].text);
 } catch (e) {
   quote = JSON.parse(raw);
