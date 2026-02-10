@@ -13,7 +13,7 @@ Seaport is the marketplace protocol used for OpenSea orders. All listings and of
 |-------|---------------------|
 | All EVM chains | `0x0000000000000068F116a894984e2DB1123eB395` |
 
-Legacy Seaport 1.4: `0x00000000000000ADc04C56Bf30aC9d3c0aAF14dC`
+Legacy Seaport 1.5: `0x00000000000000ADc04C56Bf30aC9d3c0aAF14dC`
 
 ---
 
