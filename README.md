@@ -108,7 +108,7 @@ Show me the best offer on BAYC #1234
 
 ## Supported Chains
 
-`ethereum`, `matic`, `arbitrum`, `optimism`, `base`, `avalanche`, `klaytn`, `zora`, `blast`, `sepolia`
+This skill supports all chains available on OpenSea, including `ethereum`, `solana`, `abstract`, `ape_chain`, `arbitrum`, `avalanche`, `b3`, `base`, `bera_chain`, `blast`, `flow`, `gunzilla`, `hyperevm`, `hyperliquid`, `ink`, `megaeth`, `monad`, `optimism`, `polygon`, `ronin`, `sei`, `shape`, `somnia`, `soneium`, `unichain`, and `zora`.
 
 ## Learn More
 
