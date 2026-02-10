@@ -139,7 +139,7 @@ GET /api/v2/orders/chain/{chain}/protocol/{protocol_address}/hash/{order_hash}
 
 **Example:**
 ```bash
-scripts/opensea-get.sh "/api/v2/orders/chain/ethereum/protocol/0x00000000000000adc04c56bf30ac9d3c0aaf14dc/hash/0x..."
+scripts/opensea-get.sh "/api/v2/orders/chain/ethereum/protocol/0x0000000000000068f116a894984e2db1123eb395/hash/0x..."
 ```
 
 ---
@@ -248,7 +248,7 @@ POST /api/v2/listings/fulfillment_data
   "listing": {
     "hash": "0xOrderHash",
     "chain": "ethereum",
-    "protocol_address": "0x00000000000000adc04c56bf30ac9d3c0aaf14dc"
+    "protocol_address": "0x0000000000000068f116a894984e2db1123eb395"
   },
   "fulfiller": {
     "address": "0xBuyerWalletAddress"
@@ -272,7 +272,7 @@ POST /api/v2/offers/fulfillment_data
   "offer": {
     "hash": "0xOfferOrderHash",
     "chain": "ethereum",
-    "protocol_address": "0x00000000000000adc04c56bf30ac9d3c0aaf14dc"
+    "protocol_address": "0x0000000000000068f116a894984e2db1123eb395"
   },
   "fulfiller": {
     "address": "0xSellerWalletAddress"
@@ -357,7 +357,7 @@ POST /api/v2/orders/chain/{chain}/protocol/{protocol_address}/hash/{order_hash}/
 
 | Chain | Seaport 1.6 Address |
 |-------|---------------------|
-| All chains | `0x00000000000000ADc04C56Bf30aC9d3c0aAF14dC` |
+| All chains | `0x0000000000000068F116a894984e2DB1123eB395` |
 
 ---
 
