@@ -1,0 +1,117 @@
+# OpenSea Skill
+
+**Query NFT data, trade on the Seaport marketplace, and swap ERC20 tokens** across Ethereum, Base, Arbitrum, Optimism, Polygon, and more.
+
+## What is this?
+
+This is an [Agent Skill](https://skills.sh/docs) for AI coding assistants. Once installed, your agent can interact with the OpenSea API to query NFT data, execute marketplace operations, and swap ERC20 tokens.
+
+## Prerequisites
+
+- `OPENSEA_API_KEY` environment variable — for REST API scripts
+- `OPENSEA_MCP_TOKEN` environment variable — for the MCP server (separate from API key)
+- `curl` for REST calls
+- `jq` (recommended) for parsing JSON responses
+
+Get both credentials at [opensea.io/settings/developer](https://opensea.io/settings/developer).
+
+## Installing the Skill
+
+### Using npx
+
+```bash
+npx skills add ProjectOpenSea/opensea-skill
+```
+
+### Using Claude Code
+
+```bash
+/skill install ProjectOpenSea/opensea-skill
+```
+
+### Manual Installation
+
+Clone this repository to your skills directory:
+
+```bash
+git clone https://github.com/ProjectOpenSea/opensea-skill.git ~/.skills/opensea
+```
+
+Refer to your AI tool's documentation for skills directory configuration.
+
+## What's Included
+
+### Skill Definition
+
+[`SKILL.md`](SKILL.md) — the main skill file that teaches your agent how to use the OpenSea API, including task guides, script references, MCP tool documentation, and end-to-end workflows for buying, selling, and swapping tokens.
+
+### Shell Scripts
+
+Ready-to-use scripts in [`scripts/`](scripts/) for common operations:
+
+| Script | Purpose |
+|--------|---------|
+| `opensea-collection.sh` | Fetch collection by slug |
+| `opensea-nft.sh` | Fetch single NFT by chain/contract/token |
+| `opensea-best-listing.sh` | Get lowest listing for an NFT |
+| `opensea-best-offer.sh` | Get highest offer for an NFT |
+| `opensea-swap.sh` | Swap tokens via OpenSea DEX aggregator |
+| `opensea-fulfill-listing.sh` | Get buy transaction data |
+| `opensea-fulfill-offer.sh` | Get sell transaction data |
+
+See [`SKILL.md`](SKILL.md) for the full scripts reference and usage examples.
+
+### Reference Docs
+
+Detailed API documentation in [`references/`](references/):
+
+- [`rest-api.md`](references/rest-api.md) — REST endpoint families and pagination
+- [`marketplace-api.md`](references/marketplace-api.md) — Buy/sell workflows and Seaport details
+- [`stream-api.md`](references/stream-api.md) — WebSocket event streaming
+- [`seaport.md`](references/seaport.md) — Seaport protocol and NFT purchase execution
+- [`token-swaps.md`](references/token-swaps.md) — Token swap workflows via MCP
+
+## OpenSea MCP Server
+
+An official MCP server provides direct LLM integration for token swaps and NFT operations. Add to your MCP config:
+
+```json
+{
+  "mcpServers": {
+    "opensea": {
+      "url": "https://mcp.opensea.io/mcp",
+      "headers": {
+        "Authorization": "Bearer YOUR_MCP_TOKEN"
+      }
+    }
+  }
+}
+```
+
+See [`SKILL.md`](SKILL.md) for the full list of available MCP tools.
+
+## Example Usage
+
+Once installed, prompt your AI assistant:
+
+```
+Get me the floor price for the Pudgy Penguins collection on OpenSea
+```
+
+```
+Swap 0.02 ETH to USDC on Base using OpenSea
+```
+
+```
+Show me the best offer on BAYC #1234
+```
+
+## Supported Chains
+
+`ethereum`, `matic`, `arbitrum`, `optimism`, `base`, `avalanche`, `klaytn`, `zora`, `blast`, `sepolia`
+
+## Learn More
+
+- [OpenSea Developer Docs](https://docs.opensea.io/)
+- [OpenSea Developer Portal](https://opensea.io/settings/developer)
+- [Agent Skills Directory](https://skills.sh/docs)
