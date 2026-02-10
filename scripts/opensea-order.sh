@@ -9,6 +9,6 @@ fi
 
 chain="$1"
 order_hash="$2"
-protocol="0x00000000000000adc04c56bf30ac9d3c0aaf14dc"
+protocol="0x0000000000000068f116a894984e2db1123eb395"
 
 "$(dirname "$0")/opensea-get.sh" "/api/v2/orders/chain/${chain}/protocol/${protocol}/${order_hash}"
