@@ -10,63 +10,83 @@ Query NFT data, trade on the Seaport marketplace, and swap ERC20 tokens across E
 ## Quick start
 
 1. Set `OPENSEA_API_KEY` in your environment
-2. Run helper scripts in `scripts/` for common operations
-3. Use the MCP server for token swaps and advanced queries
+2. **Preferred:** Use the `opensea` CLI (`@opensea/cli`) for all queries and operations
+3. Alternatively, use the shell scripts in `scripts/` or the MCP server
 
 ```bash
 export OPENSEA_API_KEY="your-api-key"
 
-# Token swap: ETH to token
-./scripts/opensea-swap.sh 0xTokenAddress 0.1 0xYourWallet 0xYourKey base
-
-# Token swap: Token to token (specify from_token as last arg)
-./scripts/opensea-swap.sh 0xToToken 100 0xYourWallet 0xYourKey base 0xFromToken
+# Install the CLI globally (or use npx)
+npm install -g @opensea/cli
 
 # Get collection info
-./scripts/opensea-collection.sh boredapeyachtclub
+opensea collections get boredapeyachtclub
+
+# Get floor price and volume stats
+opensea collections stats boredapeyachtclub
 
 # Get NFT details
-./scripts/opensea-nft.sh ethereum 0xbc4ca0eda7647a8ab7c2061c2e118a18a936f13d 1234
+opensea nfts get ethereum 0xbc4ca0eda7647a8ab7c2061c2e118a18a936f13d 1234
 
-# Get best listing price for an NFT
-./scripts/opensea-best-listing.sh boredapeyachtclub 1234
+# Get best listings for a collection
+opensea listings best boredapeyachtclub --limit 5
+
+# Search across OpenSea
+opensea search "cool cats"
+
+# Get trending tokens
+opensea tokens trending --limit 5
+
+# Get a swap quote
+opensea swaps quote \
+  --from-chain base --from-address 0x0000000000000000000000000000000000000000 \
+  --to-chain base --to-address 0xTokenAddress \
+  --quantity 0.02 --address 0xYourWallet
 ```
 
 ## Task guide
+
+> **Recommended:** Use the `opensea` CLI (`@opensea/cli`) as your primary tool. It covers all the operations below with a consistent interface, structured output, and built-in pagination. Install with `npm install -g @opensea/cli` or use `npx @opensea/cli`. The shell scripts in `scripts/` remain available as alternatives.
 
 ### Token swaps
 
 OpenSea's API includes a cross-chain DEX aggregator for swapping ERC20 tokens with optimal routing across all supported chains.
 
-| Task | Tool/Script |
-|------|-------------|
-| Get swap quote with calldata | `get_token_swap_quote` (MCP) or `opensea-swap.sh` |
-| Check token balances | `get_token_balances` (MCP) |
-| Search tokens | `search_tokens` (MCP) |
-| Get trending tokens | `get_trending_tokens` (MCP) |
-| Get top tokens by volume | `get_top_tokens` (MCP) |
+| Task | CLI Command | Alternative |
+|------|------------|-------------|
+| Get swap quote with calldata | `opensea swaps quote --from-chain <chain> --from-address <addr> --to-chain <chain> --to-address <addr> --quantity <qty> --address <wallet>` | `get_token_swap_quote` (MCP) or `opensea-swap.sh` |
+| Get trending tokens | `opensea tokens trending [--chains <chains>] [--limit <n>]` | `get_trending_tokens` (MCP) |
+| Get top tokens by volume | `opensea tokens top [--chains <chains>] [--limit <n>]` | `get_top_tokens` (MCP) |
+| Get token details | `opensea tokens get <chain> <address>` | `get_tokens` (MCP) |
+| Search tokens | `opensea search <query> --types token` | `search_tokens` (MCP) |
+| Check token balances | `get_token_balances` (MCP) | — |
 
 ### Reading NFT data
 
-| Task | Script |
-|------|--------|
-| Get collection details | `opensea-collection.sh <slug>` |
-| Get collection stats | `opensea-collection-stats.sh <slug>` |
-| List NFTs in collection | `opensea-collection-nfts.sh <slug> [limit] [next]` |
-| Get single NFT | `opensea-nft.sh <chain> <contract> <token_id>` |
-| List NFTs by wallet | `opensea-account-nfts.sh <chain> <address> [limit]` |
+| Task | CLI Command | Alternative |
+|------|------------|-------------|
+| Get collection details | `opensea collections get <slug>` | `opensea-collection.sh <slug>` |
+| Get collection stats | `opensea collections stats <slug>` | `opensea-collection-stats.sh <slug>` |
+| List NFTs in collection | `opensea nfts list-by-collection <slug> [--limit <n>]` | `opensea-collection-nfts.sh <slug> [limit] [next]` |
+| Get single NFT | `opensea nfts get <chain> <contract> <token_id>` | `opensea-nft.sh <chain> <contract> <token_id>` |
+| List NFTs by wallet | `opensea nfts list-by-account <chain> <address> [--limit <n>]` | `opensea-account-nfts.sh <chain> <address> [limit]` |
+| List NFTs by contract | `opensea nfts list-by-contract <chain> <contract> [--limit <n>]` | — |
+| Get collection traits | `opensea collections traits <slug>` | — |
+| Get contract details | `opensea nfts contract <chain> <address>` | — |
+| Refresh NFT metadata | `opensea nfts refresh <chain> <contract> <token_id>` | — |
 
 ### Marketplace queries
 
-| Task | Script |
-|------|--------|
-| Get best listing for NFT | `opensea-best-listing.sh <slug> <token_id>` |
-| Get best offer for NFT | `opensea-best-offer.sh <slug> <token_id>` |
-| List all collection listings | `opensea-listings-collection.sh <slug> [limit]` |
-| List all collection offers | `opensea-offers-collection.sh <slug> [limit]` |
-| Get listings for specific NFT | `opensea-listings-nft.sh <chain> <contract> <token_id>` |
-| Get offers for specific NFT | `opensea-offers-nft.sh <chain> <contract> <token_id>` |
-| Get order by hash | `opensea-order.sh <chain> <order_hash>` |
+| Task | CLI Command | Alternative |
+|------|------------|-------------|
+| Get best listings for collection | `opensea listings best <slug> [--limit <n>]` | `opensea-best-listing.sh <slug> <token_id>` |
+| Get best listing for specific NFT | `opensea listings best-for-nft <slug> <token_id>` | `opensea-best-listing.sh <slug> <token_id>` |
+| Get best offer for NFT | `opensea offers best-for-nft <slug> <token_id>` | `opensea-best-offer.sh <slug> <token_id>` |
+| List all collection listings | `opensea listings all <slug> [--limit <n>]` | `opensea-listings-collection.sh <slug> [limit]` |
+| List all collection offers | `opensea offers all <slug> [--limit <n>]` | `opensea-offers-collection.sh <slug> [limit]` |
+| Get collection offers | `opensea offers collection <slug> [--limit <n>]` | `opensea-offers-collection.sh <slug> [limit]` |
+| Get trait offers | `opensea offers traits <slug> --type <type> --value <value>` | — |
+| Get order by hash | — | `opensea-order.sh <chain> <order_hash>` |
 
 ### Marketplace actions (POST)
 
@@ -76,12 +96,34 @@ OpenSea's API includes a cross-chain DEX aggregator for swapping ERC20 tokens wi
 | Get fulfillment data (accept offer) | `opensea-fulfill-offer.sh <chain> <order_hash> <seller> <contract> <token_id>` |
 | Generic POST request | `opensea-post.sh <path> <json_body>` |
 
+### Search
+
+| Task | CLI Command |
+|------|------------|
+| Search collections | `opensea search <query> --types collection` |
+| Search NFTs | `opensea search <query> --types nft` |
+| Search tokens | `opensea search <query> --types token` |
+| Search accounts | `opensea search <query> --types account` |
+| Search multiple types | `opensea search <query> --types collection,nft,token` |
+| Search on specific chain | `opensea search <query> --chains base,ethereum` |
+
 ### Events and monitoring
 
-| Task | Script |
-|------|--------|
-| Get collection events | `opensea-events-collection.sh <slug> [event_type] [limit]` |
-| Stream real-time events | `opensea-stream-collection.sh <slug>` (requires websocat) |
+| Task | CLI Command | Alternative |
+|------|------------|-------------|
+| List recent events | `opensea events list [--event-type <type>] [--limit <n>]` | — |
+| Get collection events | `opensea events by-collection <slug> [--event-type <type>]` | `opensea-events-collection.sh <slug> [event_type] [limit]` |
+| Get events for specific NFT | `opensea events by-nft <chain> <contract> <token_id>` | — |
+| Get events for account | `opensea events by-account <address>` | — |
+| Stream real-time events | — | `opensea-stream-collection.sh <slug>` (requires websocat) |
+
+Event types: `sale`, `transfer`, `mint`, `listing`, `offer`, `trait_offer`, `collection_offer`
+
+### Accounts
+
+| Task | CLI Command |
+|------|------------|
+| Get account details | `opensea accounts get <address>` |
 
 ### Generic requests
 
@@ -124,7 +166,151 @@ OpenSea's API includes a cross-chain DEX aggregator for swapping ERC20 tokens wi
 
 Creating new listings and offers requires wallet signatures. Use `opensea-post.sh` with the Seaport order structure - see `references/marketplace-api.md` for full details.
 
-## Scripts reference
+## OpenSea CLI (`@opensea/cli`)
+
+The [OpenSea CLI](https://github.com/ProjectOpenSea/opensea-cli) is the recommended way for AI agents to interact with OpenSea. It provides a consistent command-line interface and a programmatic TypeScript/JavaScript SDK.
+
+### Installation
+
+```bash
+# Install globally
+npm install -g @opensea/cli
+
+# Or use without installing
+npx @opensea/cli collections get mfers
+```
+
+### Authentication
+
+```bash
+# Set via environment variable (recommended)
+export OPENSEA_API_KEY="your-api-key"
+opensea collections get mfers
+
+# Or pass inline
+opensea --api-key your-api-key collections get mfers
+```
+
+### CLI Commands
+
+| Command | Description |
+|---|---|
+| `collections` | Get, list, stats, and traits for NFT collections |
+| `nfts` | Get, list, refresh metadata, and contract details for NFTs |
+| `listings` | Get all, best, or best-for-nft listings |
+| `offers` | Get all, collection, best-for-nft, and trait offers |
+| `events` | List marketplace events (sales, transfers, mints, etc.) |
+| `search` | Search collections, NFTs, tokens, and accounts |
+| `tokens` | Get trending tokens, top tokens, and token details |
+| `swaps` | Get swap quotes for token trading |
+| `accounts` | Get account details |
+
+Global options: `--api-key`, `--chain` (default: ethereum), `--format` (json/table/toon), `--base-url`, `--timeout`, `--verbose`
+
+### Output Formats
+
+- **JSON** (default): Structured output for agents and scripts
+- **Table**: Human-readable tabular output (`--format table`)
+- **TOON**: Token-Oriented Object Notation, uses ~40% fewer tokens than JSON — ideal for LLM/AI agent context windows (`--format toon`)
+
+```bash
+# JSON output (default)
+opensea collections stats mfers
+
+# Human-readable table
+opensea --format table collections stats mfers
+
+# Compact TOON format (best for AI agents)
+opensea --format toon tokens trending --limit 5
+```
+
+### Pagination
+
+All list commands support cursor-based pagination with `--limit` and `--next`:
+
+```bash
+# First page
+opensea collections list --limit 5
+
+# Pass the "next" cursor from the response to get the next page
+opensea collections list --limit 5 --next "LXBrPTEwMDA..."
+```
+
+### Programmatic SDK
+
+The CLI also exports a TypeScript/JavaScript SDK for use in scripts and applications:
+
+```typescript
+import { OpenSeaCLI, OpenSeaAPIError } from "@opensea/cli"
+
+const client = new OpenSeaCLI({ apiKey: process.env.OPENSEA_API_KEY })
+
+const collection = await client.collections.get("mfers")
+const { nfts } = await client.nfts.listByCollection("mfers", { limit: 5 })
+const { listings } = await client.listings.best("mfers", { limit: 10 })
+const { asset_events } = await client.events.byCollection("mfers", { eventType: "sale" })
+const { tokens } = await client.tokens.trending({ chains: ["base"], limit: 5 })
+const results = await client.search.query("mfers", { limit: 5 })
+
+// Swap quote
+const { quote, transactions } = await client.swaps.quote({
+  fromChain: "base",
+  fromAddress: "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913",
+  toChain: "base",
+  toAddress: "0x3ec2156d4c0a9cbdab4a016633b7bcf6a8d68ea2",
+  quantity: "1000000",
+  address: "0xYourWalletAddress",
+})
+
+// Error handling
+try {
+  await client.collections.get("nonexistent")
+} catch (error) {
+  if (error instanceof OpenSeaAPIError) {
+    console.error(error.statusCode)   // e.g. 404
+    console.error(error.responseBody) // raw API response
+    console.error(error.path)         // request path
+  }
+}
+```
+
+### TOON Format for AI Agents
+
+TOON (Token-Oriented Object Notation) is a compact serialization format that uses ~40% fewer tokens than JSON, making it ideal for piping CLI output into LLM context windows:
+
+```bash
+opensea --format toon tokens trending --limit 3
+```
+
+Example output:
+```
+tokens[3]{name,symbol,chain,market_cap,price_usd}:
+  Ethereum,ETH,ethereum,250000000000,2100.50
+  Bitcoin,BTC,bitcoin,900000000000,48000.00
+  Solana,SOL,solana,30000000000,95.25
+next: abc123
+```
+
+TOON is also available programmatically:
+
+```typescript
+import { formatToon } from "@opensea/cli"
+
+const data = await client.tokens.trending({ limit: 5 })
+console.log(formatToon(data))
+```
+
+### CLI Exit Codes
+
+- `0` - Success
+- `1` - API error
+- `2` - Authentication error
+
+---
+
+## Shell Scripts Reference
+
+The `scripts/` directory contains shell scripts that wrap the OpenSea REST API directly using `curl`. These are an alternative to the CLI above.
 
 ### NFT & Collection Scripts
 | Script | Purpose |
@@ -167,6 +353,10 @@ Creating new listings and offers requires wallet signatures. Use `opensea-post.s
 
 ## References
 
+- [OpenSea CLI GitHub](https://github.com/ProjectOpenSea/opensea-cli) - Full CLI and SDK documentation
+- [CLI Reference](https://github.com/ProjectOpenSea/opensea-cli/blob/main/docs/cli-reference.md) - Complete command reference
+- [SDK Reference](https://github.com/ProjectOpenSea/opensea-cli/blob/main/docs/sdk.md) - Programmatic SDK API
+- [CLI Examples](https://github.com/ProjectOpenSea/opensea-cli/blob/main/docs/examples.md) - Real-world usage examples
 - `references/rest-api.md` - REST endpoint families and pagination
 - `references/marketplace-api.md` - Buy/sell workflows and Seaport details
 - `references/stream-api.md` - WebSocket event streaming
@@ -328,10 +518,11 @@ cast wallet new
 
 ## Requirements
 
-- `OPENSEA_API_KEY` environment variable (for REST API scripts)
+- `OPENSEA_API_KEY` environment variable (for CLI, SDK, and REST API scripts)
 - `OPENSEA_MCP_TOKEN` environment variable (for MCP server, separate from API key)
-- `curl` for REST calls
+- Node.js >= 18.0.0 (for `@opensea/cli`)
+- `curl` for REST shell scripts
 - `websocat` (optional) for Stream API
-- `jq` (recommended) for parsing JSON responses
+- `jq` (recommended) for parsing JSON responses from shell scripts
 
 Get both credentials at [opensea.io/settings/developer](https://opensea.io/settings/developer).

@@ -4,13 +4,14 @@
 
 ## What is this?
 
-This is an [Agent Skill](https://skills.sh/docs) for AI coding assistants. Once installed, your agent can interact with the OpenSea API to query NFT data, execute marketplace operations, and swap ERC20 tokens.
+This is an [Agent Skill](https://skills.sh/docs) for AI coding assistants. Once installed, your agent can interact with the OpenSea API to query NFT data, execute marketplace operations, and swap ERC20 tokens using the [OpenSea CLI](https://github.com/ProjectOpenSea/opensea-cli), shell scripts, or the MCP server.
 
 ## Prerequisites
 
-- `OPENSEA_API_KEY` environment variable — for REST API scripts
+- `OPENSEA_API_KEY` environment variable — for CLI, SDK, and REST API scripts
 - `OPENSEA_MCP_TOKEN` environment variable — for the MCP server (separate from API key)
-- `curl` for REST calls
+- Node.js >= 18.0.0 — for `@opensea/cli`
+- `curl` for REST shell scripts
 - `jq` (recommended) for parsing JSON responses
 
 Get both credentials at [opensea.io/settings/developer](https://opensea.io/settings/developer).
@@ -43,11 +44,28 @@ Refer to your AI tool's documentation for skills directory configuration.
 
 ### Skill Definition
 
-[`SKILL.md`](SKILL.md) — the main skill file that teaches your agent how to use the OpenSea API, including task guides, script references, MCP tool documentation, and end-to-end workflows for buying, selling, and swapping tokens.
+[`SKILL.md`](SKILL.md) — the main skill file that teaches your agent how to use the OpenSea API, including the CLI, task guides, script references, MCP tool documentation, and end-to-end workflows for buying, selling, and swapping tokens.
+
+### OpenSea CLI (Recommended)
+
+The [`@opensea/cli`](https://github.com/ProjectOpenSea/opensea-cli) package provides a command-line interface and programmatic SDK for all OpenSea API operations. Install with `npm install -g @opensea/cli` or use `npx @opensea/cli`.
+
+```bash
+opensea collections get mfers
+opensea listings best mfers --limit 5
+opensea tokens trending --limit 5
+opensea search "cool cats"
+opensea swaps quote --from-chain base --from-address 0x0000000000000000000000000000000000000000 \
+  --to-chain base --to-address 0xTokenAddress --quantity 0.02 --address 0xYourWallet
+```
+
+Supports JSON, table, and [TOON](https://github.com/toon-format/toon) output formats. TOON uses ~40% fewer tokens than JSON, ideal for AI agent context windows (`--format toon`).
+
+See [`SKILL.md`](SKILL.md) for the full CLI command reference and SDK usage.
 
 ### Shell Scripts
 
-Ready-to-use scripts in [`scripts/`](scripts/) for common operations:
+Ready-to-use scripts in [`scripts/`](scripts/) for common operations (alternative to the CLI):
 
 | Script | Purpose |
 |--------|---------|
@@ -106,12 +124,15 @@ Swap 0.02 ETH to USDC on Base using OpenSea
 Show me the best offer on BAYC #1234
 ```
 
+The agent will use the `opensea` CLI to query the API directly.
+
 ## Supported Chains
 
 This skill supports all chains available on OpenSea, including `ethereum`, `solana`, `abstract`, `ape_chain`, `arbitrum`, `avalanche`, `b3`, `base`, `bera_chain`, `blast`, `flow`, `gunzilla`, `hyperevm`, `hyperliquid`, `ink`, `megaeth`, `monad`, `optimism`, `polygon`, `ronin`, `sei`, `shape`, `somnia`, `soneium`, `unichain`, and `zora`.
 
 ## Learn More
 
+- [OpenSea CLI](https://github.com/ProjectOpenSea/opensea-cli) — CLI and SDK for OpenSea API
 - [OpenSea Developer Docs](https://docs.opensea.io/)
 - [OpenSea Developer Portal](https://opensea.io/settings/developer)
 - [Agent Skills Directory](https://skills.sh/docs)
