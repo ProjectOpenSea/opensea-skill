@@ -22,4 +22,4 @@ if [ -n "$query" ]; then
   url="$url?$query"
 fi
 
-curl -sS -H "x-api-key: $key" "$url"
+curl -sS -H "x-api-key: $key" -H "User-Agent: opensea-skill/1.0" "$url"
