@@ -166,6 +166,57 @@ Event types: `sale`, `transfer`, `mint`, `listing`, `offer`, `trait_offer`, `col
 
 Creating new listings and offers requires wallet signatures. Use `opensea-post.sh` with the Seaport order structure - see `references/marketplace-api.md` for full details.
 
+## Error Handling
+
+### Diagnosing failures
+
+When an API call fails, always check the **HTTP status code first** — not the response body. The shell scripts in `scripts/` use `curl`, which exits 0 even on HTTP 4xx/5xx responses. A successful script exit does not mean the API call succeeded. Pipe through `jq` or inspect the HTTP status to detect errors:
+
+```bash
+# Check HTTP status code from a script response
+HTTP_CODE=$(curl -s -o /tmp/response.json -w "%{http_code}" \
+  -H "x-api-key: $OPENSEA_API_KEY" \
+  "https://api.opensea.io/api/v2/collections/boredapeyachtclub")
+echo "HTTP Status: $HTTP_CODE"
+```
+
+When using the CLI (`@opensea/cli`), check the exit code: `0` = success, `1` = API error, `2` = authentication error. The SDK throws `OpenSeaAPIError` with `statusCode`, `responseBody`, and `path` properties.
+
+### Common error codes
+
+| HTTP Status | Meaning | Recommended Action |
+|---|---|---|
+| 400 | Bad Request | Check parameters against the endpoint docs in `references/rest-api.md` |
+| 401 | Unauthorized | Verify `OPENSEA_API_KEY` is set and valid — test with `opensea collections get boredapeyachtclub` |
+| 404 | Not Found | Verify the collection slug, chain identifier, contract address, or token ID is correct |
+| 429 | Rate Limited | Stop all requests, wait 60 seconds, then retry with exponential backoff |
+| 500 | Server Error | Retry up to 3 times with exponential backoff (wait 2s, 4s, 8s) |
+
+### Rate limit best practices
+
+- **Never run parallel scripts** sharing the same `OPENSEA_API_KEY` — concurrent requests burn through your rate limit and trigger 429 errors
+- **Use exponential backoff with jitter** on retries: wait `2^attempt` seconds (2s, 4s, 8s…) plus a random delay, capped at 60 seconds
+- **Run operations sequentially** — finish one API call before starting the next
+- Rate limits vary by API key tier. Check your limits in the [OpenSea Developer Portal](https://opensea.io/settings/developer)
+
+### Pre-bulk-operation checklist
+
+Before running batch operations (e.g., fetching data for many collections or NFTs), complete this checklist:
+
+1. **Verify your API key works** — run a single test request first:
+   ```bash
+   opensea collections get boredapeyachtclub
+   ```
+2. **Check for already-running processes** — avoid concurrent API usage on the same key:
+   ```bash
+   pgrep -fl opensea
+   ```
+3. **Test with `limit=1`** — confirm the query shape and response format before fetching large datasets:
+   ```bash
+   opensea nfts list-by-collection boredapeyachtclub --limit 1
+   ```
+4. **Run sequentially, not in parallel** — execute one request at a time, waiting for each to complete before starting the next
+
 ## OpenSea CLI (`@opensea/cli`)
 
 The [OpenSea CLI](https://github.com/ProjectOpenSea/opensea-cli) is the recommended way for AI agents to interact with OpenSea. It provides a consistent command-line interface and a programmatic TypeScript/JavaScript SDK.
