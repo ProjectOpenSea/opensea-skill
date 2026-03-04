@@ -22,4 +22,7 @@ if [ -n "$query" ]; then
   url="$url?$query"
 fi
 
-curl -sS -H "x-api-key: $key" -H "User-Agent: opensea-skill/1.0" "$url"
+curl -sS --connect-timeout 10 --max-time 30 \
+  -H "x-api-key: $key" \
+  -H "User-Agent: opensea-skill/1.0" \
+  "$url"

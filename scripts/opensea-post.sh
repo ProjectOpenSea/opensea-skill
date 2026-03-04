@@ -19,7 +19,7 @@ fi
 
 url="$base$path"
 
-curl -sS -X POST \
+curl -sS --connect-timeout 10 --max-time 30 -X POST \
   -H "x-api-key: $key" \
   -H "User-Agent: opensea-skill/1.0" \
   -H "Content-Type: application/json" \
