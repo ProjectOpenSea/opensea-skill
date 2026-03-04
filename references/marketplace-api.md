@@ -348,8 +348,9 @@ POST /api/v2/orders/chain/{chain}/protocol/{protocol_address}/hash/{order_hash}/
 
 ## Rate Limits
 
-- Standard: 60 requests/minute
-- With API key: Higher limits (check your dashboard)
+- Without API key: ~40 requests/minute
+- With API key (standard): ~60 requests/minute
+- Higher tiers available (check your [developer dashboard](https://opensea.io/settings/developer))
 
 ---
 

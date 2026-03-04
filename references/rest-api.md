@@ -101,8 +101,9 @@ For the events endpoint, filter with `event_type`:
 
 ## Rate Limits
 
-- Without API key: 40 requests/minute
-- With API key: Higher limits (varies by tier)
+- Without API key: ~40 requests/minute
+- With API key (standard): ~60 requests/minute
+- Higher tiers available (check your [developer dashboard](https://opensea.io/settings/developer))
 
 ## Error Codes
 

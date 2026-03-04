@@ -516,6 +516,57 @@ cast wallet new
 
 **Important:** Store private keys securely. Never commit them to git or share publicly.
 
+## Error Handling
+
+### How shell scripts report errors
+
+The core scripts (`opensea-get.sh`, `opensea-post.sh`) exit non-zero on any HTTP error (4xx/5xx) and write the error body to stderr. `opensea-get.sh` automatically retries HTTP 429 (rate limit) responses up to 3 times with exponential backoff (2s, 4s). All scripts enforce curl timeouts (`--connect-timeout 10 --max-time 30`) to prevent indefinite hangs.
+
+**Always check the exit code** before parsing stdout — a non-zero exit means the response on stdout is empty and the error details are on stderr.
+
+### Error codes and recommended actions
+
+| HTTP Code | Meaning | Recommended Action |
+|-----------|---------|-------------------|
+| 400 | Bad request | Check parameters — wrong slug, chain, or malformed query |
+| 401 | Unauthorized | Verify `OPENSEA_API_KEY` is set and valid. Run: `opensea-get.sh /api/v2/collections/boredapeyachtclub` as a quick health check |
+| 404 | Not found | Verify the collection slug, contract address, or token ID exists |
+| 429 | Rate limited | `opensea-get.sh` retries automatically. If still failing, reduce request frequency or wait 60s before retrying |
+| 500 | Server error | Retry up to 3 times with 5s delays. If persistent, the API may be experiencing issues |
+
+### Rate limit best practices
+
+- **Never run parallel scripts** sharing the same API key — serialize requests or add delays between them
+- Standard rate limit with API key: ~60 requests/minute (~1 req/s)
+- Without API key: ~40 requests/minute
+- When bulk-fetching, add a 1–2s sleep between calls
+- `opensea-get.sh` handles 429 retries automatically, but prevention is better than recovery
+
+### Pre-bulk-operation checklist
+
+Before starting any bulk operation (fetching all NFTs in a collection, scanning multiple listings, etc.):
+
+1. **Verify your API key works** — run a single test call first:
+   ```bash
+   opensea-get.sh /api/v2/collections/boredapeyachtclub
+   ```
+2. **Check for other running scripts** — `ps aux | grep opensea` to ensure you're not competing for rate limit quota
+3. **Test with `limit=1`** — confirm the endpoint and parameters work before fetching large datasets
+4. **Run sequentially** — do not parallelize requests on the same API key
+
+### CLI error handling
+
+The `@opensea/cli` throws `OpenSeaAPIError` on non-2xx responses with `statusCode`, `responseBody`, and `path` fields. Exit codes: `0` = success, `1` = API error, `2` = authentication error.
+
+```bash
+# Check exit code after CLI calls
+if ! opensea collections get some-slug 2>/dev/null; then
+  echo "Failed to fetch collection" >&2
+fi
+```
+
+---
+
 ## Requirements
 
 - `OPENSEA_API_KEY` environment variable (for CLI, SDK, and REST API scripts)
