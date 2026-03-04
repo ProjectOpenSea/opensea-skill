@@ -168,17 +168,11 @@ Creating new listings and offers requires wallet signatures. Use `opensea-post.s
 
 ## Error Handling
 
-### Diagnosing failures
+### How shell scripts report errors
 
-When an API call fails, always check the **HTTP status code first** — not the response body. The shell scripts in `scripts/` use `curl`, which exits 0 even on HTTP 4xx/5xx responses. A successful script exit does not mean the API call succeeded. Pipe through `jq` or inspect the HTTP status to detect errors:
+The core scripts (`opensea-get.sh`, `opensea-post.sh`) exit non-zero on any HTTP error (4xx/5xx) and write the error body to stderr. `opensea-get.sh` automatically retries HTTP 429 (rate limit) responses up to 2 times with exponential backoff (2s, 4s). All scripts enforce curl timeouts (`--connect-timeout 10 --max-time 30`) to prevent indefinite hangs.
 
-```bash
-# Check HTTP status code from a script response
-HTTP_CODE=$(curl -s -o /tmp/response.json -w "%{http_code}" \
-  -H "x-api-key: $OPENSEA_API_KEY" \
-  "https://api.opensea.io/api/v2/collections/boredapeyachtclub")
-echo "HTTP Status: $HTTP_CODE"
-```
+**Always check the exit code** before parsing stdout — a non-zero exit means the response on stdout is empty and the error details are on stderr.
 
 When using the CLI (`@opensea/cli`), check the exit code: `0` = success, `1` = API error, `2` = authentication error. The SDK throws `OpenSeaAPIError` with `statusCode`, `responseBody`, and `path` properties.
 
