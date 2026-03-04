@@ -8,7 +8,7 @@ set -euo pipefail
 #   PRIVATE_KEY=0xYourKey ./opensea-swap.sh 0xb695559b26bb2c9703ef1935c37aeae9526bab07 0.02 0xYourWallet base
 #   PRIVATE_KEY=0xYourKey ./opensea-swap.sh 0xToToken 100 0xYourWallet base 0xFromToken
 #
-# Requires: OPENSEA_API_KEY env var, PRIVATE_KEY env var, mcporter, node with viem
+# Requires: OPENSEA_API_KEY env var, PRIVATE_KEY env var, mcporter, node with viem, jq
 
 TO_TOKEN="${1:?Usage: PRIVATE_KEY=0x... $0 <to_token_address> <amount> <wallet_address> [chain] [from_token]}"
 AMOUNT="${2:?Amount required}"
@@ -26,19 +26,24 @@ trap 'rm -f "$tmp_quote"' EXIT
 
 echo "Getting swap quote: ${AMOUNT} tokens on ${CHAIN}..." >&2
 
-QUOTE=$(mcporter call opensea.get_token_swap_quote --args "{
+if ! QUOTE=$(mcporter call opensea.get_token_swap_quote --args "{
   \"fromContractAddress\": \"${FROM_TOKEN}\",
   \"fromChain\": \"${CHAIN}\",
   \"toContractAddress\": \"${TO_TOKEN}\",
   \"toChain\": \"${CHAIN}\",
   \"fromQuantity\": \"${AMOUNT}\",
   \"address\": \"${WALLET}\"
-}" --output raw 2>&1) || {
-  echo "mcporter failed (exit $?): $QUOTE" >&2
+}" --output raw 2>&1); then
+  echo "mcporter failed: $QUOTE" >&2
   exit 1
-}
+fi
 
-if echo "$QUOTE" | jq -e '.error // empty' > /dev/null 2>&1; then
+if ! echo "$QUOTE" | jq empty 2>/dev/null; then
+  echo "Invalid response (not JSON): $QUOTE" >&2
+  exit 1
+fi
+
+if echo "$QUOTE" | jq -e '.error // .isError // empty' >/dev/null 2>&1; then
   echo "Failed to get quote: $QUOTE" >&2
   exit 1
 fi
