@@ -195,7 +195,7 @@ When using the CLI (`@opensea/cli`), check the exit code: `0` = success, `1` = A
 ### Rate limit best practices
 
 - **Never run parallel scripts** sharing the same `OPENSEA_API_KEY` — concurrent requests burn through your rate limit and trigger 429 errors
-- **Use exponential backoff** on retries: wait `2^attempt` seconds (2s, 4s, 8s…) with a cap at 60 seconds
+- **Use exponential backoff with jitter** on retries: wait `2^attempt` seconds (2s, 4s, 8s…) plus a random delay, capped at 60 seconds
 - **Run operations sequentially** — finish one API call before starting the next
 - Rate limits vary by API key tier. Check your limits in the [OpenSea Developer Portal](https://opensea.io/settings/developer)
 
@@ -209,7 +209,7 @@ Before running batch operations (e.g., fetching data for many collections or NFT
    ```
 2. **Check for already-running processes** — avoid concurrent API usage on the same key:
    ```bash
-   ps aux | grep opensea
+   pgrep -fl opensea
    ```
 3. **Test with `limit=1`** — confirm the query shape and response format before fetching large datasets:
    ```bash
