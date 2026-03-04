@@ -297,6 +297,7 @@ if [ "${LIVE_TEST:-}" = "true" ]; then
   log_test "opensea-get.sh uses OPENSEA_BASE_URL when set"
   (
     export OPENSEA_BASE_URL="https://httpbin.org"
+    export OPENSEA_API_KEY="dummy-test-key"
     run_script opensea-get.sh /anything
     # httpbin.org returns JSON at /anything — verifies the base URL was used
     if [ "$EXIT_CODE" -eq 0 ] && assert_json; then
@@ -458,12 +459,12 @@ if [ "${LIVE_TEST:-}" = "true" ]; then
     if [ "$EXIT_CODE" -eq 0 ] && assert_json; then
       pass
     else
-      # API may reject fulfillment (expired order, etc.) — a response still
-      # proves the script correctly sent the request
-      if [ -n "$STDERR" ]; then
+      # API may reject fulfillment (expired order, etc.) — check stderr
+      # contains an API-related message to distinguish from infra failures
+      if echo "$STDERR" | grep -qi "HTTP\|expired\|order\|fulfillment\|error\|40[0-9]\|50[0-9]"; then
         pass
       else
-        fail "exit=$EXIT_CODE, no response"
+        fail "exit=$EXIT_CODE, unexpected stderr: $STDERR"
       fi
     fi
   else
@@ -481,10 +482,10 @@ if [ "${LIVE_TEST:-}" = "true" ]; then
     if [ "$EXIT_CODE" -eq 0 ] && assert_json; then
       pass
     else
-      if [ -n "$STDERR" ]; then
+      if echo "$STDERR" | grep -qi "HTTP\|expired\|order\|fulfillment\|error\|40[0-9]\|50[0-9]"; then
         pass
       else
-        fail "exit=$EXIT_CODE, no response"
+        fail "exit=$EXIT_CODE, unexpected stderr: $STDERR"
       fi
     fi
   else
