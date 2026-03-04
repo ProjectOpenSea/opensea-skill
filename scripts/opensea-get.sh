@@ -22,4 +22,27 @@ if [ -n "$query" ]; then
   url="$url?$query"
 fi
 
-curl -sS -H "x-api-key: $key" -H "User-Agent: opensea-skill/1.0" "$url"
+max_retries=3
+base_delay=2
+tmp_body="$(mktemp)"
+trap 'rm -f "$tmp_body"' EXIT
+
+for (( attempt=1; attempt<=max_retries; attempt++ )); do
+  http_code="$(curl -sS -w '%{http_code}' -o "$tmp_body" \
+    -H "x-api-key: $key" -H "User-Agent: opensea-skill/1.0" "$url")"
+
+  if [ "$http_code" != "429" ]; then
+    cat "$tmp_body"
+    exit 0
+  fi
+
+  if [ "$attempt" -lt "$max_retries" ]; then
+    delay=$(( base_delay * (2 ** (attempt - 1)) ))
+    echo "opensea-get.sh: 429 rate limited, retrying in ${delay}s (attempt ${attempt}/${max_retries})..." >&2
+    sleep "$delay"
+  fi
+done
+
+echo "opensea-get.sh: 429 rate limited, all ${max_retries} attempts exhausted" >&2
+cat "$tmp_body"
+exit 1
