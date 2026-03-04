@@ -115,7 +115,7 @@ assert_exit() {
 }
 
 assert_json() {
-  echo "$STDOUT" | jq empty 2>/dev/null
+  [ -n "$STDOUT" ] && echo "$STDOUT" | jq empty 2>/dev/null
 }
 
 assert_field() {
