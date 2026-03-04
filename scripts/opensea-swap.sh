@@ -17,16 +17,15 @@ CHAIN="${4:-base}"
 FROM_TOKEN="${5:-0x0000000000000000000000000000000000000000}"
 
 if [ -z "${PRIVATE_KEY:-}" ]; then
-  echo "❌ PRIVATE_KEY environment variable is required" >&2
+  echo "PRIVATE_KEY environment variable is required" >&2
   exit 1
 fi
 
-TMPFILE=$(mktemp /tmp/opensea_swap_quote.XXXXXX.json)
-trap 'rm -f "$TMPFILE"' EXIT
+tmp_quote=$(mktemp)
+trap 'rm -f "$tmp_quote"' EXIT
 
-echo "🔄 Getting swap quote: ${AMOUNT} tokens → token on ${CHAIN}..."
+echo "Getting swap quote: ${AMOUNT} tokens on ${CHAIN}..." >&2
 
-# Get swap quote via mcporter
 if ! QUOTE=$(mcporter call opensea.get_token_swap_quote --args "{
   \"fromContractAddress\": \"${FROM_TOKEN}\",
   \"fromChain\": \"${CHAIN}\",
@@ -35,24 +34,22 @@ if ! QUOTE=$(mcporter call opensea.get_token_swap_quote --args "{
   \"fromQuantity\": \"${AMOUNT}\",
   \"address\": \"${WALLET}\"
 }" --output raw 2>&1); then
-  echo "❌ Failed to get quote: $QUOTE" >&2
+  echo "mcporter failed: $QUOTE" >&2
   exit 1
 fi
 
 if ! echo "$QUOTE" | jq empty 2>/dev/null; then
-  echo "❌ Invalid response (not JSON): $QUOTE" >&2
+  echo "Invalid response (not JSON): $QUOTE" >&2
   exit 1
 fi
 
 if echo "$QUOTE" | jq -e '.error // .isError // empty' >/dev/null 2>&1; then
-  echo "❌ Failed to get quote: $QUOTE" >&2
+  echo "Failed to get quote: $QUOTE" >&2
   exit 1
 fi
 
-# Save quote for parsing by node
-echo "$QUOTE" > "$TMPFILE"
+echo "$QUOTE" > "$tmp_quote"
 
-# Execute with node
 node --input-type=module -e "
 import { createPublicClient, createWalletClient, http } from 'viem';
 import { privateKeyToAccount } from 'viem/accounts';
@@ -66,8 +63,7 @@ const account = privateKeyToAccount(process.env.PRIVATE_KEY);
 const wallet = createWalletClient({ account, chain, transport: http() });
 const pub = createPublicClient({ chain, transport: http() });
 
-// Parse the mcporter output (wrapped in content structure)
-const raw = readFileSync('${TMPFILE}', 'utf8');
+const raw = readFileSync('$tmp_quote', 'utf8');
 let quote;
 try {
   const wrapper = JSON.parse(raw);
@@ -79,12 +75,8 @@ try {
 const txData = quote.swap.actions[0].transactionSubmissionData;
 const toSymbol = quote.swapQuote.swapRoutes[0].toAsset.symbol;
 
-console.log('📊 Quote received');
-console.log('   To:', txData.to);
-console.log('   Value:', txData.value, 'wei');
-console.log('   Token:', toSymbol);
-
-console.log('📤 Sending transaction...');
+console.error('Quote received — To:', txData.to, 'Value:', txData.value, 'wei', 'Token:', toSymbol);
+console.error('Sending transaction...');
 
 const hash = await wallet.sendTransaction({
   to: txData.to,
@@ -92,10 +84,12 @@ const hash = await wallet.sendTransaction({
   value: BigInt(txData.value)
 });
 
-console.log('TX: https://basescan.org/tx/' + hash);
-console.log('⏳ Waiting for confirmation...');
+console.error('TX: https://basescan.org/tx/' + hash);
+console.error('Waiting for confirmation...');
 
 const receipt = await pub.waitForTransactionReceipt({ hash });
-console.log(receipt.status === 'success' ? '✅ Swap complete!' : '❌ Swap failed');
-console.log('Gas used:', receipt.gasUsed.toString());
+console.error(receipt.status === 'success' ? 'Swap complete!' : 'Swap failed');
+console.error('Gas used:', receipt.gasUsed.toString());
+
+if (receipt.status !== 'success') process.exit(1);
 "
