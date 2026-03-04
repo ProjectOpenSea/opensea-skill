@@ -33,7 +33,10 @@ QUOTE=$(mcporter call opensea.get_token_swap_quote --args "{
   \"toChain\": \"${CHAIN}\",
   \"fromQuantity\": \"${AMOUNT}\",
   \"address\": \"${WALLET}\"
-}" --output raw 2>&1)
+}" --output raw 2>&1) || {
+  echo "mcporter failed (exit $?): $QUOTE" >&2
+  exit 1
+}
 
 if echo "$QUOTE" | jq -e '.error // empty' > /dev/null 2>&1; then
   echo "Failed to get quote: $QUOTE" >&2

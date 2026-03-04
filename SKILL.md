@@ -170,7 +170,7 @@ Creating new listings and offers requires wallet signatures. Use `opensea-post.s
 
 ### How shell scripts report errors
 
-The core scripts (`opensea-get.sh`, `opensea-post.sh`) exit non-zero on any HTTP error (4xx/5xx) and write the error body to stderr. `opensea-get.sh` automatically retries HTTP 429 (rate limit) responses up to 3 times with exponential backoff (2s, 4s). All scripts enforce curl timeouts (`--connect-timeout 10 --max-time 30`) to prevent indefinite hangs.
+The core scripts (`opensea-get.sh`, `opensea-post.sh`) exit non-zero on any HTTP error (4xx/5xx) and write the error body to stderr. `opensea-get.sh` automatically retries HTTP 429 (rate limit) responses up to 2 times with exponential backoff (2s, 4s). All scripts enforce curl timeouts (`--connect-timeout 10 --max-time 30`) to prevent indefinite hangs.
 
 **Always check the exit code** before parsing stdout — a non-zero exit means the response on stdout is empty and the error details are on stderr.
 
