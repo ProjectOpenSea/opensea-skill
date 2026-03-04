@@ -16,7 +16,7 @@ WALLET="${3:?Wallet address required}"
 CHAIN="${4:-base}"
 FROM_TOKEN="${5:-0x0000000000000000000000000000000000000000}"
 
-if [ -z "$PRIVATE_KEY" ]; then
+if [ -z "${PRIVATE_KEY:-}" ]; then
   echo "❌ PRIVATE_KEY environment variable is required" >&2
   exit 1
 fi
