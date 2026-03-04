@@ -348,9 +348,11 @@ POST /api/v2/orders/chain/{chain}/protocol/{protocol_address}/hash/{order_hash}/
 
 ## Rate Limits
 
-- Without API key: ~40 requests/minute
-- With API key (standard): ~60 requests/minute
-- Higher tiers available (check your [developer dashboard](https://opensea.io/settings/developer))
+Rate limits apply per-account across all API keys. See `references/rest-api.md` for full details.
+
+**Default limits (Tier 1):** 120 read/min, 60 write/min, 60 fulfillment/min
+
+Fulfillment endpoints (`/api/v2/listings/fulfillment_data`, `/api/v2/offers/fulfillment_data`) use the **fulfillment** rate bucket. Order creation endpoints use the **write** rate bucket. All other GET endpoints use the **read** rate bucket.
 
 ---
 

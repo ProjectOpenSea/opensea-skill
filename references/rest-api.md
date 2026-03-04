@@ -101,9 +101,30 @@ For the events endpoint, filter with `event_type`:
 
 ## Rate Limits
 
-- Without API key: ~40 requests/minute
-- With API key (standard): ~60 requests/minute
-- Higher tiers available (check your [developer dashboard](https://opensea.io/settings/developer))
+All v2 endpoints require an API key. OpenSea uses a **token bucket** algorithm: your API key has a bucket of request tokens that refills over a fixed time window. Each request consumes one token. When the bucket is empty, the API returns `429 Too Many Requests`.
+
+All API keys under the same account share a single rate limit bucket. Creating multiple API keys will not increase your overall rate limit.
+
+### Default Rate Limits (Tier 1)
+
+| Operation | Limit |
+|-----------|-------|
+| Read (GET) | 120 requests/minute |
+| Write (POST) | 60 requests/minute |
+| Fulfillment | 60 requests/minute |
+
+Higher tiers are available for select users. You can apply for a rate limit increase via the [OpenSea Developer Portal](https://opensea.io/settings/developer).
+
+### Rate Limit Response Headers
+
+A `429` response includes these headers:
+
+| Header | Description |
+|--------|-------------|
+| `X-RateLimit-Limit` | Maximum requests allowed in the current time window |
+| `X-RateLimit-Window` | Duration of the time window (e.g., `60s`) |
+| `X-RateLimit-Remaining` | Requests remaining in the current window |
+| `Retry-After` | Seconds to wait before retrying |
 
 ## Error Codes
 
