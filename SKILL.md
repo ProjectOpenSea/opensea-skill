@@ -232,8 +232,7 @@ npx @opensea/cli collections get mfers
 export OPENSEA_API_KEY="your-api-key"
 opensea collections get mfers
 
-# Or pass inline
-opensea --api-key your-api-key collections get mfers
+# Always use the OPENSEA_API_KEY environment variable above — do not pass API keys inline
 ```
 
 ### CLI Commands
@@ -425,14 +424,14 @@ Add to your MCP config:
     "opensea": {
       "url": "https://mcp.opensea.io/mcp",
       "headers": {
-        "Authorization": "Bearer YOUR_MCP_TOKEN"
+        "Authorization": "Bearer $OPENSEA_MCP_TOKEN"
       }
     }
   }
 }
 ```
 
-Or use the inline token format: `https://mcp.opensea.io/YOUR_MCP_TOKEN/mcp`
+> **Note:** Set `OPENSEA_MCP_TOKEN` in your environment before configuring the MCP server. Do not embed tokens directly in URLs or config files.
 
 ### Token Swap Tools
 | MCP Tool | Purpose |
@@ -534,18 +533,19 @@ To execute swaps or buy NFTs, you need an Ethereum wallet (private key + address
 import crypto from 'crypto';
 import { privateKeyToAccount } from 'viem/accounts';
 
+// WARNING: Never log or print private keys — store them only in environment variables
 const privateKey = '0x' + crypto.randomBytes(32).toString('hex');
 const account = privateKeyToAccount(privateKey);
 
-console.log('Private Key:', privateKey);
+// Export as env var for use by other tools; do not write to stdout
+process.env.PRIVATE_KEY = privateKey;
 console.log('Address:', account.address);
 ```
 
 ### Using OpenSSL
 ```bash
-# Generate private key
-PRIVATE_KEY="0x$(openssl rand -hex 32)"
-echo "Private Key: $PRIVATE_KEY"
+# Generate private key — do not log or print private keys
+export PRIVATE_KEY="0x$(openssl rand -hex 32)"
 
 # Derive address (requires node + viem)
 node --input-type=module -e "
