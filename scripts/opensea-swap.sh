@@ -16,12 +16,19 @@ WALLET="${3:?Wallet address required}"
 CHAIN="${4:-base}"
 FROM_TOKEN="${5:-0x0000000000000000000000000000000000000000}"
 
+ALLOWED_CHAINS="base ethereum mainnet polygon matic arbitrum optimism"
+if ! echo " $ALLOWED_CHAINS " | grep -qF " $CHAIN "; then
+  echo "Invalid chain '${CHAIN}'. Allowed: ${ALLOWED_CHAINS}" >&2
+  exit 1
+fi
+
 if [ -z "${PRIVATE_KEY:-}" ]; then
   echo "PRIVATE_KEY environment variable is required" >&2
   exit 1
 fi
 
 tmp_quote=$(mktemp)
+chmod 600 "$tmp_quote"
 trap 'rm -f "$tmp_quote"' EXIT
 
 echo "Getting swap quote: ${AMOUNT} tokens on ${CHAIN}..." >&2
@@ -72,7 +79,28 @@ try {
   quote = JSON.parse(raw);
 }
 
+if (!quote.swap?.actions?.[0]?.transactionSubmissionData) {
+  console.error('ERROR: Quote response missing swap.actions[0].transactionSubmissionData');
+  process.exit(1);
+}
 const txData = quote.swap.actions[0].transactionSubmissionData;
+if (!txData.to || !txData.data || txData.value === undefined) {
+  console.error('ERROR: transactionSubmissionData missing required fields (to, data, value)');
+  process.exit(1);
+}
+
+const ethAddrRegex = /^0x[0-9a-fA-F]{40}$/;
+if (!ethAddrRegex.test(txData.to)) {
+  console.error('ERROR: Invalid destination address:', txData.to);
+  process.exit(1);
+}
+
+const valueBigInt = (() => { try { return BigInt(txData.value); } catch { return null; } })();
+if (valueBigInt === null || valueBigInt < 0n) {
+  console.error('ERROR: Invalid transaction value (not a non-negative integer):', txData.value);
+  process.exit(1);
+}
+
 const toSymbol = quote.swapQuote.swapRoutes[0].toAsset.symbol;
 
 console.error('Quote received — To:', txData.to, 'Value:', txData.value, 'wei', 'Token:', toSymbol);
