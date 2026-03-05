@@ -17,7 +17,7 @@ CHAIN="${4:-base}"
 FROM_TOKEN="${5:-0x0000000000000000000000000000000000000000}"
 
 ALLOWED_CHAINS="base ethereum mainnet polygon matic arbitrum optimism"
-if ! echo " $ALLOWED_CHAINS " | grep -q " $CHAIN "; then
+if ! echo " $ALLOWED_CHAINS " | grep -qF " $CHAIN "; then
   echo "Invalid chain '${CHAIN}'. Allowed: ${ALLOWED_CHAINS}" >&2
   exit 1
 fi
@@ -95,8 +95,8 @@ if (!ethAddrRegex.test(txData.to)) {
   process.exit(1);
 }
 
-const valueStr = String(txData.value);
-if (!/^\d+$/.test(valueStr)) {
+const valueBigInt = (() => { try { return BigInt(txData.value); } catch { return null; } })();
+if (valueBigInt === null || valueBigInt < 0n) {
   console.error('ERROR: Invalid transaction value (not a non-negative integer):', txData.value);
   process.exit(1);
 }
