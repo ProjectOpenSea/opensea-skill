@@ -7,6 +7,12 @@ if [ "$#" -lt 1 ]; then
 fi
 
 slug="$1"
+
+if [[ ! "$slug" =~ ^[a-zA-Z0-9*-]+$ ]]; then
+  echo "opensea-stream-collection.sh: slug must contain only alphanumeric characters, hyphens, and asterisk" >&2
+  exit 1
+fi
+
 key="${OPENSEA_API_KEY:-}"
 
 if [ -z "$key" ]; then
