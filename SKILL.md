@@ -424,14 +424,14 @@ Add to your MCP config:
     "opensea": {
       "url": "https://mcp.opensea.io/mcp",
       "headers": {
-        "Authorization": "Bearer $OPENSEA_MCP_TOKEN"
+        "Authorization": "Bearer <YOUR_MCP_TOKEN>"
       }
     }
   }
 }
 ```
 
-> **Note:** Set `OPENSEA_MCP_TOKEN` in your environment before configuring the MCP server. Do not embed tokens directly in URLs or config files.
+> **Note:** Replace `<YOUR_MCP_TOKEN>` above with the MCP token from your [OpenSea Developer Portal](https://opensea.io/settings/developer). Do not embed tokens directly in URLs or commit them to version control.
 
 ### Token Swap Tools
 | MCP Tool | Purpose |
