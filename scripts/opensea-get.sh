@@ -9,6 +9,11 @@ fi
 
 path="$1"
 query="${2-}"
+
+if [[ "$path" != /* ]]; then
+  echo "opensea-get.sh: path must start with /" >&2
+  exit 1
+fi
 base="${OPENSEA_BASE_URL:-https://api.opensea.io}"
 key="${OPENSEA_API_KEY:-}"
 
