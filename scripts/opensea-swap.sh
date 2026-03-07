@@ -112,7 +112,8 @@ const hash = await wallet.sendTransaction({
   value: BigInt(txData.value)
 });
 
-console.error('TX: https://basescan.org/tx/' + hash);
+const explorerUrl = chain.blockExplorers?.default?.url || 'https://basescan.org';
+console.error('TX: ' + explorerUrl + '/tx/' + hash);
 console.error('Waiting for confirmation...');
 
 const receipt = await pub.waitForTransactionReceipt({ hash });
