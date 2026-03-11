@@ -18,16 +18,8 @@ Get both credentials at [opensea.io/settings/developer](https://opensea.io/setti
 
 ## Installing the Skill
 
-### Using npx
-
 ```bash
 npx skills add ProjectOpenSea/opensea-skill
-```
-
-### Using Claude Code
-
-```bash
-/skill install ProjectOpenSea/opensea-skill
 ```
 
 ### Manual Installation
