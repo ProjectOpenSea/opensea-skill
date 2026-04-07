@@ -1,0 +1,5 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "description": "Dependency updates are managed in the opensea-devtools monorepo",
+  "enabled": false
+}
