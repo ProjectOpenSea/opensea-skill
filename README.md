@@ -10,7 +10,7 @@ This is an [Agent Skill](https://skills.sh/docs) for AI coding assistants. Once 
 
 ### Required
 
-- `OPENSEA_API_KEY` environment variable — for CLI, SDK, and REST API scripts
+- `OPENSEA_API_KEY` environment variable — for CLI, SDK, REST API scripts, and MCP server
 - Node.js >= 18.0.0 — for `@opensea/cli`
 - `curl` — for REST shell scripts
 - `jq` (recommended) — for parsing JSON responses
@@ -94,7 +94,7 @@ An official MCP server provides direct LLM integration for token swaps and NFT o
     "opensea": {
       "url": "https://mcp.opensea.io/mcp",
       "headers": {
-        "Authorization": "Bearer YOUR_OPENSEA_API_KEY"
+        "X-API-KEY": "OPENSEA_API_KEY"
       }
     }
   }

@@ -440,7 +440,7 @@ An official OpenSea MCP server provides direct LLM integration for token swaps a
 **Setup:**
 
 1. Go to the [OpenSea Developer Portal](https://opensea.io/settings/developer) and verify your email
-2. Generate an API key — it works for both the REST API and the MCP server
+2. Generate an API key — the same key works for both the REST API and MCP server
 
 Add to your MCP config:
 ```json
@@ -449,14 +449,14 @@ Add to your MCP config:
     "opensea": {
       "url": "https://mcp.opensea.io/mcp",
       "headers": {
-        "Authorization": "Bearer <YOUR_OPENSEA_API_KEY>"
+        "X-API-KEY": "<OPENSEA_API_KEY>"
       }
     }
   }
 }
 ```
 
-> **Note:** Replace `<YOUR_OPENSEA_API_KEY>` above with your API key from the [OpenSea Developer Portal](https://opensea.io/settings/developer). The same API key works for both the REST API and the MCP server. Do not embed keys directly in URLs or commit them to version control.
+> **Note:** Replace `<OPENSEA_API_KEY>` above with the API key from your [OpenSea Developer Portal](https://opensea.io/settings/developer). Do not embed keys directly in URLs or commit them to version control.
 
 ### Token Swap Tools
 | MCP Tool | Purpose |
