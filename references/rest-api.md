@@ -4,6 +4,7 @@
 
 ```
 Base URL: https://api.opensea.io
+OpenAPI spec: https://api.opensea.io/api/v2/openapi.json
 Auth header: x-api-key: $OPENSEA_API_KEY
 ```
 
