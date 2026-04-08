@@ -79,15 +79,13 @@ mcporter call opensea.get_token_swap_quote --args '{
 
 ```javascript
 import { createPublicClient, createWalletClient, http } from 'viem';
-import { privateKeyToAccount } from 'viem/accounts';
 import { base } from 'viem/chains';
 
 // Get quote first (via mcporter or direct API call)
 const quote = await getSwapQuote(...);
 const txData = quote.swap.actions[0].transactionSubmissionData;
 
-// Setup wallet
-const account = privateKeyToAccount(PRIVATE_KEY);
+// Use your own signer (Privy, Fireblocks, local key, etc.)
 const wallet = createWalletClient({ account, chain: base, transport: http() });
 const pub = createPublicClient({ chain: base, transport: http() });
 

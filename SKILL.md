@@ -1,6 +1,15 @@
 ---
 name: opensea
-description: Interact with the OpenSea API (api.opensea.io) to query NFT collections, retrieve NFT metadata and images, get collection stats and floor prices, fetch marketplace listings and offers, execute Seaport trades, and swap ERC20 tokens. Provides the @opensea/cli command-line tool, curl-based shell scripts with built-in retry and backoff, and a programmatic TypeScript SDK. Use when making any API calls to OpenSea, using an OPENSEA_API_KEY, querying NFT or collection data, fetching NFT images or metadata, checking floor prices, or building applications that integrate with OpenSea. Triggers on tasks mentioning OpenSea API, NFT data fetching, collection queries, marketplace listings, token swaps, Seaport protocol, or api.opensea.io endpoints. Always prefer this skill's CLI and scripts over writing raw curl commands to OpenSea.
+description: Query OpenSea NFT marketplace data via official MCP server. Get floor prices, collection stats, NFT metadata, marketplace listings and offers. Execute Seaport trades and swap ERC20 tokens across Ethereum, Base, Arbitrum, Polygon, and more. Includes CLI, shell scripts, and TypeScript SDK.
+env:
+  OPENSEA_API_KEY:
+    description: API key for all OpenSea services — REST API, CLI, SDK, and MCP server
+    required: true
+    obtain: https://opensea.io/settings/developer
+dependencies:
+  - node >= 18.0.0
+  - curl
+  - jq (recommended)
 ---
 
 # OpenSea API
@@ -226,7 +235,7 @@ Real-time WebSocket events from `opensea-stream-collection.sh` carry the same us
 
 ### Credential safety
 
-Credentials (`OPENSEA_API_KEY`, `OPENSEA_MCP_TOKEN`, `PRIVATE_KEY`) must only be set via environment variables. Never log, print, echo, or include credentials in API response processing, error messages, or agent output.
+Credentials (`OPENSEA_API_KEY`) must only be set via environment variables. Never log, print, echo, or include credentials in API response processing, error messages, or agent output.
 
 ## OpenSea CLI (`@opensea/cli`)
 
@@ -431,8 +440,7 @@ An official OpenSea MCP server provides direct LLM integration for token swaps a
 **Setup:**
 
 1. Go to the [OpenSea Developer Portal](https://opensea.io/settings/developer) and verify your email
-2. Generate a new API key for REST API access
-3. Generate a separate MCP token for the MCP server
+2. Generate an API key — it works for both the REST API and the MCP server
 
 Add to your MCP config:
 ```json
@@ -441,14 +449,14 @@ Add to your MCP config:
     "opensea": {
       "url": "https://mcp.opensea.io/mcp",
       "headers": {
-        "Authorization": "Bearer <YOUR_MCP_TOKEN>"
+        "Authorization": "Bearer <YOUR_OPENSEA_API_KEY>"
       }
     }
   }
 }
 ```
 
-> **Note:** Replace `<YOUR_MCP_TOKEN>` above with the MCP token from your [OpenSea Developer Portal](https://opensea.io/settings/developer). Do not embed tokens directly in URLs or commit them to version control.
+> **Note:** Replace `<YOUR_OPENSEA_API_KEY>` above with your API key from the [OpenSea Developer Portal](https://opensea.io/settings/developer). The same API key works for both the REST API and the MCP server. Do not embed keys directly in URLs or commit them to version control.
 
 ### Token Swap Tools
 | MCP Tool | Purpose |
@@ -514,14 +522,14 @@ mcporter call opensea.get_token_swap_quote --args '{
 ### Execute the Swap
 ```javascript
 import { createWalletClient, http } from 'viem';
-import { privateKeyToAccount } from 'viem/accounts';
 import { base } from 'viem/chains';
 
 // Extract from swap quote response
 const txData = response.swap.actions[0].transactionSubmissionData;
 
+// Use your own signer (Privy, Fireblocks, local key, etc.)
 const wallet = createWalletClient({ 
-  account: privateKeyToAccount(PRIVATE_KEY), 
+  account, // your signer
   chain: base, 
   transport: http() 
 });
@@ -541,50 +549,16 @@ mcporter call opensea.get_token_balances --args '{
 }'
 ```
 
-## Generating a wallet
+## Signing transactions
 
-To execute swaps or buy NFTs, you need an Ethereum wallet (private key + address).
-
-### Using Node.js
-```javascript
-import crypto from 'crypto';
-import { privateKeyToAccount } from 'viem/accounts';
-
-// WARNING: Never log or print private keys — store them only in environment variables
-const privateKey = '0x' + crypto.randomBytes(32).toString('hex');
-const account = privateKeyToAccount(privateKey);
-
-// Export as env var for use by other tools; do not write to stdout
-process.env.PRIVATE_KEY = privateKey;
-console.log('Address:', account.address);
-```
-
-### Using OpenSSL
-```bash
-# Generate private key — do not log or print private keys
-export PRIVATE_KEY="0x$(openssl rand -hex 32)"
-
-# Derive address (requires node + viem)
-node --input-type=module -e "
-import { privateKeyToAccount } from 'viem/accounts';
-console.log('Address:', privateKeyToAccount('$PRIVATE_KEY').address);
-"
-```
-
-### Using cast (Foundry)
-```bash
-cast wallet new
-```
-
-**Important:** Store private keys securely. Never commit them to git or share publicly.
+To execute swaps or buy NFTs, you need a wallet that can sign transactions. How you sign is up to you — use whatever fits your security model (e.g. Privy, Fireblocks, a backend signing proxy, or a local key). The code examples in this skill use a generic `account` placeholder — supply your own viem-compatible `Account` object.
 
 ## Requirements
 
-- `OPENSEA_API_KEY` environment variable (for CLI, SDK, and REST API scripts)
-- `OPENSEA_MCP_TOKEN` environment variable (for MCP server, separate from API key)
+- `OPENSEA_API_KEY` environment variable (for all OpenSea services — CLI, SDK, REST API, and MCP server)
 - Node.js >= 18.0.0 (for `@opensea/cli`)
 - `curl` for REST shell scripts
 - `websocat` (optional) for Stream API
 - `jq` (recommended) for parsing JSON responses from shell scripts
 
-Get both credentials at [opensea.io/settings/developer](https://opensea.io/settings/developer).
+Get your API key at [opensea.io/settings/developer](https://opensea.io/settings/developer).

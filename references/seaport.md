@@ -70,10 +70,9 @@ curl -X POST "https://api.opensea.io/api/v2/listings/fulfillment_data" \
 
 ```javascript
 import { createPublicClient, createWalletClient, http } from 'viem';
-import { privateKeyToAccount } from 'viem/accounts';
 import { base } from 'viem/chains';
 
-const account = privateKeyToAccount(PRIVATE_KEY);
+// Use your own signer (Privy, Fireblocks, local key, etc.)
 const wallet = createWalletClient({ account, chain: base, transport: http() });
 const pub = createPublicClient({ chain: base, transport: http() });
 
@@ -95,7 +94,6 @@ console.log(receipt.status === 'success' ? '✅ NFT purchased!' : '❌ Failed');
 ```javascript
 // buy-nft.mjs - Buy an NFT via OpenSea fulfillment API
 import { createPublicClient, createWalletClient, http, encodeFunctionData } from 'viem';
-import { privateKeyToAccount } from 'viem/accounts';
 import { base } from 'viem/chains';
 
 const SEAPORT_ABI = [{
@@ -132,7 +130,7 @@ const SEAPORT_ABI = [{
   outputs: [{ name: 'fulfilled', type: 'bool' }]
 }];
 
-async function buyNFT(orderHash, chain, buyerAddress, privateKey) {
+async function buyNFT(orderHash, chain, buyerAddress, account) {
   // 1. Get fulfillment data
   const res = await fetch('https://api.opensea.io/api/v2/listings/fulfillment_data', {
     method: 'POST',
@@ -150,8 +148,7 @@ async function buyNFT(orderHash, chain, buyerAddress, privateKey) {
   const tx = fulfillment_data.transaction;
   const params = tx.input_data.parameters;
   
-  // 2. Setup wallet
-  const account = privateKeyToAccount(privateKey);
+  // 2. Setup wallet (account is your signer — Privy, Fireblocks, local key, etc.)
   const wallet = createWalletClient({ account, chain: base, transport: http() });
   const pub = createPublicClient({ chain: base, transport: http() });
   
