@@ -3,7 +3,7 @@ set -euo pipefail
 
 if [ "$#" -ne 5 ]; then
   echo "Usage: opensea-fulfill-offer.sh <chain> <order_hash> <fulfiller_address> <contract_address> <token_id>" >&2
-  echo "Returns transaction data to execute on-chain to accept an offer (sell NFT)" >&2
+  echo "Returns transaction data to execute onchain to accept an offer (sell NFT)" >&2
   echo "Example: opensea-fulfill-offer.sh ethereum 0x1234... 0xYourWallet 0xContract 5678" >&2
   exit 1
 fi

@@ -3,7 +3,7 @@ set -euo pipefail
 
 if [ "$#" -ne 3 ]; then
   echo "Usage: opensea-fulfill-listing.sh <chain> <order_hash> <fulfiller_address>" >&2
-  echo "Returns transaction data to execute on-chain to buy the NFT" >&2
+  echo "Returns transaction data to execute onchain to buy the NFT" >&2
   echo "Example: opensea-fulfill-listing.sh ethereum 0x1234... 0xYourWallet" >&2
   exit 1
 fi

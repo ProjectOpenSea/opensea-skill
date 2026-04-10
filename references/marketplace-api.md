@@ -256,7 +256,7 @@ POST /api/v2/listings/fulfillment_data
 }
 ```
 
-**Response:** Returns transaction data for the buyer to submit on-chain.
+**Response:** Returns transaction data for the buyer to submit onchain.
 
 ### Fulfill an Offer (Sell NFT)
 
@@ -292,7 +292,7 @@ Cancel an active listing or offer.
 POST /api/v2/orders/chain/{chain}/protocol/{protocol_address}/hash/{order_hash}/cancel
 ```
 
-**Note:** Cancellation requires an on-chain transaction. The API returns the transaction data to execute.
+**Note:** Cancellation requires an onchain transaction. The API returns the transaction data to execute.
 
 ---
 

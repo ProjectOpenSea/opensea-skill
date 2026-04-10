@@ -6,7 +6,7 @@ OpenSea MCP provides token swap functionality through integrated DEX aggregation
 
 The `get_token_swap_quote` tool returns:
 1. **Quote details** - Expected output, fees, price impact
-2. **Transaction calldata** - Ready to submit on-chain
+2. **Transaction calldata** - Ready to submit onchain
 
 ## Supported Chains
 
@@ -75,41 +75,50 @@ mcporter call opensea.get_token_swap_quote --args '{
 
 ## Executing the Swap
 
-### Using viem (JavaScript)
+### Using the CLI (recommended)
 
-```javascript
-import { createPublicClient, createWalletClient, http } from 'viem';
-import { base } from 'viem/chains';
+The `opensea swaps execute` command quotes and executes in one step, signing via a Privy-managed wallet:
 
-// Get quote first (via mcporter or direct API call)
-const quote = await getSwapQuote(...);
-const txData = quote.swap.actions[0].transactionSubmissionData;
+```bash
+opensea swaps execute \
+  --from-chain base \
+  --from-address 0x0000000000000000000000000000000000000000 \
+  --to-chain base \
+  --to-address 0xb695559b26bb2c9703ef1935c37aeae9526bab07 \
+  --quantity 0.02
+```
 
-// Use your own signer (Privy, Fireblocks, local key, etc.)
-const wallet = createWalletClient({ account, chain: base, transport: http() });
-const pub = createPublicClient({ chain: base, transport: http() });
+Requires `PRIVY_APP_ID`, `PRIVY_APP_SECRET`, and `PRIVY_WALLET_ID` environment variables.
+See `references/wallet-setup.md` for Privy configuration.
 
-// Execute swap
-const hash = await wallet.sendTransaction({
-  to: txData.to,
-  data: txData.data,
-  value: BigInt(txData.value)
-});
+### Using the SDK (TypeScript)
 
-console.log(`TX: https://basescan.org/tx/${hash}`);
+```typescript
+import { OpenSeaCLI, PrivyAdapter } from '@opensea/cli';
 
-// Wait for confirmation
-const receipt = await pub.waitForTransactionReceipt({ hash });
-console.log(receipt.status === 'success' ? '✅ Swap complete!' : '❌ Failed');
+const sdk = new OpenSeaCLI({ apiKey: process.env.OPENSEA_API_KEY });
+const wallet = PrivyAdapter.fromEnv();
+
+const results = await sdk.swaps.execute({
+  fromChain: 'base',
+  fromAddress: '0x0000000000000000000000000000000000000000',
+  toChain: 'base',
+  toAddress: '0xb695559b26bb2c9703ef1935c37aeae9526bab07',
+  quantity: '0.02',
+}, wallet);
+
+for (const tx of results) {
+  console.log(`TX: ${tx.hash}`);
+}
 ```
 
 ### Using the swap script
 
 ```bash
-./scripts/opensea-swap.sh <to_token_address> <amount_eth> <your_wallet> <private_key>
+./scripts/opensea-swap.sh <to_token_address> <amount> [chain] [from_token]
 
-# Example: Swap 0.02 ETH to MOLT
-./scripts/opensea-swap.sh 0xb695559b26bb2c9703ef1935c37aeae9526bab07 0.02 0xYourWallet 0xYourPrivateKey
+# Example: Swap 0.02 ETH to MOLT on Base
+./scripts/opensea-swap.sh 0xb695559b26bb2c9703ef1935c37aeae9526bab07 0.02 base
 ```
 
 ## Finding Tokens

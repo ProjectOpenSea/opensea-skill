@@ -38,6 +38,8 @@ List endpoints support cursor-based pagination:
 | `/api/v2/collections/{slug}` | GET | Single collection details |
 | `/api/v2/collections/{slug}/stats` | GET | Collection statistics (floor, volume) |
 | `/api/v2/collections` | GET | List multiple collections |
+| `/api/v2/collections/trending` | GET | Trending collections by sales activity |
+| `/api/v2/collections/top` | GET | Top collections by volume/sales/floor |
 
 ### NFTs
 
@@ -84,11 +86,20 @@ List endpoints support cursor-based pagination:
 | `/api/v2/events/chain/{chain}/contract/{contract}/nfts/{token_id}` | GET | Events by NFT |
 | `/api/v2/events/chain/{chain}/account/{address}` | GET | Events by account |
 
+### Drops
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/v2/drops` | GET | List drops (featured, upcoming, recently_minted) |
+| `/api/v2/drops/{slug}` | GET | Detailed drop info with stages and supply |
+| `/api/v2/drops/{slug}/mint` | POST | Build mint transaction data |
+
 ### Accounts
 
 | Endpoint | Method | Description |
 |----------|--------|-------------|
 | `/api/v2/accounts/{address}` | GET | Account profile |
+| `/api/v2/accounts/resolve/{identifier}` | GET | Resolve ENS name, username, or address |
 
 ## Event Types
 

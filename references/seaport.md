@@ -68,26 +68,26 @@ curl -X POST "https://api.opensea.io/api/v2/listings/fulfillment_data" \
 
 ### Step 3: Submit Transaction
 
-```javascript
-import { createPublicClient, createWalletClient, http } from 'viem';
-import { base } from 'viem/chains';
+Use the Privy wallet adapter from `@opensea/cli` to sign and send:
 
-// Use your own signer (Privy, Fireblocks, local key, etc.)
-const wallet = createWalletClient({ account, chain: base, transport: http() });
-const pub = createPublicClient({ chain: base, transport: http() });
+```typescript
+import { PrivyAdapter, resolveChainId } from '@opensea/cli';
 
-// From fulfillment response
+const wallet = PrivyAdapter.fromEnv();
 const txData = response.fulfillment_data.transaction;
 
-const hash = await wallet.sendTransaction({
+const result = await wallet.sendTransaction({
   to: txData.to,
   data: txData.input_data.parameters ? encodeSeaportCall(txData.input_data) : txData.data,
-  value: BigInt(txData.value)
+  value: txData.value,
+  chainId: resolveChainId('base'),
 });
 
-const receipt = await pub.waitForTransactionReceipt({ hash });
-console.log(receipt.status === 'success' ? '✅ NFT purchased!' : '❌ Failed');
+console.log(`TX: ${result.hash}`);
 ```
+
+Requires `PRIVY_APP_ID`, `PRIVY_APP_SECRET`, and `PRIVY_WALLET_ID` environment variables.
+See `references/wallet-setup.md` for Privy configuration.
 
 ### Complete Working Example
 
@@ -148,9 +148,9 @@ async function buyNFT(orderHash, chain, buyerAddress, account) {
   const tx = fulfillment_data.transaction;
   const params = tx.input_data.parameters;
   
-  // 2. Setup wallet (account is your signer — Privy, Fireblocks, local key, etc.)
-  const wallet = createWalletClient({ account, chain: base, transport: http() });
-  const pub = createPublicClient({ chain: base, transport: http() });
+  // 2. Setup wallet via Privy adapter
+  const { PrivyAdapter, resolveChainId } = await import('@opensea/cli');
+  const wallet = PrivyAdapter.fromEnv();
   
   // 3. Encode and send
   const orderParams = {
@@ -175,15 +175,15 @@ async function buyNFT(orderHash, chain, buyerAddress, account) {
     args: [orderParams]
   });
   
-  const hash = await wallet.sendTransaction({
+  const result = await wallet.sendTransaction({
     to: tx.to,
     data,
-    value: BigInt(tx.value)
+    value: tx.value,
+    chainId: resolveChainId('base'),
   });
   
-  console.log(`TX: https://basescan.org/tx/${hash}`);
-  const receipt = await pub.waitForTransactionReceipt({ hash });
-  return receipt.status === 'success';
+  console.log(`TX: https://basescan.org/tx/${result.hash}`);
+  return true;
 }
 ```
 

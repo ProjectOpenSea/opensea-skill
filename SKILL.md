@@ -6,6 +6,17 @@ env:
     description: API key for all OpenSea services — REST API, CLI, SDK, and MCP server
     required: true
     obtain: https://opensea.io/settings/developer
+  PRIVY_APP_ID:
+    description: Privy application ID for wallet signing (default provider)
+    required: false
+    obtain: https://dashboard.privy.io
+  PRIVY_APP_SECRET:
+    description: Privy application secret for wallet signing
+    required: false
+    obtain: https://dashboard.privy.io
+  PRIVY_WALLET_ID:
+    description: Privy wallet ID to sign transactions with
+    required: false
 dependencies:
   - node >= 18.0.0
   - curl
@@ -76,6 +87,8 @@ OpenSea's API includes a cross-chain DEX aggregator for swapping ERC20 tokens wi
 |------|------------|-------------|
 | Get collection details | `opensea collections get <slug>` | `opensea-collection.sh <slug>` |
 | Get collection stats | `opensea collections stats <slug>` | `opensea-collection-stats.sh <slug>` |
+| Get trending collections | `opensea collections trending [--timeframe <tf>] [--chains <chains>]` | `opensea-collections-trending.sh [timeframe] [limit] [chains] [category]` |
+| Get top collections | `opensea collections top [--sort-by <field>] [--chains <chains>]` | `opensea-collections-top.sh [sort_by] [limit] [chains] [category]` |
 | List NFTs in collection | `opensea nfts list-by-collection <slug> [--limit <n>]` | `opensea-collection-nfts.sh <slug> [limit] [next]` |
 | Get single NFT | `opensea nfts get <chain> <contract> <token_id>` | `opensea-nft.sh <chain> <contract> <token_id>` |
 | List NFTs by wallet | `opensea nfts list-by-account <chain> <address> [--limit <n>]` | `opensea-account-nfts.sh <chain> <address> [limit]` |
@@ -128,11 +141,22 @@ OpenSea's API includes a cross-chain DEX aggregator for swapping ERC20 tokens wi
 
 Event types: `sale`, `transfer`, `mint`, `listing`, `offer`, `trait_offer`, `collection_offer`
 
+### Drops & minting
+
+| Task | CLI Command | Alternative |
+|------|------------|-------------|
+| List drops (featured/upcoming/recent) | `opensea drops list [--type <type>] [--chains <chains>]` | `opensea-drops.sh [type] [limit] [chains]` |
+| Get drop details and stages | `opensea drops get <slug>` | `opensea-drop.sh <slug>` |
+| Build mint transaction | `opensea drops mint <slug> --minter <address> [--quantity <n>]` | `opensea-drop-mint.sh <slug> <minter> [quantity]` |
+| Deploy a new SeaDrop contract | — | `deploy_seadrop_contract` (MCP) |
+| Check deployment status | — | `get_deploy_receipt` (MCP) |
+
 ### Accounts
 
-| Task | CLI Command |
-|------|------------|
-| Get account details | `opensea accounts get <address>` |
+| Task | CLI Command | Alternative |
+|------|------------|-------------|
+| Get account details | `opensea accounts get <address>` | — |
+| Resolve ENS/username/address | `opensea accounts resolve <identifier>` | `opensea-resolve-account.sh <identifier>` |
 
 ### Generic requests
 
@@ -155,7 +179,7 @@ Event types: `sale`, `transfer`, `mint`, `listing`, `offer`, `trait_offer`, `col
    ./scripts/opensea-fulfill-listing.sh ethereum 0x_order_hash 0x_your_wallet
    ```
 
-3. The response contains transaction data to execute on-chain
+3. The response contains transaction data to execute onchain
 
 ### Selling an NFT (accepting an offer)
 
@@ -390,8 +414,11 @@ The `scripts/` directory contains shell scripts that wrap the OpenSea REST API d
 | `opensea-collection.sh` | Fetch collection by slug |
 | `opensea-collection-stats.sh` | Fetch collection statistics |
 | `opensea-collection-nfts.sh` | List NFTs in collection |
+| `opensea-collections-trending.sh` | Trending collections by sales activity |
+| `opensea-collections-top.sh` | Top collections by volume/sales/floor |
 | `opensea-nft.sh` | Fetch single NFT by chain/contract/token |
 | `opensea-account-nfts.sh` | List NFTs owned by wallet |
+| `opensea-resolve-account.sh` | Resolve ENS/username/address to account info |
 
 ### Marketplace Scripts
 | Script | Purpose |
@@ -405,6 +432,13 @@ The `scripts/` directory contains shell scripts that wrap the OpenSea REST API d
 | `opensea-order.sh` | Get order by hash |
 | `opensea-fulfill-listing.sh` | Get buy transaction data |
 | `opensea-fulfill-offer.sh` | Get sell transaction data |
+
+### Drop Scripts
+| Script | Purpose |
+|--------|---------|
+| `opensea-drops.sh` | List drops (featured, upcoming, recently minted) |
+| `opensea-drop.sh` | Get detailed drop info by slug |
+| `opensea-drop-mint.sh` | Build mint transaction for a drop |
 
 ### Token Swap Scripts
 | Script | Purpose |
@@ -435,7 +469,7 @@ The `scripts/` directory contains shell scripts that wrap the OpenSea REST API d
 
 ## OpenSea MCP Server
 
-An official OpenSea MCP server provides direct LLM integration for token swaps and NFT operations. When enabled, Claude can execute swaps, query token data, and interact with NFT marketplaces directly.
+The [OpenSea MCP server](https://mcp.opensea.io) provides direct LLM integration for NFT operations, token swaps, drops/mints, and marketplace data. It runs on Cloudflare Workers and supports both SSE and streamable HTTP transports.
 
 **Setup:**
 
@@ -473,13 +507,21 @@ Add to your MCP config:
 |----------|---------|
 | `search_collections` | Search NFT collections |
 | `search_items` | Search individual NFTs |
-| `get_collections` | Get detailed collection info |
-| `get_items` | Get detailed NFT info |
+| `get_collections` | Get detailed collection info (supports auto-resolve) |
+| `get_items` | Get detailed NFT info (supports auto-resolve) |
 | `get_nft_balances` | List NFTs owned by wallet |
 | `get_trending_collections` | Trending NFT collections |
 | `get_top_collections` | Top collections by volume |
 | `get_activity` | Trading activity for collections/items |
-| `get_upcoming_drops` | Upcoming NFT mints |
+
+### Drop & Mint Tools
+| MCP Tool | Purpose |
+|----------|---------|
+| `get_upcoming_drops` | Browse upcoming NFT mints in chronological order |
+| `get_drop_details` | Get stages, pricing, supply, and eligibility for a drop |
+| `get_mint_action` | Get transaction data to mint NFTs from a drop |
+| `deploy_seadrop_contract` | Get transaction data to deploy a new SeaDrop NFT contract |
+| `get_deploy_receipt` | Check deployment status and get the new contract address |
 
 ### Profile & Utility Tools
 | MCP Tool | Purpose |
@@ -490,11 +532,112 @@ Add to your MCP config:
 | `search` | AI-powered natural language search |
 | `fetch` | Get full details by entity ID |
 
+### Auto-resolve for batch GET tools
+
+The following tools accept an optional free-text `query` parameter that auto-resolves to canonical identifiers when slugs/addresses are not provided:
+
+- **`get_collections`** — pass `query` instead of `slugs`; resolves via internal search
+- **`get_items`** — pass `query` (and optional `collectionSlug`) instead of explicit items
+- **`get_tokens`** — pass `query` (and optional `chain`) instead of explicit tokens list
+
+Each accepts a `disambiguation` parameter (`'first_verified'` | `'first'` | `'error'`, default `'first_verified'`) to control behavior when multiple candidates match.
+
+Decision rule: use `get_*` with `query` when the goal is a single canonical entity; use `search_*` when browsing, comparing, or returning multiple candidates.
+
+### MCP tool parameter reference
+
+#### `get_token_swap_quote`
+
+| Parameter | Required | Description |
+|-----------|----------|-------------|
+| `fromContractAddress` | Yes | Token to swap from (use `0x0000...0000` for native ETH on EVM chains) |
+| `toContractAddress` | Yes | Token to swap to |
+| `fromChain` | Yes | Source chain identifier |
+| `toChain` | Yes | Destination chain identifier |
+| `fromQuantity` | Yes | Amount in human-readable units (e.g., `"0.02"` for 0.02 ETH — not wei) |
+| `address` | Yes | Wallet address executing the swap |
+| `recipient` | No | Recipient address (defaults to sender) |
+| `slippageTolerance` | No | Slippage as decimal (e.g., `0.005` for 0.5%) |
+
+Returns a swap quote with price info, fees, slippage impact, and ready-to-submit transaction calldata in `swap.actions[0].transactionSubmissionData`.
+
+#### `search_collections` / `search_items` / `search_tokens`
+
+| Parameter | Required | Description |
+|-----------|----------|-------------|
+| `query` | Yes | Search query string |
+| `limit` | No | Number of results (default: 10–20) |
+| `chains` | No | Filter by chain identifiers (e.g., `['ethereum', 'base']`) |
+| `collectionSlug` | No | Narrow item search to a specific collection (`search_items` only) |
+| `page` | No | Page number for pagination (`search_items` only) |
+
+#### `get_drop_details`
+
+| Parameter | Required | Description |
+|-----------|----------|-------------|
+| `collectionSlug` | Yes | Collection slug to get drop details for |
+| `minter` | No | Wallet address to check eligibility for specific stages |
+
+Returns drop stages, pricing, supply, minting status, and per-wallet eligibility.
+
+#### `get_mint_action`
+
+| Parameter | Required | Description |
+|-----------|----------|-------------|
+| `collectionSlug` | Yes | Collection slug of the drop |
+| `chain` | Yes | Blockchain of the drop (e.g., `'ethereum'`, `'base'`) |
+| `contractAddress` | Yes | Contract address of the drop |
+| `quantity` | Yes | Number of NFTs to mint |
+| `minterAddress` | Yes | Wallet address that will mint and receive the NFTs |
+| `tokenId` | No | Token ID for ERC1155 mints |
+
+Returns transaction data (`to`, `data`, `value`) that must be signed and submitted.
+
+#### `deploy_seadrop_contract`
+
+| Parameter | Required | Description |
+|-----------|----------|-------------|
+| `chain` | Yes | Blockchain to deploy on |
+| `contractName` | Yes | Name of the NFT collection |
+| `contractSymbol` | Yes | Symbol (e.g., `'MYNFT'`) |
+| `dropType` | Yes | `SEADROP_V1_ERC721` or `SEADROP_V2_ERC1155_SELF_MINT` |
+| `tokenType` | Yes | `ERC721_STANDARD`, `ERC721_CLONE`, or `ERC1155_CLONE` |
+| `sender` | Yes | Wallet address sending the deploy transaction |
+
+After submitting the returned transaction, use `get_deploy_receipt` to check status.
+
+#### `get_deploy_receipt`
+
+| Parameter | Required | Description |
+|-----------|----------|-------------|
+| `chain` | Yes | Blockchain where the contract was deployed |
+| `transactionHash` | Yes | Transaction hash of the deployment (`0x` + 64 hex chars) |
+
+Returns deployment status, contract address, and collection information once the transaction is confirmed.
+
+#### `get_upcoming_drops`
+
+| Parameter | Required | Description |
+|-----------|----------|-------------|
+| `limit` | No | Number of results (default: 20, max: 100) |
+| `after` | No | Pagination cursor from previous response's `nextPageCursor` field |
+
+Returns upcoming drops in chronological order starting from the current date.
+
+#### `account_lookup`
+
+| Parameter | Required | Description |
+|-----------|----------|-------------|
+| `query` | Yes | ENS name, wallet address, or username |
+| `limit` | No | Number of results (default: 10) |
+
+Resolves ENS names to addresses, finds usernames for addresses, or searches accounts.
+
 ---
 
 ## Token Swaps via MCP
 
-OpenSea MCP supports ERC20 token swaps across supported DEXes - not just NFTs!
+OpenSea MCP supports ERC20 token swaps across supported DEXes — not just NFTs!
 
 ### Get Swap Quote
 ```bash
@@ -508,38 +651,31 @@ mcporter call opensea.get_token_swap_quote --args '{
 }'
 ```
 
-**Parameters:**
-- `fromContractAddress`: Token to swap from (use `0x0000...0000` for native ETH)
-- `toContractAddress`: Token to swap to
-- `fromChain` / `toChain`: Chain identifiers
-- `fromQuantity`: Amount in human-readable units (e.g., "0.02" for 0.02 ETH)
-- `address`: Your wallet address
-
 **Response includes:**
 - `swapQuote`: Price info, fees, slippage impact
 - `swap.actions[0].transactionSubmissionData`: Ready-to-use calldata
 
 ### Execute the Swap
-```javascript
-import { createWalletClient, http } from 'viem';
-import { base } from 'viem/chains';
 
-// Extract from swap quote response
-const txData = response.swap.actions[0].transactionSubmissionData;
+Use the CLI to quote and execute in one step (signs via Privy):
 
-// Use your own signer (Privy, Fireblocks, local key, etc.)
-const wallet = createWalletClient({ 
-  account, // your signer
-  chain: base, 
-  transport: http() 
-});
-
-const hash = await wallet.sendTransaction({
-  to: txData.to,
-  data: txData.data,
-  value: BigInt(txData.value)
-});
+```bash
+opensea swaps execute \
+  --from-chain base \
+  --from-address 0x0000000000000000000000000000000000000000 \
+  --to-chain base \
+  --to-address 0xb695559b26bb2c9703ef1935c37aeae9526bab07 \
+  --quantity 0.02
 ```
+
+Or use the shell script wrapper:
+
+```bash
+./scripts/opensea-swap.sh 0xb695559b26bb2c9703ef1935c37aeae9526bab07 0.02 base
+```
+
+By default uses Privy (`PRIVY_APP_ID`, `PRIVY_APP_SECRET`, `PRIVY_WALLET_ID`). Also supports Turnkey, Fireblocks, and raw private key — pass `--wallet-provider turnkey`, `--wallet-provider fireblocks`, or `--wallet-provider private-key`.
+See `references/wallet-setup.md` for configuration.
 
 ### Check Token Balances
 ```bash
@@ -549,16 +685,83 @@ mcporter call opensea.get_token_balances --args '{
 }'
 ```
 
+---
+
+## NFT Drops & Minting via MCP
+
+The MCP server supports browsing upcoming drops, checking eligibility, minting NFTs, and deploying new SeaDrop contracts.
+
+### Browse upcoming drops
+```bash
+mcporter call opensea.get_upcoming_drops --args '{"limit": 10}'
+```
+
+### Check drop details and eligibility
+```bash
+mcporter call opensea.get_drop_details --args '{
+  "collectionSlug": "my-collection",
+  "minter": "0xYourWallet"
+}'
+```
+
+### Mint from a drop
+```bash
+mcporter call opensea.get_mint_action --args '{
+  "collectionSlug": "my-collection",
+  "chain": "base",
+  "contractAddress": "0xContractAddress",
+  "quantity": 1,
+  "minterAddress": "0xYourWallet"
+}'
+```
+
+The response contains transaction data (`to`, `data`, `value`) — sign and submit with your wallet.
+
+### Deploy a new SeaDrop contract
+```bash
+mcporter call opensea.deploy_seadrop_contract --args '{
+  "chain": "base",
+  "contractName": "My Collection",
+  "contractSymbol": "MYCOL",
+  "dropType": "SEADROP_V1_ERC721",
+  "tokenType": "ERC721_CLONE",
+  "sender": "0xYourWallet"
+}'
+```
+
+After submitting the transaction, check deployment status:
+```bash
+mcporter call opensea.get_deploy_receipt --args '{
+  "chain": "base",
+  "transactionHash": "0xYourTxHash"
+}'
+```
+
 ## Signing transactions
 
-To execute swaps or buy NFTs, you need a wallet that can sign transactions. How you sign is up to you — use whatever fits your security model (e.g. Privy, Fireblocks, a backend signing proxy, or a local key). The code examples in this skill use a generic `account` placeholder — supply your own viem-compatible `Account` object.
+All transaction signing uses managed wallet providers through the `WalletAdapter` interface. The CLI auto-detects which provider to use based on environment variables, or you can specify one explicitly with `--wallet-provider`.
+
+Supported providers:
+
+| Provider | Env Vars | Best For |
+|----------|----------|----------|
+| **Privy** (default) | `PRIVY_APP_ID`, `PRIVY_APP_SECRET`, `PRIVY_WALLET_ID` | TEE-enforced policies, embedded wallets |
+| **Turnkey** | `TURNKEY_API_PUBLIC_KEY`, `TURNKEY_API_PRIVATE_KEY`, `TURNKEY_ORGANIZATION_ID`, `TURNKEY_WALLET_ADDRESS` | HSM-backed keys, multi-party approval |
+| **Fireblocks** | `FIREBLOCKS_API_KEY`, `FIREBLOCKS_API_SECRET`, `FIREBLOCKS_VAULT_ID` | Enterprise MPC custody, institutional use |
+| **Private Key** (not recommended) | `PRIVATE_KEY`, `RPC_URL`, `WALLET_ADDRESS` | Local dev/testing only — no spending limits or guardrails |
+
+The CLI and SDK handle signing automatically. Managed wallet providers (Privy, Turnkey, Fireblocks) are strongly recommended over raw private keys.
+
+See `references/wallet-setup.md` for setup instructions and `references/wallet-policies.md` for policy configuration.
 
 ## Requirements
 
 - `OPENSEA_API_KEY` environment variable (for all OpenSea services — CLI, SDK, REST API, and MCP server)
+- Wallet provider credentials (for transaction signing) — see the table in "Signing transactions" above
 - Node.js >= 18.0.0 (for `@opensea/cli`)
 - `curl` for REST shell scripts
 - `websocat` (optional) for Stream API
 - `jq` (recommended) for parsing JSON responses from shell scripts
 
 Get your API key at [opensea.io/settings/developer](https://opensea.io/settings/developer).
+See `references/wallet-setup.md` for wallet provider configuration.
