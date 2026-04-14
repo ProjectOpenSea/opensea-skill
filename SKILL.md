@@ -5,7 +5,7 @@ env:
   OPENSEA_API_KEY:
     description: API key for all OpenSea services — REST API, CLI, SDK, and MCP server
     required: true
-    obtain: curl -s -X POST https://api.opensea.io/api/v2/auth/keys | jq -r '.api_key'
+    obtain: https://docs.opensea.io/reference/api-keys#instant-api-key-for-agents
   PRIVY_APP_ID:
     description: Privy application ID for wallet signing (default provider)
     required: false
