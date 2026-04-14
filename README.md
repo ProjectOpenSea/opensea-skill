@@ -15,7 +15,12 @@ This is an [Agent Skill](https://skills.sh/docs) for AI coding assistants. Once 
 - `curl` — for REST shell scripts
 - `jq` (recommended) — for parsing JSON responses
 
-Get your API key at [opensea.io/settings/developer](https://opensea.io/settings/developer). The same key works for the REST API, CLI, and MCP server.
+Get an API key instantly (no signup needed):
+```bash
+curl -s -X POST https://api.opensea.io/api/v2/auth/keys | jq -r '.api_key'
+```
+
+Or get a full key at [opensea.io/settings/developer](https://opensea.io/settings/developer) for higher rate limits. The same key works for the REST API, CLI, and MCP server.
 
 For write operations (swaps, Seaport fulfillment), you'll need a wallet that can sign transactions. Use whatever fits your security model — Privy, Fireblocks, a backend signing proxy, etc.
 
@@ -94,12 +99,14 @@ An official MCP server provides direct LLM integration for token swaps and NFT o
     "opensea": {
       "url": "https://mcp.opensea.io/mcp",
       "headers": {
-        "X-API-KEY": "OPENSEA_API_KEY"
+        "X-API-KEY": "YOUR_API_KEY"
       }
     }
   }
 }
 ```
+
+Get an instant API key with `curl -s -X POST https://api.opensea.io/api/v2/auth/keys | jq -r '.api_key'` or from [opensea.io/settings/developer](https://opensea.io/settings/developer).
 
 See [`SKILL.md`](SKILL.md) for the full list of available MCP tools.
 
@@ -130,4 +137,5 @@ This skill supports all chains available on OpenSea, including `ethereum`, `sola
 - [OpenSea CLI](https://github.com/ProjectOpenSea/opensea-cli) — CLI and SDK for OpenSea API
 - [OpenSea Developer Docs](https://docs.opensea.io/)
 - [OpenSea Developer Portal](https://opensea.io/settings/developer)
+- [Instant API Key](https://docs.opensea.io/reference/api-keys#instant-api-key-for-agents) — get a free-tier key with a single API call
 - [Agent Skills Directory](https://skills.sh/docs)

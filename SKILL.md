@@ -5,7 +5,7 @@ env:
   OPENSEA_API_KEY:
     description: API key for all OpenSea services — REST API, CLI, SDK, and MCP server
     required: true
-    obtain: https://opensea.io/settings/developer
+    obtain: curl -s -X POST https://api.opensea.io/api/v2/auth/keys | jq -r '.api_key'
   PRIVY_APP_ID:
     description: Privy application ID for wallet signing (default provider)
     required: false
@@ -29,12 +29,16 @@ Query NFT data, trade on the Seaport marketplace, and swap ERC20 tokens across E
 
 ## Quick start
 
-1. Set `OPENSEA_API_KEY` in your environment
+1. Get an API key — instantly via API (no signup needed) or from the [developer portal](https://opensea.io/settings/developer)
 2. **Preferred:** Use the `opensea` CLI (`@opensea/cli`) for all queries and operations
 3. Alternatively, use the shell scripts in `scripts/` or the MCP server
 
 ```bash
-export OPENSEA_API_KEY="your-api-key"
+# Get an instant free-tier API key (no signup needed)
+export OPENSEA_API_KEY=$(curl -s -X POST https://api.opensea.io/api/v2/auth/keys | jq -r '.api_key')
+
+# Or set an existing key
+# export OPENSEA_API_KEY="your-api-key"
 
 # Install the CLI globally (or use npx)
 npm install -g @opensea/cli
