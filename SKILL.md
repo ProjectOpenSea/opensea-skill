@@ -1,6 +1,6 @@
 ---
 name: opensea
-description: Query OpenSea NFT marketplace data via official MCP server. Get floor prices, collection stats, NFT metadata, marketplace listings and offers. Execute Seaport trades and swap ERC20 tokens across Ethereum, Base, Arbitrum, Polygon, and more. Includes CLI, shell scripts, and TypeScript SDK.
+description: Query OpenSea marketplace data via official MCP server. Get floor prices, collection stats, NFT and token data, marketplace listings and offers. Execute Seaport trades and swap ERC20 tokens across Ethereum, Base, Arbitrum, Polygon, and more. Includes CLI, shell scripts, and TypeScript SDK.
 env:
   OPENSEA_API_KEY:
     description: API key for all OpenSea services — REST API, CLI, SDK, and MCP server
@@ -25,7 +25,7 @@ dependencies:
 
 # OpenSea API
 
-Query NFT data, trade on the Seaport marketplace, and swap ERC20 tokens across Ethereum, Base, Arbitrum, Optimism, Polygon, and more.
+Query NFT and token data, trade on the Seaport marketplace, and swap ERC20 tokens across Ethereum, Base, Arbitrum, Optimism, Polygon, and more.
 
 ## Quick start
 

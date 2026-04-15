@@ -1,6 +1,6 @@
 # OpenSea Marketplace API
 
-This reference covers the marketplace endpoints for buying and selling NFTs on OpenSea.
+This reference covers the marketplace endpoints for buying and selling NFTs and tokens on OpenSea.
 
 ## Overview
 

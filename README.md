@@ -1,10 +1,10 @@
 # OpenSea Skill
 
-**Query NFT data, trade on the Seaport marketplace, and swap ERC20 tokens** across Ethereum, Base, Arbitrum, Optimism, Polygon, and more.
+**Query NFT and token data, trade on the Seaport marketplace, and swap ERC20 tokens** across Ethereum, Base, Arbitrum, Optimism, Polygon, and more.
 
 ## What is this?
 
-This is an [Agent Skill](https://skills.sh/docs) for AI coding assistants. Once installed, your agent can interact with the OpenSea API to query NFT data, execute marketplace operations, and swap ERC20 tokens using the [OpenSea CLI](https://github.com/ProjectOpenSea/opensea-cli), shell scripts, or the [MCP server](#opensea-mcp-server).
+This is an [Agent Skill](https://skills.sh/docs) for AI coding assistants. Once installed, your agent can interact with the OpenSea API to query NFT and token data, execute marketplace operations, and swap ERC20 tokens using the [OpenSea CLI](https://github.com/ProjectOpenSea/opensea-cli), shell scripts, or the [MCP server](#opensea-mcp-server).
 
 ## Prerequisites
 
