@@ -40,10 +40,9 @@ http_code=$(curl -sS --connect-timeout 10 --max-time 30 -X POST \
 }
 
 if [[ "$http_code" =~ ^2 ]]; then
-  echo "--- BEGIN OPENSEA API RESPONSE ---"
+  echo "--- BEGIN OPENSEA API RESPONSE ---" >&2
   cat "$tmp_body"
-  printf '\n'
-  echo "--- END OPENSEA API RESPONSE ---"
+  echo "--- END OPENSEA API RESPONSE ---" >&2
   exit 0
 fi
 
