@@ -47,6 +47,7 @@ for (( attempt=1; attempt<=max_attempts; attempt++ )); do
   if [[ "$http_code" =~ ^2 ]]; then
     echo "--- BEGIN OPENSEA API RESPONSE ---" >&2
     cat "$tmp_body"
+    printf '\n'
     echo "--- END OPENSEA API RESPONSE ---" >&2
     exit 0
   fi
