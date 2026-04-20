@@ -21,10 +21,12 @@ if [ -z "$key" ]; then
 fi
 
 url="wss://stream.openseabeta.com/socket/websocket?token=${key}"
+masked_url="wss://stream.openseabeta.com/socket/websocket?token=***"
 join="{\"topic\":\"collection:${slug}\",\"event\":\"phx_join\",\"payload\":{},\"ref\":1}"
 heartbeat="{\"topic\":\"phoenix\",\"event\":\"heartbeat\",\"payload\":{},\"ref\":0}"
 
 if command -v websocat >/dev/null 2>&1; then
+  echo "Connecting to Stream API (collection: ${slug})..." >&2
   {
     printf '%s\n' "$join"
     while sleep 30; do
@@ -35,9 +37,9 @@ if command -v websocat >/dev/null 2>&1; then
 fi
 
 if command -v wscat >/dev/null 2>&1; then
-  cat <<INFO
+  cat >&2 <<INFO
 wscat is installed, but it does not auto-send join/heartbeat.
-Run: wscat -c "$url"
+Run: wscat -c "$masked_url" (replace *** with your API key)
 Then send:
 $join
 And every ~30s:
