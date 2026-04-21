@@ -22,7 +22,11 @@ curl -s -X POST https://api.opensea.io/api/v2/auth/keys | jq -r '.api_key'
 
 Or get a full key at [opensea.io/settings/developer](https://opensea.io/settings/developer) for higher rate limits. The same key works for the REST API, CLI, and MCP server.
 
-For write operations (swaps, Seaport fulfillment), you'll need a wallet that can sign transactions. Use whatever fits your security model — Privy, Fireblocks, a backend signing proxy, etc.
+For write operations (swaps, Seaport fulfillment), you'll need a wallet that can sign transactions. Use a managed provider — Privy, Turnkey, Fireblocks, or a backend signing proxy — and configure conservative signing policies (value caps, allowlists). Raw private keys are supported for local dev only and must not be used in shared agent environments.
+
+## Provenance
+
+This skill is published by OpenSea. The canonical source is the public GitHub repo [`ProjectOpenSea/opensea-skill`](https://github.com/ProjectOpenSea/opensea-skill), mirrored from the internal [`opensea-devtools`](https://github.com/ProjectOpenSea/opensea-devtools) monorepo. Releases are tagged `v<version>` (e.g. `v2.2.1`) and visible on the [Releases page](https://github.com/ProjectOpenSea/opensea-skill/releases). Always install from the official repo above; do not install forks or rehosts unless you have audited them.
 
 ## Installing the Skill
 
