@@ -82,8 +82,11 @@ OpenSea's API includes a cross-chain DEX aggregator for swapping ERC20 tokens wi
 | Get trending tokens | `opensea tokens trending [--chains <chains>] [--limit <n>]` | `get_trending_tokens` (MCP) |
 | Get top tokens by volume | `opensea tokens top [--chains <chains>] [--limit <n>]` | `get_top_tokens` (MCP) |
 | Get token details | `opensea tokens get <chain> <address>` | `get_tokens` (MCP) |
+| List token groups | `opensea token-groups list [--limit <n>] [--next <cursor>]` | `opensea-token-groups.sh [limit] [cursor]` |
+| Get token group by slug | `opensea token-groups get <slug>` | `opensea-token-group.sh <slug>` |
 | Search tokens | `opensea search <query> --types token` | `search_tokens` (MCP) |
 | Check token balances | `get_token_balances` (MCP) | — |
+| Request instant API key | `opensea auth request-key` | `opensea-auth-request-key.sh` |
 
 ### Reading NFT data
 
@@ -448,6 +451,17 @@ The `scripts/` directory contains shell scripts that wrap the OpenSea REST API d
 | Script | Purpose |
 |--------|---------|
 | `opensea-swap.sh` | **Swap tokens via OpenSea MCP** |
+
+### Token Group Scripts
+| Script | Purpose |
+|--------|---------|
+| `opensea-token-groups.sh` | List token groups (equivalent currencies across chains) |
+| `opensea-token-group.sh` | Fetch a single token group by slug (e.g. `eth`) |
+
+### Auth Scripts
+| Script | Purpose |
+|--------|---------|
+| `opensea-auth-request-key.sh` | Request a free-tier API key without authentication (3/hour per IP) |
 
 ### Monitoring Scripts
 | Script | Purpose |

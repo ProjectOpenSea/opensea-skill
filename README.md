@@ -76,6 +76,9 @@ Ready-to-use scripts in [`scripts/`](scripts/) for common operations (alternativ
 | `opensea-swap.sh` | Swap tokens via OpenSea DEX aggregator |
 | `opensea-fulfill-listing.sh` | Get buy transaction data |
 | `opensea-fulfill-offer.sh` | Get sell transaction data |
+| `opensea-token-groups.sh` | List token groups (equivalent currencies across chains) |
+| `opensea-token-group.sh` | Fetch a single token group by slug |
+| `opensea-auth-request-key.sh` | Request a free-tier API key (no auth required) |
 
 See [`SKILL.md`](SKILL.md) for the full scripts reference and usage examples.
 
