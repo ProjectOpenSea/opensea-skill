@@ -134,12 +134,12 @@ scripts/opensea-get.sh "/api/v2/orders/ethereum/seaport/offers" "asset_contract_
 Retrieve details of a specific order.
 
 ```bash
-GET /api/v2/orders/chain/{chain}/protocol/{protocol_address}/hash/{order_hash}
+GET /api/v2/orders/chain/{chain}/protocol/{protocol_address}/{order_hash}
 ```
 
 **Example:**
 ```bash
-scripts/opensea-get.sh "/api/v2/orders/chain/ethereum/protocol/0x0000000000000068f116a894984e2db1123eb395/hash/0x..."
+scripts/opensea-get.sh "/api/v2/orders/chain/ethereum/protocol/0x0000000000000068f116a894984e2db1123eb395/0x..."
 ```
 
 ---
@@ -157,6 +157,7 @@ POST /api/v2/orders/{chain}/seaport/listings
 **Request body:**
 ```json
 {
+  "protocol_address": "0x0000000000000068f116a894984e2db1123eb395",
   "parameters": {
     "offerer": "0xYourWalletAddress",
     "offer": [{
@@ -179,13 +180,25 @@ POST /api/v2/orders/{chain}/seaport/listings
     "orderType": 0,
     "zone": "0x0000000000000000000000000000000000000000",
     "zoneHash": "0x0000000000000000000000000000000000000000000000000000000000000000",
-    "salt": "random_salt_value",
+    "salt": "24446860302761739304752683030156737591518664810215442929805094493721949474548",
     "conduitKey": "0x0000007b02230091a7ed01230072f7006a004d60a8d4e71d599b8104250f0000",
-    "totalOriginalConsiderationItems": 1
+    "totalOriginalConsiderationItems": 1,
+    "counter": "0"
   },
   "signature": "0xSignedOrderSignature"
 }
 ```
+
+**Required top-level fields:** `protocol_address`, `parameters`, `signature`.
+
+**Required `parameters` fields** (all must be present before signing): `offerer`, `zone`, `offer`, `consideration`, `startTime`, `endTime`, `orderType`, `zoneHash`, `salt`, `conduitKey`, `totalOriginalConsiderationItems`, `counter`.
+
+**Field notes:**
+- `counter` — Seaport nonce for the offerer. Fetch with `getCounter(address)` on the Seaport contract, or use `"0"` for accounts that have never canceled via `incrementCounter`. Order hashes and EIP-712 signatures are bound to this value.
+- `salt` — uint256 as a decimal string (e.g. from `toString(randomBigInt(256))`). A hex string works too as long as it parses as uint256.
+- `conduitKey` — `0x0000007b02230091a7ed01230072f7006a004d60a8d4e71d599b8104250f0000` is OpenSea's conduit. Use `0x0000…0000` to transfer directly without a conduit.
+- `zone` / `zoneHash` — use zero address / zero bytes32 unless you're integrating a custom zone. `zone` is part of the signed `OrderComponents` struct, so it must be present in `parameters` (even as the zero address) or signing will fail.
+- See `### Signing Orders (EIP-712)` below for building the signature.
 
 **Item Types:**
 - `0`: Native currency (ETH, MATIC, etc.)
@@ -198,7 +211,7 @@ POST /api/v2/orders/{chain}/seaport/listings
 curl -X POST "https://api.opensea.io/api/v2/orders/ethereum/seaport/listings" \
   -H "x-api-key: $OPENSEA_API_KEY" \
   -H "Content-Type: application/json" \
-  -d '{"parameters": {...}, "signature": "0x..."}'
+  -d '{"protocol_address": "0x0000000000000068f116a894984e2db1123eb395", "parameters": {...}, "signature": "0x..."}'
 ```
 
 ### Build an Offer
@@ -209,9 +222,10 @@ Creates an unsigned Seaport offer order.
 POST /api/v2/orders/{chain}/seaport/offers
 ```
 
-**Request body structure** (similar to listings, but offer contains payment and consideration contains NFT):
+**Request body structure** (same shape as listings — top-level `protocol_address`, `parameters`, `signature` — but `offer` contains payment and `consideration` contains the NFT):
 ```json
 {
+  "protocol_address": "0x0000000000000068f116a894984e2db1123eb395",
   "parameters": {
     "offerer": "0xBuyerWalletAddress",
     "offer": [{
@@ -228,11 +242,112 @@ POST /api/v2/orders/{chain}/seaport/offers
       "startAmount": "1",
       "endAmount": "1",
       "recipient": "0xBuyerWalletAddress"
-    }]
+    }],
+    "startTime": "1704067200",
+    "endTime": "1735689600",
+    "orderType": 0,
+    "zone": "0x0000000000000000000000000000000000000000",
+    "zoneHash": "0x0000000000000000000000000000000000000000000000000000000000000000",
+    "salt": "24446860302761739304752683030156737591518664810215442929805094493721949474548",
+    "conduitKey": "0x0000007b02230091a7ed01230072f7006a004d60a8d4e71d599b8104250f0000",
+    "totalOriginalConsiderationItems": 1,
+    "counter": "0"
   },
   "signature": "0x..."
 }
 ```
+
+Field requirements and notes are identical to **Build a Listing** — see above.
+
+### Signing Orders (EIP-712)
+
+Both listing and offer creation require an EIP-712 signature over the order parameters. The signer must be the `offerer`.
+
+**Before signing**, fetch the offerer's current Seaport counter:
+
+```bash
+# Returns the uint256 counter. Use "0" for any account that has never called incrementCounter.
+cast call 0x0000000000000068F116a894984e2DB1123eB395 \
+  "getCounter(address)(uint256)" 0xYourWalletAddress \
+  --rpc-url <chain-rpc-url>
+```
+
+**EIP-712 `domain`:**
+```json
+{
+  "name": "Seaport",
+  "version": "1.6",
+  "chainId": 1,
+  "verifyingContract": "0x0000000000000068F116a894984e2DB1123eB395"
+}
+```
+
+Set `chainId` to the target chain ID (`1` for Ethereum, `8453` for Base, `137` for Polygon, etc.). `verifyingContract` is the Seaport 1.6 address — the same value as `protocol_address` in the request body.
+
+**EIP-712 `types` (primary type `OrderComponents`):**
+```json
+{
+  "OrderComponents": [
+    { "name": "offerer", "type": "address" },
+    { "name": "zone", "type": "address" },
+    { "name": "offer", "type": "OfferItem[]" },
+    { "name": "consideration", "type": "ConsiderationItem[]" },
+    { "name": "orderType", "type": "uint8" },
+    { "name": "startTime", "type": "uint256" },
+    { "name": "endTime", "type": "uint256" },
+    { "name": "zoneHash", "type": "bytes32" },
+    { "name": "salt", "type": "uint256" },
+    { "name": "conduitKey", "type": "bytes32" },
+    { "name": "counter", "type": "uint256" }
+  ],
+  "OfferItem": [
+    { "name": "itemType", "type": "uint8" },
+    { "name": "token", "type": "address" },
+    { "name": "identifierOrCriteria", "type": "uint256" },
+    { "name": "startAmount", "type": "uint256" },
+    { "name": "endAmount", "type": "uint256" }
+  ],
+  "ConsiderationItem": [
+    { "name": "itemType", "type": "uint8" },
+    { "name": "token", "type": "address" },
+    { "name": "identifierOrCriteria", "type": "uint256" },
+    { "name": "startAmount", "type": "uint256" },
+    { "name": "endAmount", "type": "uint256" },
+    { "name": "recipient", "type": "address" }
+  ]
+}
+```
+
+**`message`:** the `parameters` object from the request body, minus `totalOriginalConsiderationItems` (which is a submission-only field, not part of the signed struct). All uint256 values can stay as decimal strings; ethers/viem will coerce.
+
+**Example with viem:**
+```typescript
+import { createWalletClient, http } from 'viem';
+import { privateKeyToAccount } from 'viem/accounts';
+
+const account = privateKeyToAccount(process.env.PRIVATE_KEY);
+const client = createWalletClient({ account, transport: http() });
+
+const { totalOriginalConsiderationItems, ...message } = parameters;
+
+const signature = await client.signTypedData({
+  domain: {
+    name: 'Seaport',
+    version: '1.6',
+    chainId: 1,
+    verifyingContract: '0x0000000000000068F116a894984e2DB1123eB395',
+  },
+  types: { OrderComponents, OfferItem, ConsiderationItem },
+  primaryType: 'OrderComponents',
+  message,
+});
+
+// POST { protocol_address, parameters, signature } to /api/v2/orders/{chain}/seaport/listings
+```
+
+After signing, submit with `protocol_address`, the full `parameters` object (including `totalOriginalConsiderationItems`), and `signature`.
+
+---
 
 ### Fulfill a Listing (Buy NFT)
 
@@ -289,7 +404,7 @@ POST /api/v2/offers/fulfillment_data
 Cancel an active listing or offer.
 
 ```bash
-POST /api/v2/orders/chain/{chain}/protocol/{protocol_address}/hash/{order_hash}/cancel
+POST /api/v2/orders/chain/{chain}/protocol/{protocol_address}/{order_hash}/cancel
 ```
 
 **Note:** Cancellation requires an onchain transaction. The API returns the transaction data to execute.

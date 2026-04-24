@@ -1,7 +1,7 @@
 # OpenSea Stream API (WebSocket)
 
 ## Base endpoint
-wss://stream.openseabeta.com/socket/websocket?token=YOUR_API_KEY
+wss://stream-api.opensea.io/socket/websocket?token=YOUR_API_KEY
 
 ## Join a collection channel
 Send a Phoenix join message:

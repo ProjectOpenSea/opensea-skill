@@ -20,7 +20,7 @@ if [ -z "$key" ]; then
   exit 1
 fi
 
-url="wss://stream.openseabeta.com/socket/websocket?token=${key}"
+url="wss://stream-api.opensea.io/socket/websocket?token=${key}"
 join="{\"topic\":\"collection:${slug}\",\"event\":\"phx_join\",\"payload\":{},\"ref\":1}"
 heartbeat="{\"topic\":\"phoenix\",\"event\":\"heartbeat\",\"payload\":{},\"ref\":0}"
 

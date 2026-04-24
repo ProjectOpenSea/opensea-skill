@@ -201,13 +201,14 @@ Similar workflow using `/api/v2/offers/fulfillment_data`:
 
 ## Creating Listings
 
-Creating listings requires signing a Seaport order:
+Creating listings (and offers) requires signing a Seaport order:
 
-1. Build order structure with offer (your NFT) and consideration (payment)
-2. Sign order with EIP-712
-3. POST signed order to OpenSea
+1. **Fetch the offerer's `counter`** — call `getCounter(address)` on the Seaport contract, or use `"0"` for accounts that have never called `incrementCounter`. The counter must be included both in the signed payload and in the submitted `parameters`.
+2. **Build order structure** with offer (your NFT) and consideration (payment). `salt` is a uint256 decimal string.
+3. **Sign with EIP-712** using domain `{ name: "Seaport", version: "1.6", chainId, verifyingContract }` and primary type `OrderComponents`.
+4. **POST** `{ protocol_address, parameters, signature }` to `/api/v2/orders/{chain}/seaport/listings` (or `/offers`). `protocol_address` is a top-level field, not inside `parameters`.
 
-See `references/marketplace-api.md` for full order structure.
+See `references/marketplace-api.md` → **Build a Listing** and **Signing Orders (EIP-712)** for the full request schema, field-by-field notes, and a complete `viem` signing example.
 
 ---
 
