@@ -134,12 +134,12 @@ scripts/opensea-get.sh "/api/v2/orders/ethereum/seaport/offers" "asset_contract_
 Retrieve details of a specific order.
 
 ```bash
-GET /api/v2/orders/chain/{chain}/protocol/{protocol_address}/hash/{order_hash}
+GET /api/v2/orders/chain/{chain}/protocol/{protocol_address}/{order_hash}
 ```
 
 **Example:**
 ```bash
-scripts/opensea-get.sh "/api/v2/orders/chain/ethereum/protocol/0x0000000000000068f116a894984e2db1123eb395/hash/0x..."
+scripts/opensea-get.sh "/api/v2/orders/chain/ethereum/protocol/0x0000000000000068f116a894984e2db1123eb395/0x..."
 ```
 
 ---
@@ -289,7 +289,7 @@ POST /api/v2/offers/fulfillment_data
 Cancel an active listing or offer.
 
 ```bash
-POST /api/v2/orders/chain/{chain}/protocol/{protocol_address}/hash/{order_hash}/cancel
+POST /api/v2/orders/chain/{chain}/protocol/{protocol_address}/{order_hash}/cancel
 ```
 
 **Note:** Cancellation requires an onchain transaction. The API returns the transaction data to execute.
