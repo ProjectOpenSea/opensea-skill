@@ -102,7 +102,7 @@ OpenSea's API includes a cross-chain DEX aggregator for swapping ERC20 tokens wi
 | Get collection stats | `opensea collections stats <slug>` | `opensea-collection-stats.sh <slug>` |
 | Get trending collections | `opensea collections trending [--timeframe <tf>] [--chains <chains>]` | `opensea-collections-trending.sh [timeframe] [limit] [chains] [category]` |
 | Get top collections | `opensea collections top [--sort-by <field>] [--chains <chains>]` | `opensea-collections-top.sh [sort_by] [limit] [chains] [category]` |
-| List NFTs in collection | `opensea nfts list-by-collection <slug> [--limit <n>]` | `opensea-collection-nfts.sh <slug> [limit] [next]` |
+| List NFTs in collection | `opensea nfts list-by-collection <slug> [--limit <n>] [--traits <json>]` | `opensea-collection-nfts.sh <slug> [limit] [next]` |
 | Get single NFT | `opensea nfts get <chain> <contract> <token_id>` | `opensea-nft.sh <chain> <contract> <token_id>` |
 | List NFTs by wallet | `opensea nfts list-by-account <chain> <address> [--limit <n>]` | `opensea-account-nfts.sh <chain> <address> [limit]` |
 | List NFTs by contract | `opensea nfts list-by-contract <chain> <contract> [--limit <n>]` | — |
@@ -114,7 +114,7 @@ OpenSea's API includes a cross-chain DEX aggregator for swapping ERC20 tokens wi
 
 | Task | CLI Command | Alternative |
 |------|------------|-------------|
-| Get best listings for collection | `opensea listings best <slug> [--limit <n>]` | `opensea-best-listing.sh <slug> <token_id>` |
+| Get best listings for collection | `opensea listings best <slug> [--limit <n>] [--traits <json>]` | `opensea-best-listing.sh <slug> <token_id>` |
 | Get best listing for specific NFT | `opensea listings best-for-nft <slug> <token_id>` | `opensea-best-listing.sh <slug> <token_id>` |
 | Get best offer for NFT | `opensea offers best-for-nft <slug> <token_id>` | `opensea-best-offer.sh <slug> <token_id>` |
 | List all collection listings | `opensea listings all <slug> [--limit <n>]` | `opensea-listings-collection.sh <slug> [limit]` |
@@ -122,6 +122,42 @@ OpenSea's API includes a cross-chain DEX aggregator for swapping ERC20 tokens wi
 | Get collection offers | `opensea offers collection <slug> [--limit <n>]` | `opensea-offers-collection.sh <slug> [limit]` |
 | Get trait offers | `opensea offers traits <slug> --type <type> --value <value>` | — |
 | Get order by hash | — | `opensea-order.sh <chain> <order_hash>` |
+
+### Server-side trait filtering
+
+Three collection-scoped endpoints accept a `traits` query parameter so you can filter NFTs, listings, and events by trait values without fetching everything and filtering client-side:
+
+| Endpoint | CLI | SDK |
+|---|---|---|
+| List NFTs in collection | `opensea nfts list-by-collection <slug> --traits <json>` | `client.nfts.listByCollection(slug, { traits })` |
+| Best listings for collection | `opensea listings best <slug> --traits <json>` | `client.listings.best(slug, { traits })` |
+| Events for collection | `opensea events by-collection <slug> --traits <json>` | `client.events.byCollection(slug, { traits })` |
+
+`--traits` takes a JSON-encoded array of `{ "traitType": string, "value": string }` objects. Multiple entries are AND-combined (returned items must match every trait):
+
+```bash
+# Single trait
+opensea nfts list-by-collection doodles-official \
+  --traits '[{"traitType":"Background","value":"Red"}]'
+
+# Multiple traits (Background AND Eyes)
+opensea events by-collection doodles-official --event-type sale \
+  --traits '[{"traitType":"Background","value":"Red"},{"traitType":"Eyes","value":"Laser"}]'
+```
+
+```typescript
+// SDK accepts a structured array — no JSON.stringify needed
+const { nfts } = await client.nfts.listByCollection("doodles-official", {
+  traits: [{ traitType: "Background", value: "Red" }],
+})
+```
+
+Behavior to know:
+
+- **Always prefer this over client-side filtering** for the three endpoints above — paginating the unfiltered set just to drop most rows wastes rate-limit budget.
+- **Empty match returns an empty result set** (not all items). An empty `nfts`/`listings`/`asset_events` array means no items match the filter, not a server error.
+- **Server returns 400 if a single trait matches more than 1000 items.** Combine with another trait, or fall back to listing the collection without the filter and narrowing in the client.
+- The other endpoints (events `list`, `by-account`, `by-nft`; listings `all`, `best-for-nft`; etc.) do **not** accept `traits` — only the three above. For trait-scoped *offers*, use `opensea offers traits` (a separate endpoint with its own shape).
 
 ### Marketplace actions (POST)
 
@@ -147,7 +183,7 @@ OpenSea's API includes a cross-chain DEX aggregator for swapping ERC20 tokens wi
 | Task | CLI Command | Alternative |
 |------|------------|-------------|
 | List recent events | `opensea events list [--event-type <type>] [--limit <n>]` | — |
-| Get collection events | `opensea events by-collection <slug> [--event-type <type>]` | `opensea-events-collection.sh <slug> [event_type] [limit]` |
+| Get collection events | `opensea events by-collection <slug> [--event-type <type>] [--traits <json>]` | `opensea-events-collection.sh <slug> [event_type] [limit]` |
 | Get events for specific NFT | `opensea events by-nft <chain> <contract> <token_id>` | — |
 | Get events for account | `opensea events by-account <address>` | — |
 | Stream real-time events | — | `opensea-stream-collection.sh <slug>` (requires websocat) |
@@ -360,6 +396,10 @@ const collection = await client.collections.get("mfers")
 const { nfts } = await client.nfts.listByCollection("mfers", { limit: 5 })
 const { listings } = await client.listings.best("mfers", { limit: 10 })
 const { asset_events } = await client.events.byCollection("mfers", { eventType: "sale" })
+
+// Server-side trait filtering on collection NFTs / best listings / events
+const traits = [{ traitType: "Background", value: "Red" }]
+const filtered = await client.nfts.listByCollection("doodles-official", { traits })
 const { tokens } = await client.tokens.trending({ chains: ["base"], limit: 5 })
 const results = await client.search.query("mfers", { limit: 5 })
 
