@@ -1,6 +1,6 @@
 {
   "name": "@opensea/skill",
-  "version": "2.2.3",
+  "version": "2.3.0",
   "description": "Agent Skill for the OpenSea API — query NFT and token data, execute Seaport trades, and swap ERC20 tokens via the @opensea/cli, shell scripts, or the OpenSea MCP server.",
   "private": true,
   "license": "MIT",

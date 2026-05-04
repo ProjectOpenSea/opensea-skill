@@ -164,6 +164,7 @@ Behavior to know:
 | Task | Script |
 |------|--------|
 | Get fulfillment data (buy NFT) | `opensea-fulfill-listing.sh <chain> <order_hash> <buyer>` |
+| Get cross-chain fulfillment data | `opensea-cross-chain-fulfill.sh [--recipient <addr>] <fulfiller> <payment_chain> <payment_token> <listing_chain> <protocol_address> <hash1> [hash2 ...]` |
 | Get fulfillment data (accept offer) | `opensea-fulfill-offer.sh <chain> <order_hash> <seller> <contract> <token_id>` |
 | Generic POST request | `opensea-post.sh <path> <json_body>` |
 
@@ -243,6 +244,39 @@ Event types: `sale`, `transfer`, `mint`, `listing`, `offer`, `trait_offer`, `col
    ```
 
 3. Execute the returned transaction data
+
+### Cross-chain buying
+
+Buy NFTs using tokens from a different chain (e.g., USDC on Base to buy an ETH mainnet NFT). Also supports same-chain different-token purchases and sweeping up to 50 listings.
+
+1. Find the NFT and check its listing:
+   ```bash
+   opensea listings best-for-nft cool-cats-nft 1234
+   ```
+
+2. Get cross-chain fulfillment data:
+   ```bash
+   # Pay with native ETH on Base for an Ethereum mainnet listing
+   ./scripts/opensea-cross-chain-fulfill.sh 0xYourWallet base 0x0000000000000000000000000000000000000000 ethereum 0x0000000000000068f116a894984e2db1123eb395 0xOrderHash
+   ```
+
+3. The response contains an ordered list of transactions to sign and submit (first may be an ERC20 approval)
+
+**Sweep multiple listings:**
+```bash
+./scripts/opensea-cross-chain-fulfill.sh 0xYourWallet base 0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913 ethereum 0x0000000000000068f116a894984e2db1123eb395 0xHash1 0xHash2 0xHash3
+```
+
+**CLI alternative:**
+```bash
+opensea listings cross-chain-fulfill \
+  --hashes 0xHash1,0xHash2 \
+  --listing-chain ethereum \
+  --protocol-address 0x0000000000000068f116a894984e2db1123eb395 \
+  --fulfiller 0xYourWallet \
+  --payment-chain base \
+  --payment-token 0x0000000000000000000000000000000000000000
+```
 
 ### Creating listings/offers
 
