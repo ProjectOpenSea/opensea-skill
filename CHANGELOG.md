@@ -1,5 +1,17 @@
 # @opensea/skill
 
+## 2.5.0
+
+### Minor Changes
+
+- 9ecf704: Provider-aware wallet hardening for Privy, Turnkey, Fireblocks, and Bankr.
+
+  - `opensea-wallet/SKILL.md`: new "Security model" section documenting per-tx caps (provider-enforced), aggregate caps (universally not native — wallet float is the answer), and policy mutation (requires separately-held credential per provider).
+  - `opensea-wallet/references/wallet-setup.md`: hardening is now part of the happy path for all four providers — Privy authorization-key registration, Turnkey non-root signer-only API user, Fireblocks `Signer`-role keys, Bankr key scope flags.
+  - `opensea-wallet/references/wallet-policies.md`: stripped the `PUT /policy` curl; sharpened the TEE-cannot-be-bypassed claim (it's narrower than it sounds — TEE protects against signing through an applied policy, not against the same env credentials rewriting the policy first).
+  - New `opensea-wallet/references/wallet-funding.md`: hot/cold wallet float pattern, the universal answer for aggregate caps.
+  - New top-level `docs/policy-administration.md` (outside any individual skill mount path): user-only mutation recipes for all four providers, including a Node script for `PATCH /v1/wallets/{id}` with auth signature.
+
 ## 2.4.0
 
 ### Minor Changes
