@@ -1,148 +1,134 @@
-# OpenSea Skill
+# OpenSea Skills
 
-**Query NFT and token data, trade on the Seaport marketplace, and swap ERC20 tokens** across Ethereum, Base, Arbitrum, Optimism, Polygon, and more.
+Agent Skills for interacting with [OpenSea](https://opensea.io/): query NFT and token data, trade on the Seaport marketplace, swap ERC20 tokens, and build AI agent tools with onchain gating.
 
-## What is this?
+This repository follows the [Agent Skills specification](https://agentskills.io/specification).
 
-This is an [Agent Skill](https://skills.sh/docs) for AI coding assistants. Once installed, your agent can interact with the OpenSea API to query NFT and token data, execute marketplace operations, and swap ERC20 tokens using the [OpenSea CLI](https://github.com/ProjectOpenSea/opensea-cli), shell scripts, or the [MCP server](#opensea-mcp-server).
+## Decision tree
 
-## Prerequisites
+Pick the right skill in one question:
 
-### Required
+```
+Want to use OpenSea?
+├── Query NFT/token data, search, collection stats ──────── opensea-api
+├── Buy/sell NFTs (listings, offers, fulfillment) ───────── opensea-marketplace
+├── Swap ERC20 tokens (DEX aggregator) ──────────────────── opensea-swaps
+├── Set up wallet signing for transactions ──────────────── opensea-wallet
+└── Build/register/gate AI agent tools (proposed ERC) ────── opensea-tool-sdk
+```
 
-- `OPENSEA_API_KEY` environment variable — for CLI, SDK, REST API scripts, and MCP server
-- Node.js >= 18.0.0 — for `@opensea/cli`
-- `curl` — for REST shell scripts
-- `jq` (recommended) — for parsing JSON responses
+## Skills
 
-Get an API key instantly (no signup needed):
+### `opensea-api`
+
+Query NFT and token data via the OpenSea CLI, MCP server, or shell scripts. Collections, NFTs, tokens, search, drops, events, and account lookups.
+
+- **Auth**: `OPENSEA_API_KEY` environment variable
+- **Setup**: Get a key at [opensea.io/settings/developer](https://opensea.io/settings/developer) or instantly via API
+- **Entry point**: [`opensea-api/SKILL.md`](opensea-api/SKILL.md)
+
+### `opensea-marketplace`
+
+Buy and sell NFTs on the Seaport protocol. Create listings and offers, fulfill orders, cross-chain purchases, and sweep multiple listings.
+
+- **Auth**: `OPENSEA_API_KEY` + wallet provider credentials
+- **Entry point**: [`opensea-marketplace/SKILL.md`](opensea-marketplace/SKILL.md)
+
+### `opensea-swaps`
+
+Swap ERC20 tokens across supported chains via OpenSea's DEX aggregator. Get quotes, check balances, and execute swaps.
+
+- **Auth**: `OPENSEA_API_KEY` + wallet provider credentials (for execution)
+- **Entry point**: [`opensea-swaps/SKILL.md`](opensea-swaps/SKILL.md)
+
+### `opensea-wallet`
+
+Set up and configure wallet signing providers for OpenSea transactions. Supports Privy, Turnkey, Fireblocks, Bankr, and local private keys.
+
+- **Entry point**: [`opensea-wallet/SKILL.md`](opensea-wallet/SKILL.md)
+
+### `opensea-tool-sdk`
+
+Build, register, and gate AI-callable tool endpoints using the OpenSea Tool Registry (proposed ERC) on Base. Supports x402 pay-per-call and NFT-gated access.
+
+- **Auth**: Wallet credentials for onchain registration
+- **Entry point**: [`opensea-tool-sdk/SKILL.md`](opensea-tool-sdk/SKILL.md)
+
+## Ecosystem / partner skills
+
+Skills contributed by ecosystem partners. See [`ecosystem/CONTRIBUTING.md`](ecosystem/CONTRIBUTING.md) for conventions and how to add a new partner skill.
+
+No partner skills have been added yet. When partners contribute skills through the normal PR flow, they will appear here.
+
+## Less-obvious routing
+
+The tree above covers the common cases. These edge cases catch the easy-to-misroute ones:
+
+| Scenario | Skill |
+|---|---|
+| Browse and mint NFT drops | `opensea-api` |
+| Stream real-time marketplace events (WebSocket) | `opensea-api` |
+| Cross-chain NFT purchase (pay from a different chain) | `opensea-marketplace` |
+| Sweep multiple listings in one transaction | `opensea-marketplace` |
+| Check token balances for a wallet | `opensea-swaps` |
+| Configure wallet signing policies (caps, allowlists) | `opensea-wallet` |
+| Gate a tool with NFT ownership or x402 payments | `opensea-tool-sdk` |
+
+## Installation
+
+All three paths install the router `SKILL.md` plus all five sub-skills:
+
 ```bash
-curl -s -X POST https://api.opensea.io/api/v2/auth/keys | jq -r '.api_key'
+# Auto-installs all five skills (recommended)
+npx skills add ProjectOpenSea/opensea-skill --yes
+
+# ClawHub (single slug, all skills bundled)
+clawhub install opensea
+
+# Manual (Claude Code / Cursor / Codex)
+git clone https://github.com/ProjectOpenSea/opensea-skill.git ~/.claude/skills/opensea
 ```
 
-Or get a full key at [opensea.io/settings/developer](https://opensea.io/settings/developer) for higher rate limits. The same key works for the REST API, CLI, and MCP server.
+After install, the consuming agent reads `SKILL.md` (the router), which directs it to the relevant sub-skill based on the task.
 
-For write operations (swaps, Seaport fulfillment), you'll need a wallet that can sign transactions. Use a managed provider — Privy, Turnkey, Fireblocks, or a backend signing proxy — and configure conservative signing policies (value caps, allowlists). Raw private keys are supported for local dev only and must not be used in shared agent environments.
+## Official Links
 
-## Provenance
+- [Developer docs](https://docs.opensea.io/)
+- [OpenSea CLI](https://github.com/ProjectOpenSea/opensea-cli)
+- [OpenSea MCP Server](https://mcp.opensea.io)
+- [Get an API key](https://opensea.io/settings/developer)
 
-This skill is published by OpenSea. The canonical source is the public GitHub repo [`ProjectOpenSea/opensea-skill`](https://github.com/ProjectOpenSea/opensea-skill), mirrored from the internal [`opensea-devtools`](https://github.com/ProjectOpenSea/opensea-devtools) monorepo. Releases are tagged `v<version>` (e.g. `v2.2.1`) and visible on the [Releases page](https://github.com/ProjectOpenSea/opensea-skill/releases). Always install from the official repo above; do not install forks or rehosts unless you have audited them.
+## Specification
 
-## Installing the Skill
+These skills follow the [Agent Skills specification](https://agentskills.io/specification).
 
-```bash
-npx skills add ProjectOpenSea/opensea-skill
-```
+## Publishing (maintainer notes)
 
-### Manual Installation
+### Repo layout
 
-Clone this repository to your skills directory:
+The root `SKILL.md` is a thin router that directs agents to the correct sub-skill. This ensures a single install (`npx skills add` or `clawhub install`) delivers all five skills with intelligent routing.
 
-```bash
-git clone https://github.com/ProjectOpenSea/opensea-skill.git ~/.skills/opensea
-```
+### ClawHub
 
-Refer to your AI tool's documentation for skills directory configuration.
-
-## What's Included
-
-### Skill Definition
-
-[`SKILL.md`](SKILL.md) — the main skill file that teaches your agent how to use the OpenSea API, including the CLI, task guides, script references, MCP tool documentation, and end-to-end workflows for buying, selling, and swapping tokens.
-
-### OpenSea CLI (Recommended)
-
-The [`@opensea/cli`](https://github.com/ProjectOpenSea/opensea-cli) package provides a command-line interface and programmatic SDK for all OpenSea API operations. Install with `npm install -g @opensea/cli` or use `npx @opensea/cli`.
-
-```bash
-opensea collections get mfers
-opensea listings best mfers --limit 5
-opensea tokens trending --limit 5
-opensea search "cool cats"
-opensea swaps quote --from-chain base --from-address 0x0000000000000000000000000000000000000000 \
-  --to-chain base --to-address 0xTokenAddress --quantity 0.02 --address 0xYourWallet
-```
-
-Supports JSON, table, and [TOON](https://github.com/toon-format/toon) output formats. TOON uses ~40% fewer tokens than JSON, ideal for AI agent context windows (`--format toon`).
-
-See [`SKILL.md`](SKILL.md) for the full CLI command reference and SDK usage.
-
-### Shell Scripts
-
-Ready-to-use scripts in [`scripts/`](scripts/) for common operations (alternative to the CLI):
-
-| Script | Purpose |
-|--------|---------|
-| `opensea-collection.sh` | Fetch collection by slug |
-| `opensea-nft.sh` | Fetch single NFT by chain/contract/token |
-| `opensea-best-listing.sh` | Get lowest listing for an NFT |
-| `opensea-best-offer.sh` | Get highest offer for an NFT |
-| `opensea-swap.sh` | Swap tokens via OpenSea DEX aggregator |
-| `opensea-fulfill-listing.sh` | Get buy transaction data |
-| `opensea-fulfill-offer.sh` | Get sell transaction data |
-| `opensea-token-groups.sh` | List token groups (equivalent currencies across chains) |
-| `opensea-token-group.sh` | Fetch a single token group by slug |
-| `opensea-auth-request-key.sh` | Request a free-tier API key (no auth required) |
-
-See [`SKILL.md`](SKILL.md) for the full scripts reference and usage examples.
-
-### Reference Docs
-
-Detailed API documentation in [`references/`](references/):
-
-- [`rest-api.md`](references/rest-api.md) — REST endpoint families and pagination
-- [`marketplace-api.md`](references/marketplace-api.md) — Buy/sell workflows and Seaport details
-- [`stream-api.md`](references/stream-api.md) — WebSocket event streaming
-- [`seaport.md`](references/seaport.md) — Seaport protocol and NFT purchase execution
-- [`token-swaps.md`](references/token-swaps.md) — Token swap workflows via MCP
-
-## OpenSea MCP Server
-
-An official MCP server provides direct LLM integration for token swaps and NFT operations. Add to your MCP config:
-
-```json
-{
-  "mcpServers": {
-    "opensea": {
-      "url": "https://mcp.opensea.io/mcp",
-      "headers": {
-        "X-API-KEY": "YOUR_API_KEY"
-      }
-    }
-  }
-}
-```
-
-Get an instant API key with `curl -s -X POST https://api.opensea.io/api/v2/auth/keys | jq -r '.api_key'` or from [opensea.io/settings/developer](https://opensea.io/settings/developer).
-
-See [`SKILL.md`](SKILL.md) for the full list of available MCP tools.
-
-## Example Usage
-
-Once installed, prompt your AI assistant:
+Register one slug (`opensea`) and publish via `clawhub skill publish .`. The installed layout:
 
 ```
-Get me the floor price for the Pudgy Penguins collection on OpenSea
+opensea/
+├── SKILL.md                       # router; agent registers this
+├── opensea-api/SKILL.md
+├── opensea-marketplace/SKILL.md
+├── opensea-swaps/SKILL.md
+├── opensea-wallet/SKILL.md
+├── opensea-tool-sdk/SKILL.md
+└── ecosystem/...
 ```
 
-```
-Swap 0.02 ETH to USDC on Base using OpenSea
-```
+Do **not** publish five separate ClawHub slugs.
 
-```
-Show me the best offer on BAYC #1234
-```
+### `npx skills add` behavior
 
-The agent will use the `opensea` CLI to query the API directly.
+The vercel-labs/skills CLI discovers both root `SKILL.md` and `skills/` subdirectories. With the router at root, `npx skills add ProjectOpenSea/opensea-skill` installs the router plus all sub-skills as a single directory tree. Verify this with `--dry-run` after any structural changes.
 
-## Supported Chains
+## License
 
-This skill supports all chains available on OpenSea, including `ethereum`, `solana`, `abstract`, `ape_chain`, `arbitrum`, `avalanche`, `b3`, `base`, `bera_chain`, `blast`, `flow`, `gunzilla`, `hyperevm`, `hyperliquid`, `ink`, `megaeth`, `monad`, `optimism`, `polygon`, `ronin`, `sei`, `shape`, `somnia`, `soneium`, `unichain`, and `zora`.
-
-## Learn More
-
-- [OpenSea CLI](https://github.com/ProjectOpenSea/opensea-cli) — CLI and SDK for OpenSea API
-- [OpenSea Developer Docs](https://docs.opensea.io/)
-- [OpenSea Developer Portal](https://opensea.io/settings/developer)
-- [Instant API Key](https://docs.opensea.io/reference/api-keys#instant-api-key-for-agents) — get a free-tier key with a single API call
-- [Agent Skills Directory](https://skills.sh/docs)
+MIT

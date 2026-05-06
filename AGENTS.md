@@ -1,6 +1,6 @@
 # skill — Agent Conventions
 
-AI agent skill for interacting with OpenSea via Claude, Devin, and other AI assistants. Provides shell scripts, reference docs, and a structured SKILL.md for LLM consumption.
+Modular AI agent skills for interacting with OpenSea via Claude, Devin, and other AI assistants. Provides shell scripts, reference docs, and structured SKILL.md files for LLM consumption.
 
 ## Quick Reference
 
@@ -12,9 +12,13 @@ There is no build or test step. Changes are validated by reviewing the shell scr
 
 | File / Directory | Role |
 |------------------|------|
-| `SKILL.md` | Primary entry point for AI agents — full usage guide with CLI examples, shell script docs, and task walkthroughs |
-| `scripts/` | Standalone shell scripts for REST API and Stream API access (curl + jq) |
-| `references/` | Technical reference docs: Seaport protocol, marketplace API, stream API, token swaps, wallet setup |
+| `SKILL.md` | Router entry point — directs agents to the correct sub-skill based on task |
+| `opensea-api/SKILL.md` | Read-only queries: collections, NFTs, tokens, search, drops, events |
+| `opensea-marketplace/SKILL.md` | Write operations: buy/sell NFTs, Seaport fulfillment, sweeps |
+| `opensea-swaps/SKILL.md` | ERC20 token swaps via DEX aggregator |
+| `opensea-wallet/SKILL.md` | Wallet provider setup: Privy, Turnkey, Fireblocks, Bankr, private key |
+| `opensea-tool-sdk/SKILL.md` | Build/register/gate AI agent tools (proposed ERC) |
+| `ecosystem/` | Partner skill contributions (template + guide) |
 | `package.json` | Metadata only (private, not published) |
 | `.env.example` | Required and optional environment variables |
 
@@ -22,15 +26,17 @@ There is no build or test step. Changes are validated by reviewing the shell scr
 
 When reviewing changes to this package, verify:
 
-1. **SKILL.md is the source of truth for agents**. It must accurately reflect the current CLI commands, API endpoints, and shell scripts. Outdated examples cause agents to fail silently.
+1. **SKILL.md files are the source of truth for agents**. They must accurately reflect the current CLI commands, API endpoints, and shell scripts. Outdated examples cause agents to fail silently.
 
-2. **Shell scripts are self-contained**. Each script in `scripts/` should work with just `OPENSEA_API_KEY` set and `curl` + `jq` available. Do not add dependencies on Node.js or other tools.
+2. **No duplication across sub-skills**. The wallet provider table lives only in `opensea-wallet`. `opensea-post.sh` lives only in `opensea-api/scripts/`. Other skills link to these canonical locations.
 
-3. **Security**: This package is mirrored to a public repo. Never include API keys, internal URLs, or private infrastructure details. Treat all content as publicly visible.
+3. **Shell scripts are self-contained**. Each script should work with just `OPENSEA_API_KEY` set and `curl` + `jq` available. Do not add dependencies on Node.js or other tools.
 
-4. **CLI parity**: The skill recommends `@opensea/cli` as the preferred interface. When CLI commands change in `packages/cli`, update the corresponding examples in `SKILL.md`.
+4. **Security**: This package is mirrored to a public repo. Never include API keys, internal URLs, or private infrastructure details. Treat all content as publicly visible.
 
-5. **Reference doc accuracy**: Files in `references/` describe protocol details (Seaport order structure, fulfillment data, wallet policies). Verify they match the current SDK and API behavior.
+5. **CLI parity**: The skills recommend `@opensea/cli` as the preferred interface. When CLI commands change in `packages/cli`, update the corresponding examples in the relevant sub-skill SKILL.md.
+
+6. **Reference doc accuracy**: Files in sub-skill `references/` directories describe protocol details. Verify they match the current SDK and API behavior.
 
 ## Conventions
 

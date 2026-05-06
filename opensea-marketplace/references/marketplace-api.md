@@ -52,7 +52,7 @@ GET /api/v2/listings/collection/{collection_slug}/nfts/{identifier}/best
 
 **Example:**
 ```bash
-scripts/opensea-get.sh "/api/v2/listings/collection/boredapeyachtclub/nfts/1234/best"
+opensea listings best-for-nft boredapeyachtclub 1234
 ```
 
 ### Get Best Offer for NFT
@@ -65,7 +65,7 @@ GET /api/v2/offers/collection/{collection_slug}/nfts/{identifier}/best
 
 **Example:**
 ```bash
-scripts/opensea-get.sh "/api/v2/offers/collection/boredapeyachtclub/nfts/1234/best"
+opensea offers best-for-nft boredapeyachtclub 1234
 ```
 
 ### Get All Listings for Collection
@@ -82,7 +82,7 @@ GET /api/v2/listings/collection/{collection_slug}/all
 
 **Example:**
 ```bash
-scripts/opensea-listings-collection.sh boredapeyachtclub 50
+opensea listings all boredapeyachtclub --limit 50
 ```
 
 ### Get All Offers for Collection
@@ -95,7 +95,7 @@ GET /api/v2/offers/collection/{collection_slug}/all
 
 **Example:**
 ```bash
-scripts/opensea-offers-collection.sh boredapeyachtclub 50
+opensea offers all boredapeyachtclub --limit 50
 ```
 
 ### Get Listings for Specific NFT
@@ -111,7 +111,10 @@ GET /api/v2/orders/{chain}/seaport/listings
 
 **Example:**
 ```bash
-scripts/opensea-get.sh "/api/v2/orders/ethereum/seaport/listings" "asset_contract_address=0xbc4ca0eda7647a8ab7c2061c2e118a18a936f13d&token_ids=1234"
+curl -G "https://api.opensea.io/api/v2/orders/ethereum/seaport/listings" \
+  -H "x-api-key: $OPENSEA_API_KEY" \
+  --data-urlencode "asset_contract_address=0xbc4ca0eda7647a8ab7c2061c2e118a18a936f13d" \
+  --data-urlencode "token_ids=1234"
 ```
 
 ### Get Offers for Specific NFT
@@ -126,7 +129,10 @@ GET /api/v2/orders/{chain}/seaport/offers
 
 **Example:**
 ```bash
-scripts/opensea-get.sh "/api/v2/orders/ethereum/seaport/offers" "asset_contract_address=0xbc4ca0eda7647a8ab7c2061c2e118a18a936f13d&token_ids=1234"
+curl -G "https://api.opensea.io/api/v2/orders/ethereum/seaport/offers" \
+  -H "x-api-key: $OPENSEA_API_KEY" \
+  --data-urlencode "asset_contract_address=0xbc4ca0eda7647a8ab7c2061c2e118a18a936f13d" \
+  --data-urlencode "token_ids=1234"
 ```
 
 ### Get Order by Hash
@@ -139,7 +145,8 @@ GET /api/v2/orders/chain/{chain}/protocol/{protocol_address}/{order_hash}
 
 **Example:**
 ```bash
-scripts/opensea-get.sh "/api/v2/orders/chain/ethereum/protocol/0x0000000000000068f116a894984e2db1123eb395/0x..."
+curl "https://api.opensea.io/api/v2/orders/chain/ethereum/protocol/0x0000000000000068F116a894984e2DB1123eB395/0xORDER_HASH" \
+  -H "x-api-key: $OPENSEA_API_KEY"
 ```
 
 ---
@@ -194,10 +201,10 @@ POST /api/v2/orders/{chain}/seaport/listings
 **Required `parameters` fields** (all must be present before signing): `offerer`, `zone`, `offer`, `consideration`, `startTime`, `endTime`, `orderType`, `zoneHash`, `salt`, `conduitKey`, `totalOriginalConsiderationItems`, `counter`.
 
 **Field notes:**
-- `counter` — Seaport nonce for the offerer. Fetch with `getCounter(address)` on the Seaport contract, or use `"0"` for accounts that have never canceled via `incrementCounter`. Order hashes and EIP-712 signatures are bound to this value.
-- `salt` — uint256 as a decimal string (e.g. from `toString(randomBigInt(256))`). A hex string works too as long as it parses as uint256.
-- `conduitKey` — `0x0000007b02230091a7ed01230072f7006a004d60a8d4e71d599b8104250f0000` is OpenSea's conduit. Use `0x0000…0000` to transfer directly without a conduit.
-- `zone` / `zoneHash` — use zero address / zero bytes32 unless you're integrating a custom zone. `zone` is part of the signed `OrderComponents` struct, so it must be present in `parameters` (even as the zero address) or signing will fail.
+- `counter`: Seaport nonce for the offerer. Fetch with `getCounter(address)` on the Seaport contract, or use `"0"` for accounts that have never canceled via `incrementCounter`. Order hashes and EIP-712 signatures are bound to this value.
+- `salt`: uint256 as a decimal string (e.g. from `toString(randomBigInt(256))`). A hex string works too as long as it parses as uint256.
+- `conduitKey`: `0x0000007b02230091a7ed01230072f7006a004d60a8d4e71d599b8104250f0000` is OpenSea's conduit. Use `0x0000…0000` to transfer directly without a conduit.
+- `zone` / `zoneHash`: use zero address / zero bytes32 unless you're integrating a custom zone. `zone` is part of the signed `OrderComponents` struct, so it must be present in `parameters` (even as the zero address) or signing will fail.
 - See `### Signing Orders (EIP-712)` below for building the signature.
 
 **Item Types:**
@@ -222,7 +229,7 @@ Creates an unsigned Seaport offer order.
 POST /api/v2/orders/{chain}/seaport/offers
 ```
 
-**Request body structure** (same shape as listings — top-level `protocol_address`, `parameters`, `signature` — but `offer` contains payment and `consideration` contains the NFT):
+**Request body structure** (same shape as listings, with top-level `protocol_address`, `parameters`, `signature`, but `offer` contains payment and `consideration` contains the NFT):
 ```json
 {
   "protocol_address": "0x0000000000000068f116a894984e2db1123eb395",
@@ -257,7 +264,7 @@ POST /api/v2/orders/{chain}/seaport/offers
 }
 ```
 
-Field requirements and notes are identical to **Build a Listing** — see above.
+Field requirements and notes are identical to **Build a Listing** (see above).
 
 ### Signing Orders (EIP-712)
 
@@ -282,7 +289,7 @@ cast call 0x0000000000000068F116a894984e2DB1123eB395 \
 }
 ```
 
-Set `chainId` to the target chain ID (`1` for Ethereum, `8453` for Base, `137` for Polygon, etc.). `verifyingContract` is the Seaport 1.6 address — the same value as `protocol_address` in the request body.
+Set `chainId` to the target chain ID (`1` for Ethereum, `8453` for Base, `137` for Polygon, etc.). `verifyingContract` is the Seaport 1.6 address (the same value as `protocol_address` in the request body).
 
 **EIP-712 `types` (primary type `OrderComponents`):**
 ```json
@@ -413,19 +420,21 @@ POST /api/v2/orders/chain/{chain}/protocol/{protocol_address}/{order_hash}/cance
 
 ## Workflow: Buying an NFT
 
-1. **Find the NFT** - Use `opensea-nft.sh` to get NFT details
-2. **Check listings** - Use `opensea-get.sh` to get best listing
-3. **Get fulfillment data** - POST to `/api/v2/listings/fulfillment_data`
-4. **Execute transaction** - Sign and submit the returned transaction data
+Steps 1 and 2 are read-only and live in the [`opensea-api`](../../opensea-api/SKILL.md) skill.
+
+1. **Find the NFT** (opensea-api): `opensea nfts get <chain> <contract> <token_id>`
+2. **Check listings** (opensea-api): `opensea listings best-for-nft <slug> <token_id>`
+3. **Get fulfillment data** (this skill): POST to `/api/v2/listings/fulfillment_data`
+4. **Execute transaction**: sign and submit the returned transaction data
 
 ```bash
-# Step 1: Get NFT info
-./scripts/opensea-nft.sh ethereum 0xbc4ca0eda7647a8ab7c2061c2e118a18a936f13d 1234
+# Step 1: Get NFT info (opensea-api skill)
+opensea nfts get ethereum 0xbc4ca0eda7647a8ab7c2061c2e118a18a936f13d 1234
 
-# Step 2: Get best listing
-./scripts/opensea-get.sh "/api/v2/listings/collection/boredapeyachtclub/nfts/1234/best"
+# Step 2: Get best listing (opensea-api skill)
+opensea listings best-for-nft boredapeyachtclub 1234
 
-# Step 3: Request fulfillment (requires POST - see marketplace scripts)
+# Step 3: Request fulfillment (this skill)
 ./scripts/opensea-fulfill-listing.sh ethereum 0x_order_hash 0x_your_wallet
 ```
 
@@ -445,9 +454,9 @@ POST /api/v2/orders/chain/{chain}/protocol/{protocol_address}/{order_hash}/cance
 
 ## Workflow: Accepting an Offer
 
-1. **View offers** - Use `opensea-offers-collection.sh`
-2. **Get fulfillment data** - POST to `/api/v2/offers/fulfillment_data`
-3. **Execute** - Submit the returned transaction
+1. **View offers** (opensea-api): `opensea offers all <slug> --limit 50`
+2. **Get fulfillment data** (this skill): POST to `/api/v2/offers/fulfillment_data`
+3. **Execute**: submit the returned transaction
 
 ---
 

@@ -1,5 +1,11 @@
 # @opensea/skill
 
+## 2.4.0
+
+### Minor Changes
+
+- 28dda97: Restructure skills into modular Agent Skills format. The monolithic `packages/skill/` is split into five focused skills following the Agent Skills spec (agentskills.io): `opensea-api`, `opensea-marketplace`, `opensea-swaps`, `opensea-wallet`, and `opensea-tool-sdk`. Each skill has its own SKILL.md with frontmatter, scope contracts, and handoff routing. Adds `ecosystem/` directory with CONTRIBUTING.md and partner onboarding scaffolding, and a root `skills/README.md` with a decision tree and routing table for skill selection.
+
 ## 2.3.0
 
 ### Minor Changes

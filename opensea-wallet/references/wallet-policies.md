@@ -1,16 +1,16 @@
 # Wallet Policies (Privy)
 
-Privy wallet policies enforce guardrails on transaction signing. Policies are evaluated inside a trusted execution environment (TEE) before any signing occurs — they cannot be bypassed by application code.
+Privy wallet policies enforce guardrails on transaction signing. Policies are evaluated inside a trusted execution environment (TEE) before any signing occurs, so they cannot be bypassed by application code.
 
 ## Overview
 
 Policies restrict what transactions a wallet can sign:
 
-- **Transaction value caps** — Maximum ETH/token value per transaction
-- **Destination allowlists** — Only sign transactions to approved contract addresses
-- **Chain restrictions** — Limit signing to specific chains
-- **Method restrictions** — Only allow specific contract method calls
-- **Key export prevention** — Prevent extraction of the private key
+- **Transaction value caps**: maximum ETH/token value per transaction
+- **Destination allowlists**: only sign transactions to approved contract addresses
+- **Chain restrictions**: limit signing to specific chains
+- **Method restrictions**: only allow specific contract method calls
+- **Key export prevention**: prevent extraction of the private key
 
 ## Configuring Policies
 
@@ -28,7 +28,7 @@ curl -X PUT "https://api.privy.io/v1/wallets/$PRIVY_WALLET_ID/policy" \
 
 ## Recommended Policies
 
-### Agent Trading — Conservative
+### Agent Trading: Conservative
 
 Suitable for automated agents executing swaps and NFT purchases with tight guardrails.
 
@@ -80,7 +80,7 @@ Suitable for automated agents executing swaps and NFT purchases with tight guard
 }
 ```
 
-### Agent Trading — Permissive
+### Agent Trading: Permissive
 
 For trusted agents with higher limits and broader destination access.
 
@@ -153,8 +153,8 @@ For trusted agents with higher limits and broader destination access.
 
 ## Tips
 
-1. **Start conservative** — Begin with tight value caps and a narrow allowlist, then relax as needed
-2. **Use chain restrictions** — Limit to chains you actively trade on
-3. **Monitor policy violations** — Privy logs denied transactions in the dashboard
-4. **Separate wallets for separate concerns** — Use different wallets (and policies) for swaps vs. NFT purchases
-5. **Never disable policies in production** — Keep at least a value cap active
+1. **Start conservative**: begin with tight value caps and a narrow allowlist, then relax as needed
+2. **Use chain restrictions**: limit to chains you actively trade on
+3. **Monitor policy violations**: Privy logs denied transactions in the dashboard
+4. **Separate wallets for separate concerns**: use different wallets (and policies) for swaps vs. NFT purchases
+5. **Never disable policies in production**: keep at least a value cap active

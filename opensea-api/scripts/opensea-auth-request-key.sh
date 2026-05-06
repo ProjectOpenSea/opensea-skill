@@ -28,7 +28,7 @@ if [[ "$http_code" =~ ^2 ]]; then
 fi
 
 if [ "$http_code" = "429" ]; then
-  echo "opensea-auth-request-key.sh: HTTP 429 rate limited — this endpoint is capped at 3 keys per hour per IP. Try again later or request a key at https://opensea.io/settings/developer" >&2
+  echo "opensea-auth-request-key.sh: HTTP 429 rate limited (this endpoint is capped at 3 keys per hour per IP). Try again later or request a key at https://opensea.io/settings/developer" >&2
 else
   echo "opensea-auth-request-key.sh: HTTP $http_code error" >&2
 fi

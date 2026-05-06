@@ -89,7 +89,7 @@ opensea swaps execute \
 ```
 
 Requires `PRIVY_APP_ID`, `PRIVY_APP_SECRET`, and `PRIVY_WALLET_ID` environment variables.
-See `references/wallet-setup.md` for Privy configuration.
+See the [`opensea-wallet`](../../opensea-wallet/SKILL.md) skill for Privy configuration.
 
 ### Using the SDK (TypeScript)
 

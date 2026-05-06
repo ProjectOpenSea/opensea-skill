@@ -30,8 +30,8 @@ Legacy Seaport 1.5: `0x00000000000000ADc04C56Bf30aC9d3c0aAF14dC`
 ### Step 1: Get Listings
 
 ```bash
-# Via script
-./scripts/opensea-listings-collection.sh basenames
+# Via the opensea-api skill (CLI)
+opensea listings all basenames --limit 10
 
 # Via MCP
 mcporter call opensea.get_listings collection="basenames" limit=10
@@ -87,7 +87,7 @@ console.log(`TX: ${result.hash}`);
 ```
 
 Requires `PRIVY_APP_ID`, `PRIVY_APP_SECRET`, and `PRIVY_WALLET_ID` environment variables.
-See `references/wallet-setup.md` for Privy configuration.
+See the [`opensea-wallet`](../../opensea-wallet/SKILL.md) skill for Privy configuration.
 
 ### Complete Working Example
 
@@ -203,7 +203,7 @@ Similar workflow using `/api/v2/offers/fulfillment_data`:
 
 Creating listings (and offers) requires signing a Seaport order:
 
-1. **Fetch the offerer's `counter`** — call `getCounter(address)` on the Seaport contract, or use `"0"` for accounts that have never called `incrementCounter`. The counter must be included both in the signed payload and in the submitted `parameters`.
+1. **Fetch the offerer's `counter`**: call `getCounter(address)` on the Seaport contract, or use `"0"` for accounts that have never called `incrementCounter`. The counter must be included both in the signed payload and in the submitted `parameters`.
 2. **Build order structure** with offer (your NFT) and consideration (payment). `salt` is a uint256 decimal string.
 3. **Sign with EIP-712** using domain `{ name: "Seaport", version: "1.6", chainId, verifyingContract }` and primary type `OrderComponents`.
 4. **POST** `{ protocol_address, parameters, signature }` to `/api/v2/orders/{chain}/seaport/listings` (or `/offers`). `protocol_address` is a top-level field, not inside `parameters`.

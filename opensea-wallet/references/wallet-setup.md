@@ -7,7 +7,8 @@ Transaction signing in the OpenSea CLI and SDK uses wallet providers through the
 | **Privy** (default) | TEE-enforced policies, embedded wallets | [privy.io](https://privy.io) |
 | **Turnkey** | HSM-backed keys, multi-party approval | [turnkey.com](https://www.turnkey.com) |
 | **Fireblocks** | Enterprise MPC custody, institutional use | [fireblocks.com](https://www.fireblocks.com) |
-| **Private Key** (not recommended) | Local dev/testing only | — |
+| **Bankr** | Agent wallets via HTTP signing API | [bankr.bot](https://bankr.bot) |
+| **Private Key** (not recommended) | Local dev/testing only | (none) |
 
 Managed providers (Privy, Turnkey, Fireblocks) are **strongly recommended** over raw private keys. They provide spending limits, destination allowlists, and policy enforcement that raw keys cannot.
 
@@ -81,7 +82,7 @@ Before executing real transactions, configure wallet policies to enforce guardra
 
 1. Sign up at [app.turnkey.com](https://app.turnkey.com)
 2. Create an organization
-3. Generate an API key pair — note the **public key** and **private key**
+3. Generate an API key pair, then note the **public key** and **private key**
 
 ### 2. Create a Wallet
 
@@ -101,7 +102,7 @@ export TURNKEY_RPC_URL="https://mainnet.infura.io/v3/YOUR_KEY"  # required
 # export TURNKEY_API_BASE_URL="https://api.turnkey.com"  # override API base URL
 ```
 
-> **Note:** `TURNKEY_RPC_URL` is **required**. Turnkey is a pure signing service — it does not estimate gas or broadcast transactions. The adapter uses `TURNKEY_RPC_URL` to populate gas fields (nonce, gasLimit, maxFeePerGas, maxPriorityFeePerGas) via `eth_getTransactionCount`, `eth_estimateGas`, and `eth_feeHistory`, then broadcasts the signed transaction via `eth_sendRawTransaction`. The RPC endpoint must match the target chain.
+> **Note:** `TURNKEY_RPC_URL` is **required**. Turnkey is a pure signing service: it does not estimate gas or broadcast transactions. The adapter uses `TURNKEY_RPC_URL` to populate gas fields (nonce, gasLimit, maxFeePerGas, maxPriorityFeePerGas) via `eth_getTransactionCount`, `eth_estimateGas`, and `eth_feeHistory`, then broadcasts the signed transaction via `eth_sendRawTransaction`. The RPC endpoint must match the target chain.
 
 ### 4. Fund & Verify
 
@@ -167,6 +168,49 @@ opensea swaps execute \
 
 ---
 
+## Bankr Setup
+
+Bankr is an HTTP signing service for agent wallets. The adapter calls Bankr's API for transaction signing rather than holding a key locally.
+
+### Prerequisites
+
+- A Bankr account ([bankr.bot](https://bankr.bot))
+- An OpenSea API key (`OPENSEA_API_KEY`)
+
+### 1. Get a Bankr API Key
+
+Sign up at [bankr.bot](https://bankr.bot) and provision an API key.
+
+### 2. Set Environment Variables
+
+```bash
+export OPENSEA_API_KEY="your-opensea-api-key"
+export BANKR_API_KEY="your-bankr-api-key"
+```
+
+### 3. Execute a Swap
+
+```bash
+opensea swaps execute \
+  --wallet-provider bankr \
+  --from-chain base \
+  --from-address 0x0000000000000000000000000000000000000000 \
+  --to-chain base \
+  --to-address 0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913 \
+  --quantity 0.001
+```
+
+### SDK Usage
+
+```typescript
+import { createBankrAccount } from '@opensea/wallet-adapters';
+
+const account = await createBankrAccount(process.env.BANKR_API_KEY);
+// Use with authenticatedFetch, paidAuthenticatedFetch, or the OpenSeaCLI swaps API
+```
+
+---
+
 ## Private Key Setup (Not Recommended)
 
 > **WARNING:** Using a raw private key provides no spending limits, no destination allowlists, and no human-in-the-loop approval. Use a managed provider (Privy, Turnkey, Fireblocks) for anything beyond local development.
@@ -192,7 +236,7 @@ opensea swaps execute \
   --quantity 0.001
 ```
 
-**Note:** The private-key adapter uses `eth_sendTransaction` on the RPC node, which requires the node to manage the imported key (e.g. Hardhat, Anvil, Ganache). The `PRIVATE_KEY` env var is validated to confirm intent but is not used for signing — the RPC node signs server-side. This adapter does **not** work with production RPC providers like Infura or Alchemy. Use a managed wallet instead.
+**Note:** The private-key adapter uses `eth_sendTransaction` on the RPC node, which requires the node to manage the imported key (e.g. Hardhat, Anvil, Ganache). The `PRIVATE_KEY` env var is validated to confirm intent but is not used for signing; the RPC node signs server-side. This adapter does **not** work with production RPC providers like Infura or Alchemy. Use a managed wallet instead.
 
 ---
 
@@ -212,6 +256,7 @@ opensea swaps execute \
 # Explicitly specify provider
 opensea swaps execute --wallet-provider turnkey ...
 opensea swaps execute --wallet-provider fireblocks ...
+opensea swaps execute --wallet-provider bankr ...
 opensea swaps execute --wallet-provider private-key ...  # not recommended
 ```
 
@@ -223,6 +268,7 @@ import {
   PrivyAdapter,
   TurnkeyAdapter,
   FireblocksAdapter,
+  BankrAdapter,
   PrivateKeyAdapter,
   createWalletFromEnv,
 } from '@opensea/cli';
@@ -236,6 +282,7 @@ const wallet = createWalletFromEnv();
 // const wallet = PrivyAdapter.fromEnv();
 // const wallet = TurnkeyAdapter.fromEnv();
 // const wallet = FireblocksAdapter.fromEnv();
+// const wallet = BankrAdapter.fromEnv();
 // const wallet = PrivateKeyAdapter.fromEnv();  // not recommended
 
 const results = await sdk.swaps.execute({
@@ -265,6 +312,8 @@ const results = await sdk.swaps.execute({
 | `FIREBLOCKS_API_KEY environment variable is required` | Missing Fireblocks env var | Set Fireblocks credentials |
 | `No Fireblocks asset ID mapping for chain` | Unsupported chain | Set `FIREBLOCKS_ASSET_ID` explicitly |
 | `Fireblocks transaction ended with status: REJECTED` | Policy rejection | Review Fireblocks TAP rules |
+| `BANKR_API_KEY environment variable is required` | Missing Bankr env var | Set `BANKR_API_KEY` |
+| `Bankr signing failed (401)` | Bad Bankr API key | Verify the key at [bankr.bot](https://bankr.bot) |
 | `PRIVATE_KEY environment variable is required` | Missing private key env var | Set `PRIVATE_KEY`, `RPC_URL`, and `WALLET_ADDRESS` |
 | `RPC_URL environment variable is required` | Missing RPC URL | Set `RPC_URL` for the target chain |
 | `insufficient funds` | Wallet not funded | Send ETH to the wallet address |
