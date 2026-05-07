@@ -1,5 +1,16 @@
 # @opensea/skill
 
+## 2.6.0
+
+### Minor Changes
+
+- 94dbf08: Refresh API references for the os2-core#40171 / #40190 sync.
+
+  - `opensea-api/references/rest-api.md`: endpoint tables refreshed — removed deleted GET rows for `/orders/{chain}/seaport/{listings,offers}`, added `?maker=` annotations on the `/all` endpoints, added new rows for `listings/sweep`, per-NFT offers (`/offers/collection/{slug}/nfts/{token_id}`), `swap/execute`, and `transactions/receipt`.
+  - `opensea-marketplace/references/marketplace-api.md`: replaced the "Get listings/offers for specific NFT" sections (which curled the removed endpoints) with the slug-based replacements (`/listings/collection/{slug}/nfts/{token_id}/best`, `/offers/collection/{slug}/nfts/{token_id}`).
+
+  Also picks up `feat(skill): auto-publish to ClawHub on release [OS2-31827]` (#112) — adds a `clawhub-publish.yml` workflow to `packages/skill/.github/workflows/` that auto-publishes on release.
+
 ## 2.5.0
 
 ### Minor Changes

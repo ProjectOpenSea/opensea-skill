@@ -1,0 +1,57 @@
+name: Publish to ClawHub
+
+# Auto-publishes new versions of opensea/opensea-marketplace on every
+# release event in this (synced) public repo.
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to publish (semver, no leading v)"
+        required: true
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.release.tag_name || github.ref }}
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+
+      - name: Install ClawHub CLI
+        run: npm install -g clawhub@0.12.3
+
+      - name: Write ClawHub config
+        env:
+          CLAWHUB_TOKEN: ${{ secrets.CLAWHUB_TOKEN }}
+        run: |
+          if [ -z "$CLAWHUB_TOKEN" ]; then
+            echo "CLAWHUB_TOKEN secret is not set" >&2
+            exit 1
+          fi
+          jq -n --arg token "$CLAWHUB_TOKEN" \
+            '{registry: "https://clawhub.ai", token: $token}' \
+            > "$RUNNER_TEMP/clawhub-config.json"
+
+      - name: Publish skill
+        env:
+          CLAWHUB_CONFIG_PATH: ${{ runner.temp }}/clawhub-config.json
+          EVENT_NAME: ${{ github.event_name }}
+          INPUT_VERSION: ${{ inputs.version }}
+        run: |
+          if [ "$EVENT_NAME" = "release" ]; then
+            VERSION="${GITHUB_REF_NAME#v}"
+          else
+            VERSION="$INPUT_VERSION"
+          fi
+          echo "Publishing opensea/opensea-marketplace@${VERSION}"
+          clawhub publish . \
+            --slug opensea-marketplace \
+            --owner opensea \
+            --version "$VERSION"
