@@ -14,7 +14,7 @@ Want to use OpenSea?
 ├── Buy/sell NFTs (listings, offers, fulfillment) ───────── opensea-marketplace
 ├── Swap ERC20 tokens (DEX aggregator) ──────────────────── opensea-swaps
 ├── Set up wallet signing for transactions ──────────────── opensea-wallet
-└── Build/register/gate AI agent tools (proposed ERC) ────── opensea-tool-sdk
+└── Build/register/gate AI agent tools (ERC-8257) ────── opensea-tool-sdk
 ```
 
 ## Skills
@@ -49,7 +49,7 @@ Set up and configure wallet signing providers for OpenSea transactions. Supports
 
 ### `opensea-tool-sdk`
 
-Build, register, and gate AI-callable tool endpoints using the OpenSea Tool Registry (proposed ERC) on Base. Supports x402 pay-per-call and NFT-gated access.
+Build, register, and gate AI-callable tool endpoints using the OpenSea Tool Registry (ERC-8257) on Base. Supports x402 pay-per-call and NFT-gated access.
 
 - **Auth**: Wallet credentials for onchain registration
 - **Entry point**: [`opensea-tool-sdk/SKILL.md`](opensea-tool-sdk/SKILL.md)

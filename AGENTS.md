@@ -17,7 +17,7 @@ There is no build or test step. Changes are validated by reviewing the shell scr
 | `opensea-marketplace/SKILL.md` | Write operations: buy/sell NFTs, Seaport fulfillment, sweeps |
 | `opensea-swaps/SKILL.md` | ERC20 token swaps via DEX aggregator |
 | `opensea-wallet/SKILL.md` | Wallet provider setup: Privy, Turnkey, Fireblocks, Bankr, private key |
-| `opensea-tool-sdk/SKILL.md` | Build/register/gate AI agent tools (proposed ERC) |
+| `opensea-tool-sdk/SKILL.md` | Build/register/gate AI agent tools (ERC-8257) |
 | `ecosystem/` | Partner skill contributions (template + guide) |
 | `package.json` | Metadata only (private, not published) |
 | `.env.example` | Required and optional environment variables |
