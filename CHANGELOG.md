@@ -1,5 +1,12 @@
 # @opensea/skill
 
+## 2.7.0
+
+### Minor Changes
+
+- _Phase 2 PR_: Add 22 new shell scripts wrapping the api-types 0.4.0 endpoints (Tokens/NFTs/Collections batch lookups, Listings actions, Drops deploy + receipt, Assets transfer, Collection offer aggregates / holders / floor prices, Token price history / OHLCV / activity, NFT owners / analytics, Account portfolio / portfolio history / offers / offers_received / listings / favorites / collections).
+- **Breaking** — Scripts under `opensea-api/scripts/` reorganized into per-domain subdirectories (`accounts/`, `auth/`, `collections/`, `nfts/`, `tokens/`, `listings/`, `offers/`, `orders/`, `events/`, `drops/`, `assets/`, `stream/`). The shared utilities `opensea-get.sh`, `opensea-post.sh`, and `_response-markers.sh` remain at the scripts root. Any agent prompt or doc that hardcoded a flat path (e.g. `opensea-collection.sh`) needs to update to the new path (`collections/opensea-collection.sh`). `SKILL.md` and `references/rest-api.md` updated.
+
 ## 2.6.0
 
 ### Minor Changes
