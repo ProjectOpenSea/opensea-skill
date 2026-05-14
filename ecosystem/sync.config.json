@@ -1,0 +1,35 @@
+{
+  "$schema": "./sync.config.schema.md",
+  "partners": [
+    {
+      "vendor": "alchemy",
+      "upstream": "https://github.com/alchemyplatform/skills",
+      "ref": "main",
+      "skills": [
+        {
+          "from": "skills/agentic-gateway",
+          "to": "ecosystem/alchemy-agentic-gateway",
+          "dirs": ["references", "rules"]
+        },
+        { "from": "skills/alchemy-api", "to": "ecosystem/alchemy-api" },
+        {
+          "from": "skills/alchemy-cli",
+          "to": "ecosystem/alchemy-cli",
+          "dirs": []
+        },
+        {
+          "from": "skills/alchemy-mcp",
+          "to": "ecosystem/alchemy-mcp",
+          "dirs": []
+        }
+      ],
+      "rewrites": [
+        {
+          "from": "agentic-gateway",
+          "to": "alchemy-agentic-gateway",
+          "reason": "Upstream uses bare `agentic-gateway` as the skill name; OpenSea's ecosystem convention requires the `<vendor>-<skill-name>` prefix, so references that point at the sibling skill must use the renamed form."
+        }
+      ]
+    }
+  ]
+}

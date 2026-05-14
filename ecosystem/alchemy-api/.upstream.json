@@ -1,0 +1,7 @@
+{
+  "upstream": "https://github.com/alchemyplatform/skills",
+  "ref": "main",
+  "sha": "c0200b15cf3ecfb1fefe9297bcc029d9d1525311",
+  "from": "skills/alchemy-api",
+  "synced_at": "2026-05-14T19:46:23Z"
+}

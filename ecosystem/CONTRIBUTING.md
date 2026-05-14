@@ -73,9 +73,24 @@ In the body, every ecosystem skill must include two routing sections:
 ecosystem/<vendor>-<skill-name>/
 ├── SKILL.md           # Required: metadata + instructions + scope contract
 ├── LICENSE.txt         # Required: your license (typically MIT)
-├── references/         # Optional: reference docs
+├── .upstream.json      # Optional: provenance stamp if synced from an upstream repo
+├── references/         # Optional: reference docs (bot-maintained when .upstream.json is present)
 └── agents/             # Optional: openai.yaml for Codex picker
 ```
+
+## Keeping references fresh (optional)
+
+If your skill's `references/` directory mirrors content from your own upstream repo, you can opt into automated weekly syncs by declaring your skill in [`sync.config.json`](./sync.config.json). The bot (`pnpm sync-ecosystem`, run by `.github/workflows/sync-ecosystem.yml`) will:
+
+- Clone your upstream at the pinned `ref` (typically `main`)
+- Copy `<your-upstream>/<from>/references/` into `ecosystem/<vendor>-<skill-name>/references/`
+- Apply any declared string `rewrites` (e.g. renaming a sibling skill that has a vendor prefix in this repo but not in yours)
+- Write `.upstream.json` with the upstream SHA and timestamp so reviewers can verify provenance
+- Open a PR for human review — never auto-merges
+
+The bot **does not touch** `SKILL.md`, `LICENSE.txt`, or `agents/`. Those stay human-curated (the description, handoff table, and frontmatter overlay are judgment calls that don't survive automation).
+
+If you don't opt in, your skill is fully hand-maintained — no `sync.config.json` entry, no `.upstream.json` stamp.
 
 ## Review criteria
 
