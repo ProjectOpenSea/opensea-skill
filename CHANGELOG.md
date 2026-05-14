@@ -1,5 +1,17 @@
 # @opensea/skill
 
+## 2.8.0
+
+### Minor Changes
+
+- 0031a87: Add **Alchemy ecosystem skill suite** under `ecosystem/` — four curated, non-overlapping partner skills (`alchemy-agentic-gateway`, `alchemy-api`, `alchemy-cli`, `alchemy-mcp`) sourced from `alchemyplatform/skills`. Each routes back to first-party OpenSea skills for NFT marketplace, listings/offers, ERC20 swaps, wallet setup, and tool-sdk needs. Provenance is stamped per skill in `.upstream.json`.
+
+  Adds a **references-only sync action** (`scripts/sync-ecosystem.ts` + `.github/workflows/sync-ecosystem.yml` in the monorepo) that runs Mondays 06:00 UTC. The bot clones each declared upstream, mirrors only `references/` and `rules/` (default + per-skill `dirs` override), applies declared string rewrites, refreshes `.upstream.json`, and opens a PR for human review. `SKILL.md`, `LICENSE.txt`, and `agents/` stay human-curated.
+
+  Security hardening on the bot: file-type allowlist (`.md` only), diff-aware content scanner that flags newly-introduced ETH addresses, prompt-injection phrases, base64 blobs, and PEM private-key markers (rendered into the PR body), optional `pinned_sha` to disable HEAD tracking, and a pre-sync check that aborts loud (rather than wiping local content) if any declared upstream `from` path goes missing.
+
+  Documents the bot in `ecosystem/CONTRIBUTING.md` so future partners know how to opt their `references/` directory in.
+
 ## 2.7.0
 
 ### Minor Changes

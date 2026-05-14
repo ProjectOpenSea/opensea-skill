@@ -4,7 +4,21 @@ Modular AI agent skills for interacting with OpenSea via Claude, Devin, and othe
 
 ## Quick Reference
 
-This package is **not a pnpm workspace member** and is **not published to npm**. It is synced to the public [opensea-skill](https://github.com/ProjectOpenSea/opensea-skill) mirror.
+This package is **not a pnpm workspace member** and is **not published to npm**, but it IS versioned (changesets) and IS published to **[ClawHub](https://clawhub.ai)** as `opensea/opensea-marketplace`. The release chain is:
+
+```
+/release skill  →  changeset → version bump → tag `skill-vX.Y.Z` → monorepo GitHub release
+                      ↓
+   .github/workflows/sync-package.yml fires on `release: published`
+                      ↓
+   Public ProjectOpenSea/opensea-skill gets pushed code + `vX.Y.Z` tag + GitHub release
+                      ↓
+   Public repo's .github/workflows/clawhub-publish.yml fires on `release: published`
+                      ↓
+   `clawhub publish` → live at clawhub.ai under opensea/opensea-marketplace
+```
+
+End-to-end, no human in the middle past the `/release` step.
 
 There is no build or test step. Changes are validated by reviewing the shell scripts and documentation manually.
 
@@ -43,5 +57,6 @@ When reviewing changes to this package, verify:
 - All shell scripts use `#!/usr/bin/env bash` and read `OPENSEA_API_KEY` from the environment.
 - Scripts output JSON by default (piped through `jq` when available).
 - SKILL.md frontmatter declares required/optional env vars and dependencies.
-- Changes to this package should use `/sync` (not `/release`) since it is not versioned on npm.
+- Meaningful changes to this package should use `/release` so a new ClawHub version ships end-to-end. **Do not write a changeset for `@opensea/skill`** — skill is excluded from `pnpm-workspace.yaml`, so `pnpm changeset version` would fail. The `/release` skill walks through the manual flow instead: bump `packages/skill/package.json` by hand (semver: minor for new features/scripts, patch for fixes/docs), prepend a matching `CHANGELOG.md` entry, then tag and release as usual.
+- `/sync` (a code-only `workflow_dispatch` push to the public mirror) is reserved for changes that should NOT cut a new ClawHub version — purely-internal CI/workflow tweaks, README typo fixes, or one-off code-mirror refreshes.
 - **Never open PRs against the public `opensea-skill` repo** — all changes go through this monorepo.
