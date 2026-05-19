@@ -51,13 +51,15 @@ This SDK is for tool *providers and consumers*. To query OpenSea marketplace dat
 | **SIWE** | Sign-In with Ethereum (EIP-4361), used to authenticate callers for predicate-gated tools |
 | **Facilitator** | Third-party service that verifies and settles x402 payments (PayAI or Coinbase CDP) |
 
-## Deployed Contracts (Base mainnet)
+## Deployed Contracts (Ethereum mainnet + Base)
+
+Canonical v0.2 deployments — identical CREATE2 address on both chains.
 
 | Contract | Address |
 |----------|---------|
-| ToolRegistry (v0.1) | `0x7291BbFbC368C2D478eCe1eA30de31F612a34856` |
-| ERC721OwnerPredicate (v0.2) | `0xd1F703D0B90BB7106fAebBfbcAdD2B07BDc4c769` |
-| ERC1155OwnerPredicate (v0.2) | `0xc179b9d4D9B7ffe0CdA608134729f72003380A7e` |
+| ToolRegistry (v0.2) | `0x265BB2DBFC0A8165C9A1941Eb1372F349baD2cf1` |
+| ERC721OwnerPredicate (v0.2) | `0xc8721c9A776958FfFfEb602DA1b708bf1D318379` |
+| ERC1155OwnerPredicate (v0.2) | `0x77373Dc3c1AE9A1e937eF3e5E08F4807D47c7c11` |
 
 ## 1. Create a Tool
 

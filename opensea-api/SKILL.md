@@ -268,8 +268,11 @@ The [OpenSea MCP server](https://mcp.opensea.io) provides direct LLM integration
 | `search_collections` | Search NFT collections |
 | `search_items` | Search individual NFTs |
 | `get_collections` | Get detailed collection info (supports auto-resolve) |
+| `get_collection_stats` | Aggregate stats for a collection (volume, sales, owners, floor) with 1d/7d/30d intervals |
+| `get_collection_floor_prices` | Historical floor price time-series for a collection |
 | `get_items` | Get detailed NFT info (supports auto-resolve) |
 | `get_nft_balances` | List NFTs owned by wallet |
+| `get_account_collections` | NFT collections held by a wallet, with item count and USD value |
 | `get_trending_collections` | Trending NFT collections |
 | `get_top_collections` | Top collections by volume |
 | `get_activity` | Trading activity for collections/items |

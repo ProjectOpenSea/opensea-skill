@@ -127,7 +127,7 @@ When the predicate denies access, the server returns:
 {
   "error": "Predicate gate: access predicate denied",
   "toolId": "1",
-  "predicate": "0xd1F703D0B90BB7106fAebBfbcAdD2B07BDc4c769"
+  "predicate": "0xc8721c9A776958FfFfEb602DA1b708bf1D318379"
 }
 ```
 
@@ -141,7 +141,7 @@ import { base } from "viem/chains"
 const client = createPublicClient({ chain: base, transport: http() })
 
 const [requirements, logic] = await client.readContract({
-  address: "0xd1F703D0B90BB7106fAebBfbcAdD2B07BDc4c769",
+  address: "0xc8721c9A776958FfFfEb602DA1b708bf1D318379",
   abi: IAccessPredicateABI,
   functionName: "getRequirements",
   args: [1n],  // toolId

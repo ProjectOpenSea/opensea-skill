@@ -1,5 +1,13 @@
 # @opensea/skill
 
+## 2.9.0
+
+### Minor Changes
+
+- 27a89da: `opensea-tool-sdk`: document canonical `SubscriptionPredicate` deployment on Ethereum mainnet + Base (`0xCBe0cd9B1d99d95Baa9c58f2767246C52e461f25`). `SubscriptionPredicateClient` constructor no longer requires `predicateAddress` — it defaults to the canonical multi-tenant deployment, matching the ERC721 / ERC1155 owner predicates. Self-hosted deployments are still supported by passing `predicateAddress` explicitly.
+- 427e093: `opensea-tool-sdk`: update SKILL.md and `references/known-predicates.md` for the v0.2 registry redeploy on Ethereum mainnet + Base. New canonical addresses for `ToolRegistry`, `ERC721OwnerPredicate`, and `ERC1155OwnerPredicate`.
+- 773adcd: `opensea-api`: document 3 new opensea-mcp tools.
+
 ## 2.8.0
 
 ### Minor Changes

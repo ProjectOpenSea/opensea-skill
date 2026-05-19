@@ -8,7 +8,7 @@ Grants access to holders of any configured ERC-721 collection (`balanceOf > 0`).
 
 | Field | Value |
 |-------|-------|
-| Address | `0xd1F703D0B90BB7106fAebBfbcAdD2B07BDc4c769` |
+| Address | `0xc8721c9A776958FfFfEb602DA1b708bf1D318379` |
 | Requirement `kind` | `0xbdf8c428` (`IERC721Holding` interface ID) |
 | Requirement `data` | `abi.encode(address collection)` |
 | Logic | `OR` (any one collection suffices) |
@@ -63,7 +63,7 @@ Grants access to holders of specific `(collection, tokenId)` pairs across ERC-11
 
 | Field | Value |
 |-------|-------|
-| Address | `0xc179b9d4D9B7ffe0CdA608134729f72003380A7e` |
+| Address | `0x77373Dc3c1AE9A1e937eF3e5E08F4807D47c7c11` |
 | Requirement `kind` | `0xcb429230` (`IERC1155Holding` interface ID) |
 | Requirement `data` | `abi.encode(address collection, uint256 tokenId)` |
 | Logic | `OR` (any one entry suffices) |
@@ -108,21 +108,22 @@ Grants access based on ERC-5643 subscription NFTs with optional tier gating.
 
 | Field | Value |
 |-------|-------|
+| Address | `0xCBe0cd9B1d99d95Baa9c58f2767246C52e461f25` |
 | Requirement `kind` | `0x44387cc2` (`ISubscription` interface ID) |
 | Requirement `data` | `abi.encode(address collection, uint8 minTier)` |
+| Logic | `AND` |
 
-**Configure via SDK (after deploying the predicate):**
+**Configure via SDK:**
 
 ```typescript
-// 1. Register tool with subscriptionPredicate as the accessPredicate
-const { toolId } = await registry.registerTool({
-  metadataURI: "...",
-  manifest,
-  accessPredicate: subscriptionPredicateAddress,
-})
+import { SubscriptionPredicateClient, walletAdapterToClient, createWalletFromEnv } from "@opensea/tool-sdk"
+import { base } from "viem/chains"
 
-// 2. Configure which subscription NFT gates the tool
-// (call configureToolGating on the SubscriptionPredicate contract)
+const adapter = createWalletFromEnv()
+const walletClient = await walletAdapterToClient(adapter, base)
+
+const predicate = new SubscriptionPredicateClient({ walletClient })
+await predicate.configureToolGating(toolId, "0xSUBSCRIPTION_NFT", 0)
 ```
 
 ## CompositePredicate
