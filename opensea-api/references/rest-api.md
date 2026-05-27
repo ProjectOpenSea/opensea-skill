@@ -126,6 +126,8 @@ List endpoints support cursor-based pagination:
 | `/api/v2/chain/{chain}/token/{address}/price_history` | GET | Token price history |
 | `/api/v2/chain/{chain}/token/{address}/ohlcv` | GET | OHLCV candles for a token |
 | `/api/v2/chain/{chain}/token/{address}/activity` | GET | Recent swap activity for a token |
+| `/api/v2/chain/{chain}/token/{address}/holders` | GET | Paginated holders + aggregate distribution health |
+| `/api/v2/chain/{chain}/token/{address}/liquidity-pools` | GET | Liquidity pools for a token |
 
 ### Assets
 

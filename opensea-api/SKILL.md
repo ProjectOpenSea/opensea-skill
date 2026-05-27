@@ -454,6 +454,8 @@ The `scripts/` directory contains shell scripts that wrap the OpenSea REST API d
 | `tokens/opensea-token-price-history.sh` | Token price history |
 | `tokens/opensea-token-ohlcv.sh` | OHLCV candles for a token |
 | `tokens/opensea-token-activity.sh` | Recent swap activity for a token |
+| `tokens/opensea-token-holders.sh` | Paginated token holders + aggregate distribution health |
+| `tokens/opensea-token-liquidity-pools.sh` | Liquidity pools for a token (reserves, bonding-curve progress) |
 
 ### Monitoring Scripts
 

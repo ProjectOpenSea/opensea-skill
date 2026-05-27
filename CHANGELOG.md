@@ -1,5 +1,11 @@
 # @opensea/skill
 
+## 2.10.0
+
+### Minor Changes
+
+- 8fa9fb5: `opensea-api`: add `tokens/opensea-token-holders.sh` and `tokens/opensea-token-liquidity-pools.sh` shell scripts wrapping the new `GET /api/v2/chain/{chain}/token/{address}/holders` and `/liquidity-pools` endpoints. Update `SKILL.md` (Investigation Scripts) and `references/rest-api.md` (Tokens) accordingly.
+
 ## 2.9.0
 
 ### Minor Changes
