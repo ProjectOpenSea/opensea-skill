@@ -1,6 +1,6 @@
 ---
 name: opensea-tool-sdk
-description: Build, register, and gate AI-callable tool endpoints using the OpenSea Tool Registry (ERC-8257) on Base. Scaffold HTTPS tools with JSON Schema interfaces, register them onchain, gate access via NFT ownership or x402 pay-per-call (USDC), and call gated tools. For querying OpenSea marketplace data use opensea-api instead.
+description: Build, register, and gate AI-callable tool endpoints using the OpenSea Tool Registry (ERC-8257) on Base. Scaffold HTTPS tools with JSON Schema interfaces, register them onchain, gate access via NFT ownership, subscriptions, trait gating, or x402 pay-per-call (USDC), and call gated tools. For querying OpenSea marketplace data use opensea-api instead.
 homepage: https://github.com/ProjectOpenSea/tool-sdk
 repository: https://github.com/ProjectOpenSea/tool-sdk
 license: MIT
@@ -25,7 +25,7 @@ Use `opensea-tool-sdk` when you need to:
 
 - Scaffold an AI-callable tool endpoint (HTTPS, JSON Schema, `.well-known` manifest) for Vercel, Cloudflare, or Express
 - Register a tool onchain on the Base ToolRegistry so other agents can discover it
-- Gate access via x402 pay-per-call (USDC) or predicates (ERC-721/ERC-1155 ownership, subscriptions, composites)
+- Gate access via x402 pay-per-call (USDC) or predicates (ERC-721/ERC-1155 ownership, subscriptions, trait gating, composites)
 - Call a gated tool: SIWE auth (`authenticatedFetch`), 402 payments (`paidFetch`), or both (`paidAuthenticatedFetch`)
 
 ## When NOT to use this skill (`scope_out`, handoff)
@@ -46,7 +46,7 @@ This SDK is for tool *providers and consumers*. To query OpenSea marketplace dat
 | **Tool** | An HTTPS endpoint with a JSON Schema interface, discoverable via `/.well-known/ai-tool/<slug>.json` |
 | **Manifest** | JCS-canonicalized JSON describing the tool's name, endpoint, inputs, outputs, pricing, and access policy |
 | **ToolRegistry** | Onchain contract (Base) where tools are registered with a manifest hash and optional access predicate |
-| **Access Predicate** | An `IAccessPredicate` contract that gates who can invoke a tool (NFT ownership, subscriptions, composites) |
+| **Access Predicate** | An `IAccessPredicate` contract that gates who can invoke a tool (NFT ownership, subscriptions, trait gating, composites) |
 | **x402** | HTTP 402-based pay-per-call protocol (caller signs a USDC `TransferWithAuthorization`; server settles after execution) |
 | **SIWE** | Sign-In with Ethereum (EIP-4361), used to authenticate callers for predicate-gated tools |
 | **Facilitator** | Third-party service that verifies and settles x402 payments (PayAI or Coinbase CDP) |
@@ -60,6 +60,8 @@ Canonical v0.2 deployments — identical CREATE2 address on both chains.
 | ToolRegistry (v0.2) | `0x265BB2DBFC0A8165C9A1941Eb1372F349baD2cf1` |
 | ERC721OwnerPredicate (v0.2) | `0xc8721c9A776958FfFfEb602DA1b708bf1D318379` |
 | ERC1155OwnerPredicate (v0.2) | `0x77373Dc3c1AE9A1e937eF3e5E08F4807D47c7c11` |
+| SubscriptionPredicate (v0.2) | `0xCBe0cd9B1d99d95Baa9c58f2767246C52e461f25` |
+| TraitGatedPredicate (v0.2) | `0x10abF07CfA34Bf22372C57f27e8bd9C2DCF93fA1` |
 
 ## 1. Create a Tool
 
@@ -70,11 +72,11 @@ npx @opensea/tool-sdk init --runtime vercel   # or: cloudflare, express
 ```
 
 This generates:
-- `src/manifest.ts`: tool manifest definition
-- `src/handler.ts`: request handler with input/output schemas
-- `api/index.ts`: framework adapter entry point
-- `public/llms.txt`: agent-readable discovery page
-- `api/well-known/[slug].ts`: serves the manifest at `/.well-known/ai-tool/<slug>.json`
+- `src/manifest.ts` — tool manifest definition
+- `src/handler.ts` — request handler with input/output schemas
+- `api/index.ts` — framework adapter entry point
+- `public/llms.txt` — agent-readable discovery page
+- `api/well-known/[slug].ts` — serves the manifest at `/.well-known/ai-tool/<slug>.json`
 
 ### 1b. Define the manifest
 
@@ -158,18 +160,12 @@ export default { fetch: toolHandler }
 export PRIVATE_KEY=0x...
 export RPC_URL=https://mainnet.base.org
 
-# Register (open access, no predicate)
+# Register (open access — no predicate)
 npx @opensea/tool-sdk register \
   --metadata https://my-tool.example.com/.well-known/ai-tool/my-tool.json \
   --network base
 
-# Register with NFT gate (ERC-721 collection)
-npx @opensea/tool-sdk register \
-  --metadata https://my-tool.example.com/.well-known/ai-tool/my-tool.json \
-  --network base \
-  --nft-gate 0xCOLLECTION_ADDRESS
-
-# Register with a custom access predicate
+# Register with an access predicate
 npx @opensea/tool-sdk register \
   --metadata https://my-tool.example.com/.well-known/ai-tool/my-tool.json \
   --network base \
@@ -206,7 +202,7 @@ const registry = new ToolRegistryClient({
 const { toolId, txHash } = await registry.registerTool({
   metadataURI: "https://my-tool.example.com/.well-known/ai-tool/my-tool.json",
   manifest,                                      // your ToolManifest object
-  accessPredicate: "0x0000...0000",              // address(0) for open access
+  accessPredicate: "0x0000...0000",              // address(0) = open access
 })
 
 console.log(`Registered tool ${toolId} in tx ${txHash}`)
@@ -219,7 +215,7 @@ Tools can be gated three ways:
 | Gate | Mechanism | Reference |
 |------|-----------|-----------|
 | **x402 paywall** | Pay-per-call (USDC, EIP-3009) | [`references/x402.md`](references/x402.md) |
-| **Predicate gate** | Onchain check (NFT, subscription, composite) | [`references/predicate-gating.md`](references/predicate-gating.md) |
+| **Predicate gate** | Onchain check (NFT, subscription, trait gating, composite) | [`references/predicate-gating.md`](references/predicate-gating.md) |
 | **Combined** | SIWE auth and payment (predicate first, then x402) | [`references/predicate-gating.md`](references/predicate-gating.md) |
 
 For deployed predicate addresses, requirement encodings, and SDK helpers like `describeToolAccess` / `decodeRequirement`, see [`references/known-predicates.md`](references/known-predicates.md).
@@ -228,9 +224,18 @@ For deployed predicate addresses, requirement encodings, and SDK helpers like `d
 
 The SDK supports multiple wallet providers via `@opensea/wallet-adapters`. Set environment variables and the SDK auto-detects the provider. See the [`opensea-wallet`](../opensea-wallet/SKILL.md) skill for the full provider table, env vars, setup walkthroughs, and signing-policy configuration.
 
+| Provider | Env vars | Best for |
+|----------|----------|----------|
+| Private Key | `PRIVATE_KEY`, `RPC_URL` | Local dev, scripts |
+| Privy | `PRIVY_APP_ID`, `PRIVY_APP_SECRET`, `PRIVY_WALLET_ID` | Server wallets |
+| Turnkey | `TURNKEY_API_PUBLIC_KEY`, `TURNKEY_API_PRIVATE_KEY`, `TURNKEY_ORGANIZATION_ID` | Enterprise signing |
+| Fireblocks | `FIREBLOCKS_API_KEY`, `FIREBLOCKS_API_SECRET`, `FIREBLOCKS_VAULT_ACCOUNT_ID` | Institutional custody |
+| Bankr | `BANKR_API_KEY` | Agent wallets (via HTTP API) |
+
 ```typescript
 import { createWalletFromEnv } from "@opensea/tool-sdk"
 
+// Auto-detects: Privy > Fireblocks > Turnkey > Bankr > PrivateKey
 const adapter = createWalletFromEnv()
 const address = await adapter.getAddress()
 ```
@@ -265,18 +270,24 @@ const account = await createBankrAccount("your-bankr-api-key")
 | `validate` | Validate a manifest file |
 | `hash` | Compute the JCS keccak256 hash of a manifest |
 | `export` | Export the manifest as JSON |
-| `register` | Register a tool onchain |
+| `register` | Register a tool onchain. Supports `--predicate-config` to bundle predicate setup with registration |
 | `update-metadata` | Update a tool's metadata URI and manifest hash onchain |
 | `inspect` | Look up a tool's onchain config by ID |
 | `verify` | Verify a manifest against its onchain hash |
 | `deploy` | Deploy a tool to Vercel |
 | `auth` | Call a predicate-gated tool (SIWE) |
-| `pay` | Call an x402-paid tool (USDC) |
+| `pay` | Call an x402-paid tool (USDC), with optional `--auth siwe` for predicate-gated endpoints |
 | `smoke` | Auto-detect gate type and call |
 | `dry-run-gate` | Simulate an x402 gate check locally |
 | `dry-run-predicate-gate` | Simulate a predicate gate check locally |
+| `set-collections` | Set ERC-721 collection gate list for a tool |
+| `get-collections` | Read ERC-721 collection gate list for a tool |
+| `set-collection-tokens` | Set ERC-1155 collection + token ID gate for a tool |
+| `configure-subscription` | Configure SubscriptionPredicate gate (collection + minTier) for a tool |
+| `configure-trait-gating` | Configure TraitGatedPredicate gate (collection, traits contract, trait key, allowed values) for a tool |
+| `get-trait-config` | Read trait gating configuration for a tool |
 
-All CLI commands accept `--wallet-provider privy|turnkey|fireblocks|bankr|private-key` or auto-detect from env vars.
+All CLI commands accept `--wallet-provider privy|turnkey|fireblocks|private-key` or auto-detect from env vars.
 
 ## 7. End-to-End Examples
 
@@ -311,11 +322,15 @@ PRIVATE_KEY=0x... npx @opensea/tool-sdk pay \
 ### Example C: NFT-gated tool (identity check, no payment)
 
 ```bash
-# Register with NFT gate
+# Register with ERC721OwnerPredicate
 PRIVATE_KEY=0x... npx @opensea/tool-sdk register \
   --metadata https://my-tool.vercel.app/.well-known/ai-tool/my-tool.json \
   --network base \
-  --nft-gate 0xCOLLECTION
+  --nft-gate 0xYOUR_COLLECTION_ADDRESS
+
+# Configure which collection(s) gate the tool (if not using --nft-gate):
+npx @opensea/tool-sdk set-collections <TOOL_ID> 0xYOUR_COLLECTION_ADDRESS \
+  --network base
 
 # Server: add predicateGate (see references/predicate-gating.md)
 
@@ -326,15 +341,36 @@ PRIVATE_KEY=0x... RPC_URL=https://mainnet.base.org \
   --body '{"query": "hello"}'
 ```
 
-### Example D: NFT-gated and paid tool (both gates)
+### Example D: Subscription-gated tool
+
+```bash
+# Register with SubscriptionPredicate and configure in one shot:
+PRIVATE_KEY=0x... npx @opensea/tool-sdk register \
+  --metadata https://my-tool.vercel.app/.well-known/ai-tool/my-tool.json \
+  --access-predicate 0xCBe0cd9B1d99d95Baa9c58f2767246C52e461f25 \
+  --predicate-config '{"collection":"0xYOUR_SUBSCRIPTION_NFT","minTier":0}' \
+  --network base
+
+# Or configure after registration:
+npx @opensea/tool-sdk configure-subscription <TOOL_ID> 0xYOUR_SUBSCRIPTION_NFT \
+  --min-tier 0 --network base
+
+# Call via CLI:
+PRIVATE_KEY=0x... RPC_URL=https://mainnet.base.org \
+  npx @opensea/tool-sdk auth \
+  https://my-tool.vercel.app/api \
+  --body '{"query": "hello"}'
+```
+
+### Example E: NFT-gated + paid tool (both gates)
 
 ```bash
 # Server: add both predicateGate and paywall.gate (see references/predicate-gating.md)
 # Call via CLI:
 PRIVATE_KEY=0x... RPC_URL=https://mainnet.base.org \
-  npx @opensea/tool-sdk smoke \
-  --endpoint https://my-tool.vercel.app/api \
-  --expect 200
+  npx @opensea/tool-sdk pay --auth siwe \
+  https://my-tool.vercel.app/api \
+  --body '{"query": "hello"}'
 ```
 
 ## References
