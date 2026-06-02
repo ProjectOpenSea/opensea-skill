@@ -1,6 +1,6 @@
 # Known Predicates
 
-These predicates are deployed on Ethereum mainnet and Base and available for any tool to use. They are multi-tenant: one deployment serves all tools, configured per `toolId`.
+These predicates are deployed on Ethereum mainnet, Base, Shape, and Abstract and available for any tool to use. They are multi-tenant: one deployment serves all tools, configured per `toolId`.
 
 ## ERC721OwnerPredicate
 
@@ -281,6 +281,98 @@ if (decoded.type === "erc7496Trait") {
 }
 ```
 
+## ERC20BalancePredicate
+
+Gates access based on holding a configurable minimum balance of an ERC-20 token. Multi-tenant: one deployment per chain, configured per `toolId`. Canonical deployment: `0x1a834FC48B5f6e119c62C12a98b32137bCFA77cD` (Ethereum mainnet, Base, Shape, Abstract). The CLI commands default to this address; pass `--predicate-address` only to override it.
+
+| Field | Value |
+|-------|-------|
+| Address | `0x1a834FC48B5f6e119c62C12a98b32137bCFA77cD` |
+| Requirement `kind` | `0x812b02ee` (`IERC20Balance` interface ID) |
+| Requirement `data` | `abi.encode(address token, uint256 minBalance)` |
+| Logic | `AND` |
+| `hasAccess` `data` | unused (can be empty) |
+
+**Configure via SDK:**
+
+```typescript
+import { ERC20BalancePredicateClient, walletAdapterToClient, createWalletFromEnv } from "@opensea/tool-sdk"
+import { base } from "viem/chains"
+
+const adapter = createWalletFromEnv()
+const walletClient = await walletAdapterToClient(adapter, base)
+
+const predicate = new ERC20BalancePredicateClient({ walletClient })
+
+const toolId = 1n // obtained from registerTool()
+await predicate.configureToolERC20(
+  toolId,
+  "0xTOKEN_ADDRESS",  // ERC-20 token contract
+  1000000000000000000n, // minBalance (e.g. 1e18 = 1 token with 18 decimals)
+)
+```
+
+**Read ERC-20 config:**
+
+```typescript
+const config = await predicate.getToolERC20Config(toolId)
+// { token, minBalance }
+```
+
+**Generate manifest access via SDK:**
+
+```typescript
+const access = predicate.toManifestAccess(
+  "0xTOKEN_ADDRESS",
+  1000000000000000000n,
+)
+```
+
+With a custom label (**recommended** — the default renders raw bigint units):
+```typescript
+const access = predicate.toManifestAccess(
+  "0xTOKEN_ADDRESS",
+  1000000000000000000n,
+  { label: "Hold at least 1 USDC" },
+)
+```
+
+**Register and configure via CLI (one shot):**
+
+```bash
+npx @opensea/tool-sdk register \
+  --metadata https://my-tool.example.com/.well-known/ai-tool/my-tool.json \
+  --network base \
+  --erc20-gate 0xTOKEN_ADDRESS --erc20-min-balance 1000000000000000000
+```
+
+**Configure via CLI (after registration):**
+
+```bash
+npx @opensea/tool-sdk configure-erc20-gate <TOOL_ID> \
+  0xTOKEN_ADDRESS 1000000000000000000 \
+  --network base
+```
+
+**Read ERC-20 config via CLI:**
+
+```bash
+npx @opensea/tool-sdk get-erc20-config <TOOL_ID> \
+  --network base
+```
+
+**Decode requirements via SDK:**
+
+```typescript
+import { decodeRequirement, ERC20_BALANCE_KIND } from "@opensea/tool-sdk"
+
+const decoded = decodeRequirement(req)
+if (decoded.type === "erc20Balance") {
+  console.log(`Token: ${decoded.token}`)
+  console.log(`Min Balance: ${decoded.minBalance}`)
+}
+```
+
 ## CompositePredicate
 
 Combines up to 3 leaf predicates under AND-all or OR-any with optional per-term negation. No canonical deployment — each tool creator deploys their own instance.
@@ -399,6 +491,9 @@ for (const req of description.requirements) {
       break
     case "subscription":
       console.log(`Requires subscription (min tier ${decoded.minTier}) from ${decoded.collection}`)
+      break
+    case "erc20Balance":
+      console.log(`Requires balance >= ${decoded.minBalance} of token ${decoded.token}`)
       break
     case "walletStateAttestation":
       console.log(`Requires attestation from ${decoded.issuerJwksUri} (condition: ${decoded.conditionHash})`)

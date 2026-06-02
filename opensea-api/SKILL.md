@@ -27,6 +27,7 @@ Use `opensea-api` for **read-only** operations:
 - NFT details, ownership, metadata refresh
 - Token details, trending tokens, top tokens, token groups
 - Search across collections, NFTs, tokens, and accounts
+- Search and discover registered AI agent tools (ERC-8257)
 - Reading marketplace listings, offers, and orders (not executing them)
 - Events and activity monitoring (including real-time WebSocket streams)
 - Drops and mint eligibility
@@ -172,6 +173,42 @@ Event types: `sale`, `transfer`, `mint`, `listing`, `offer`, `trait_offer`, `col
 |------|------------|-------------|
 | Get account details | `opensea accounts get <address>` | |
 | Resolve ENS/username/address | `opensea accounts resolve <identifier>` | `accounts/opensea-resolve-account.sh <identifier>` |
+
+### Tool discovery [Beta]
+
+Search for verified registered AI agent tools (ERC-8257) by name, tags, creator, or other criteria.
+
+| Task | Alternative |
+|------|-------------|
+| Search registered tools | `opensea-get.sh "tools/search" "query=<text>"` |
+| Get a registered tool | `opensea-get.sh "tools/<chain>/<registry_address>/<tool_id>"` |
+
+**Endpoint:** `GET /api/v2/tools/search` ([docs](https://docs.opensea.io/reference/search_tools))
+
+| Parameter | Required | Description |
+|-----------|----------|-------------|
+| `query` | No | Search query text |
+| `registry_chain` | No | Filter by registry chain ID |
+| `tags` | No | Filter by tags |
+| `access_type` | No | Filter by access type: `open`, `nft_gated`, `subscription` |
+| `creator` | No | Filter by creator address |
+| `sort_by` | No | Sort by: `relevance` (default), `newest`, `most_used` |
+| `limit` | No | Results per page (1–200) |
+| `cursor.value` | No | Pagination cursor |
+
+```bash
+# Search tools by keyword
+curl -s "https://api.opensea.io/api/v2/tools/search?query=nft" \
+  -H "x-api-key: $OPENSEA_API_KEY" | jq
+
+# Filter by access type
+curl -s "https://api.opensea.io/api/v2/tools/search?access_type=open&limit=10" \
+  -H "x-api-key: $OPENSEA_API_KEY" | jq
+
+# Filter by creator
+curl -s "https://api.opensea.io/api/v2/tools/search?creator=0xYOUR_ADDRESS&sort_by=newest" \
+  -H "x-api-key: $OPENSEA_API_KEY" | jq
+```
 
 ### Generic requests
 

@@ -1,5 +1,15 @@
 # @opensea/skill
 
+## 2.11.0
+
+### Minor Changes
+
+- af0d079: `opensea-tool-sdk`: document tool discovery endpoints (registry lookup and listing) in SKILL.md.
+- f45c170: `opensea-api`: document the tools search endpoint.
+- 73170a2: `opensea-tool-sdk`: migrate SIWE references to EIP-3009 across SKILL.md and `references/predicate-gating.md`, reflecting the predicate-gate and CLI auth switch.
+- 1ce2300: `opensea-tool-sdk`: document `ERC20BalancePredicate` for token-balance-gated tool access, the `--erc20-gate` register helper, and canonical predicate addresses in `references/known-predicates.md`.
+- f1636af: `opensea-tool-sdk`: document tool registry deployment on Shape and Abstract, plus Shape/Abstract chain support in the CLI.
+
 ## 2.10.0
 
 ### Minor Changes
