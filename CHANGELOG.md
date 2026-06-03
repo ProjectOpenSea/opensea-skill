@@ -1,5 +1,11 @@
 # @opensea/skill
 
+## 2.12.0
+
+### Minor Changes
+
+- 61682fb: `opensea-tool-sdk` and `opensea-api`: document the list tools endpoint (`GET /api/v2/tools`, with `sort_by` and `type` filter) in the tool discovery sections and `references/rest-api.md`.
+
 ## 2.11.0
 
 ### Minor Changes
