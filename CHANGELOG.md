@@ -1,5 +1,11 @@
 # @opensea/skill
 
+## 2.13.0
+
+### Minor Changes
+
+- 1185694: `opensea-api`: document the `opensea tools` CLI commands (`list`, `search`, `get`), the `client.tools` SDK methods, and the `search_tools` / `get_tool` / `get_wallet_tools` MCP tools for the `[Beta]` tool registry (ERC-8257) in SKILL.md.
+
 ## 2.12.0
 
 ### Minor Changes

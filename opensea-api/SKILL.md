@@ -178,11 +178,11 @@ Event types: `sale`, `transfer`, `mint`, `listing`, `offer`, `trait_offer`, `col
 
 Search for verified registered AI agent tools (ERC-8257) by name, tags, creator, or other criteria.
 
-| Task | Alternative |
-|------|-------------|
-| List registered tools | `opensea-get.sh "tools" "sort_by=newest&limit=10"` |
-| Search registered tools | `opensea-get.sh "tools/search" "query=<text>"` |
-| Get a registered tool | `opensea-get.sh "tools/<chain>/<registry_address>/<tool_id>"` |
+| Task | CLI Command | Alternative |
+|------|------------|-------------|
+| List registered tools | `opensea tools list [--sort-by <sort>] [--type <type>]` | `opensea-get.sh "tools" "sort_by=newest&limit=10"` |
+| Search registered tools | `opensea tools search [--query <text>] [--tags <tags>]` | `opensea-get.sh "tools/search" "query=<text>"` |
+| Get a registered tool | `opensea tools get <chain> <registry_addr> <tool_id>` | `opensea-get.sh "tools/<chain>/<registry_address>/<tool_id>"` |
 
 **Endpoint:** `GET /api/v2/tools` ([docs](https://docs.opensea.io/reference/list_tools))
 
@@ -265,6 +265,7 @@ opensea collections get mfers
 | `events` | List marketplace events (sales, transfers, mints, etc.) |
 | `search` | Search collections, NFTs, tokens, and accounts |
 | `tokens` | Get trending tokens, top tokens, and token details |
+| `tools` | Search, list, and inspect registered AI agent tools (ERC-8257) |
 | `accounts` | Get account details |
 
 Global options: `--api-key`, `--chain` (default: ethereum), `--format` (json/table/toon), `--base-url`, `--timeout`, `--verbose`
@@ -295,6 +296,8 @@ const collection = await client.collections.get("mfers")
 const { nfts } = await client.nfts.listByCollection("mfers", { limit: 5 })
 const { listings } = await client.listings.best("mfers", { limit: 10 })
 const results = await client.search.query("mfers", { limit: 5 })
+const { results: tools } = await client.tools.search({ query: "nft" })
+const tool = await client.tools.get("8453", "0xRegistryAddr", "42")
 ```
 
 ## OpenSea MCP Server
@@ -361,6 +364,14 @@ The [OpenSea MCP server](https://mcp.opensea.io) provides direct LLM integration
 | `get_chains` | List supported chains |
 | `search` | AI-powered natural language search |
 | `fetch` | Get full details by entity ID |
+
+### Tool Registry Tools
+
+| MCP Tool | Purpose |
+|----------|---------|
+| `search_tools` | Search registered AI agent tools by name, tags, creator |
+| `get_tool` | Get detailed info for a specific registered tool |
+| `get_wallet_tools` | List NFT-gated tools accessible to a wallet with eligibility status |
 
 ### Auto-resolve for batch GET tools
 
