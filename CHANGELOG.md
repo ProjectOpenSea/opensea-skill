@@ -1,5 +1,11 @@
 # @opensea/skill
 
+## 2.14.0
+
+### Minor Changes
+
+- Remove the ecosystem partner skill suite. Deletes the `ecosystem/` directory (the Alchemy `alchemy-agentic-gateway`, `alchemy-api`, `alchemy-cli`, `alchemy-mcp` skills plus the template, `CONTRIBUTING.md`, and `sync.config.json`), the references-only sync bot (`scripts/sync-ecosystem.ts` + `.github/workflows/sync-ecosystem.yml` and the root `sync-ecosystem` package script), and all ecosystem references from `SKILL.md`, `README.md`, and `AGENTS.md`.
+
 ## 2.13.0
 
 ### Minor Changes

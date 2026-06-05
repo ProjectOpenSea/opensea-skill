@@ -54,12 +54,6 @@ Build, register, and gate AI-callable tool endpoints using the OpenSea Tool Regi
 - **Auth**: Wallet credentials for onchain registration
 - **Entry point**: [`opensea-tool-sdk/SKILL.md`](opensea-tool-sdk/SKILL.md)
 
-## Ecosystem / partner skills
-
-Skills contributed by ecosystem partners. See [`ecosystem/CONTRIBUTING.md`](ecosystem/CONTRIBUTING.md) for conventions and how to add a new partner skill.
-
-No partner skills have been added yet. When partners contribute skills through the normal PR flow, they will appear here.
-
 ## Less-obvious routing
 
 The tree above covers the common cases. These edge cases catch the easy-to-misroute ones:
@@ -119,8 +113,7 @@ opensea/
 ├── opensea-marketplace/SKILL.md
 ├── opensea-swaps/SKILL.md
 ├── opensea-wallet/SKILL.md
-├── opensea-tool-sdk/SKILL.md
-└── ecosystem/...
+└── opensea-tool-sdk/SKILL.md
 ```
 
 Do **not** publish five separate ClawHub slugs.

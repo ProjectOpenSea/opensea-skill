@@ -36,7 +36,3 @@ Always read the sub-skill `SKILL.md` before executing. This router intentionally
 - **Token swaps** (ERC20 to ERC20, cross-chain): `opensea-swaps`
 - **Wallet setup** (before any write operation): `opensea-wallet`
 - **Tool building** (register, gate, monetize AI tools): `opensea-tool-sdk`
-
-## Ecosystem
-
-Partner skills that complement OpenSea's capabilities live in [`ecosystem/`](ecosystem/). See [`ecosystem/CONTRIBUTING.md`](ecosystem/CONTRIBUTING.md) to add one.

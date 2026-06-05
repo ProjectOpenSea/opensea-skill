@@ -47,8 +47,10 @@ Use `opensea-api` for **read-only** operations:
 ## Quick start
 
 ```bash
-# Get an instant free-tier API key (no signup needed)
-export OPENSEA_API_KEY=$(curl -s -X POST https://api.opensea.io/api/v2/auth/keys | jq -r '.api_key')
+# Resolve an API key: reuses your env var / a cached instant key, or fetches a
+# new instant key (no signup) AND saves it to disk for reuse. See
+# "API key resolution" below — always save and reuse a fetched key.
+export OPENSEA_API_KEY=$(scripts/auth/opensea-resolve-key.sh)
 
 # Install the CLI globally (or use npx)
 npm install -g @opensea/cli
@@ -68,6 +70,75 @@ opensea search "cool cats"
 # Get trending tokens
 opensea tokens trending --limit 5
 ```
+
+## API key resolution (read this before your first request)
+
+Every OpenSea request needs `OPENSEA_API_KEY`. If you don't already have a key,
+you can fetch an **instant** free-tier key with no signup. The one rule that
+matters: **once you fetch an instant key, save it to disk and reuse it.** Do not
+re-fetch on every request — instant key creation is rate limited per IP, so a
+second fetch can fail and leave you with no key. The previous successful request
+will not have persisted the key for you.
+
+### The flow (follow these steps in order, every time)
+
+1. **Check the environment first.** If `OPENSEA_API_KEY` is already set and
+   non-empty, use it as-is. This is the path for users who supply their own key
+   — never overwrite or re-fetch it.
+2. **Check disk next.** If no env var, look for a cached key at
+   `~/.opensea/api_key` (override the dir with `$OPENSEA_CONFIG_DIR`). If the
+   file exists and is non-empty, load it into `OPENSEA_API_KEY` and use it.
+3. **Fetch only if missing.** If there is neither an env var nor a cached key,
+   request a new instant key from `POST /api/v2/auth/keys`.
+4. **Save immediately after fetching.** Write the fetched key to
+   `~/.opensea/api_key` (mode `600`) *before* making your API call, so the next
+   step — and every future request — reuses it instead of re-fetching.
+
+The `scripts/auth/opensea-resolve-key.sh` helper does all four steps for you and
+prints the resolved key. **Prefer it over a bare `curl ... /auth/keys` call**,
+which fetches without saving and is exactly what caused keys to be lost:
+
+```bash
+# env var? -> use it. cached key? -> reuse it. otherwise fetch + save to disk.
+export OPENSEA_API_KEY=$(scripts/auth/opensea-resolve-key.sh)
+
+opensea collections get boredapeyachtclub
+```
+
+If you can't use the helper, replicate the same ordered logic explicitly:
+
+```bash
+KEY_FILE="${OPENSEA_CONFIG_DIR:-$HOME/.opensea}/api_key"
+if [ -n "${OPENSEA_API_KEY:-}" ]; then
+  :                                              # 1. env var wins
+elif [ -s "$KEY_FILE" ]; then
+  export OPENSEA_API_KEY=$(cat "$KEY_FILE")      # 2. reuse cached key
+else
+  api_key=$(curl -s -X POST https://api.opensea.io/api/v2/auth/keys | jq -r '.api_key')  # 3. fetch
+  mkdir -p "$(dirname "$KEY_FILE")"
+  (umask 077; printf '%s\n' "$api_key" > "$KEY_FILE")  # 4. SAVE before using it
+  export OPENSEA_API_KEY="$api_key"
+fi
+```
+
+### Edge cases
+
+- **Key already exists (env var or cached file):** reuse it; do not fetch a new
+  one. Re-fetching wastes the per-IP rate limit and can fail.
+- **Key invalid or expired** (instant keys expire after 30 days; a request
+  returns HTTP `401`/`403`): the cached key is stale. Re-fetch and overwrite the
+  cache with `scripts/auth/opensea-resolve-key.sh --force` (or delete
+  `~/.opensea/api_key` and re-run the flow). `--force` never overrides a key
+  supplied via the `OPENSEA_API_KEY` environment variable.
+- **Fetch fails** (HTTP `429` rate limit, or network error): do **not** retry in
+  a tight loop. If you have a cached key, keep using it. Otherwise wait and try
+  again later, or create a full key at
+  [Settings → Developer](https://docs.opensea.io/reference/api-keys). For higher
+  rate limits than the instant free tier, use a full key.
+
+You can also fetch a raw key (JSON response, no persistence) with
+`opensea auth request-key` or `scripts/auth/opensea-auth-request-key.sh` — but if
+you use those, you must save the key yourself per step 4 above.
 
 ## Task guide
 
@@ -100,7 +171,8 @@ opensea tokens trending --limit 5
 | Get token group by slug | `opensea token-groups get <slug>` | `tokens/opensea-token-group.sh <slug>` |
 | Search tokens | `opensea search <query> --types token` | `search_tokens` (MCP) |
 | Check token balances | `get_token_balances` (MCP) | |
-| Request instant API key | `opensea auth request-key` | `auth/opensea-auth-request-key.sh` |
+| Resolve API key (reuse env/cache, else fetch + save) — preferred | `auth/opensea-resolve-key.sh` | see [API key resolution](#api-key-resolution-read-this-before-your-first-request) |
+| Request instant API key (raw JSON, no persistence) | `opensea auth request-key` | `auth/opensea-auth-request-key.sh` |
 
 ### Marketplace queries (read-only)
 
@@ -319,6 +391,8 @@ The [OpenSea MCP server](https://mcp.opensea.io) provides direct LLM integration
 }
 ```
 
+The key can also be supplied as an `Authorization: Bearer <OPENSEA_API_KEY>` header instead of `X-API-KEY`. The MCP handshake and tool discovery work without a key, so an agent with no key can connect, call `get_instant_api_key` to mint a free-tier key, then reconnect with it; all other tools require a key.
+
 ### NFT Tools
 
 | MCP Tool | Purpose |
@@ -364,6 +438,7 @@ The [OpenSea MCP server](https://mcp.opensea.io) provides direct LLM integration
 | `get_chains` | List supported chains |
 | `search` | AI-powered natural language search |
 | `fetch` | Get full details by entity ID |
+| `get_instant_api_key` | Mint a free-tier OpenSea API key with no signup (bootstrap access, then reconnect with the key) |
 
 ### Tool Registry Tools
 

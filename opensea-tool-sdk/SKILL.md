@@ -74,11 +74,26 @@ Canonical v0.2 deployments — identical CREATE2 address on every supported chai
 Search or look up registered tools via the OpenSea REST API. Requires `OPENSEA_API_KEY`.
 
 ```bash
-# Get an instant free-tier API key (no signup needed — 60/min read, 5/min write, 30-day expiry)
-export OPENSEA_API_KEY=$(curl -s -X POST https://api.opensea.io/api/v2/auth/keys | jq -r '.api_key')
+# Reuse OPENSEA_API_KEY if already set; otherwise fetch an instant free-tier key
+# (no signup — 60/min read, 5/min write, 30-day expiry) and SAVE it for reuse.
+if [ -z "${OPENSEA_API_KEY:-}" ]; then
+  KEY_FILE="${OPENSEA_CONFIG_DIR:-$HOME/.opensea}/api_key"
+  if [ -s "$KEY_FILE" ]; then
+    export OPENSEA_API_KEY=$(cat "$KEY_FILE")          # reuse cached key
+  else
+    api_key=$(curl -s -X POST https://api.opensea.io/api/v2/auth/keys | jq -r '.api_key')
+    mkdir -p "$(dirname "$KEY_FILE")"
+    (umask 077; printf '%s\n' "$api_key" > "$KEY_FILE")  # save before using it
+    export OPENSEA_API_KEY="$api_key"
+  fi
+fi
 ```
 
-For higher rate limits, create a full key at [Settings → Developer](https://docs.opensea.io/reference/api-keys).
+Instant key creation is rate limited per IP, so always save a fetched key and
+reuse it rather than re-fetching. The `opensea-api` skill ships an
+`auth/opensea-resolve-key.sh` helper that does this (env → cached file → fetch +
+save); see its "API key resolution" section. For higher rate limits, create a
+full key at [Settings → Developer](https://docs.opensea.io/reference/api-keys).
 
 **List tools:** `GET /api/v2/tools` ([docs](https://docs.opensea.io/reference/list_tools))
 
