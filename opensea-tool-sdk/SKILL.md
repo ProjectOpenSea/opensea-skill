@@ -30,7 +30,7 @@ Use `opensea-tool-sdk` when you need to:
 - Scaffold an AI-callable tool endpoint (HTTPS, JSON Schema, `.well-known` manifest) for Vercel, Cloudflare, or Express
 - Register a tool onchain on the Base ToolRegistry so other agents can discover it
 - Gate access via x402 pay-per-call (USDC) or predicates (ERC-721/ERC-1155 ownership, subscriptions, trait gating, ERC-20 balance, composites)
-- Call a gated tool: EIP-3009 auth (`eip3009AuthenticatedFetch`), 402 payments (`paidFetch`), or both (`paidAuthenticatedFetch`)
+- Call a gated or paid tool: 402 payments (`paidFetch`), predicate-gated auth (`eip3009AuthenticatedFetch`), or both (`paidAuthenticatedFetch`)
 - Search and discover registered tools via the OpenSea REST API
 
 ## When NOT to use this skill (`scope_out`, handoff)
@@ -339,8 +339,8 @@ const account = await createBankrAccount("your-bankr-api-key")
 |------|---------|--------|
 | 200 | Success | Parse the JSON body per the manifest's `outputs` schema |
 | 400 | Invalid input | Fix request body to match the manifest's `inputs` schema |
-| 401 | Missing/invalid auth | Sign an EIP-3009 zero-value authorization and include `Authorization: EIP-3009 <token>` |
-| 402 | Payment required | Read `body.accepts[0]` for payment requirements, sign and retry with `X-Payment` |
+| 401 | Missing/invalid auth (no `operatorAddress`) | Sign an EIP-3009 zero-value authorization and include `Authorization: EIP-3009 <token>` (legacy) |
+| 402 | Payment / identity required | Read `body.accepts[0]` for `PaymentRequirements`. For predicate gates (`maxAmountRequired: "0"`), sign a zero-value `X-Payment` and retry. For x402 paywalls, sign and pay the requested amount. |
 | 403 | Access denied | Inspect `body.predicate` to discover what's needed; acquire the required token/subscription |
 | 405 | Method not allowed | Use POST |
 | 500 | Internal tool error | Retry or contact the tool creator |
@@ -360,7 +360,7 @@ const account = await createBankrAccount("your-bankr-api-key")
 | `verify` | Verify a manifest against its onchain hash |
 | `deploy` | Deploy a tool to Vercel |
 | `auth` | Call a predicate-gated tool (EIP-3009) |
-| `pay` | Call an x402-paid tool (USDC), with optional `--auth` for predicate-gated endpoints |
+| `pay` | Call an x402-paid or gated tool (probes for 402, signs X-Payment, retries) |
 | `smoke` | Auto-detect gate type and call |
 | `dry-run-gate` | Simulate an x402 gate check locally |
 | `dry-run-predicate-gate` | Simulate a predicate gate check locally |
@@ -377,45 +377,42 @@ All CLI commands accept `--wallet-provider privy|turnkey|fireblocks|private-key`
 
 ## 7. Usage Tracking
 
-Tool-sdk supports usage tracking via the `onInvocation` callback on `createToolHandler`. This fires after every successful invocation (post-settle, pre-response) with an `InvocationEvent` containing caller identity, payment status, and timing.
+Tool-sdk reports usage to OpenSea's analytics endpoint (`POST /api/v2/tools/usage`) for each successful call. It reports the **verified caller**: the on-chain payer for paid x402 calls, or the caller's own EIP-3009 authorization for `predicateGate`-authenticated calls. A tool server never signs on the caller's behalf.
 
-### createEip3009UsageReporter (recommended)
+### usageReporting (recommended)
 
-`createEip3009UsageReporter` is the recommended `onInvocation` implementation. It reports tool usage via EIP-3009 zero-value `TransferWithAuthorization` signatures:
+Pass `usageReporting` to `createToolHandler` and it runs the reporter at the very end of the lifecycle, awaited before the response returns (bounded by `timeoutMs`, default 5s) so it completes even on serverless runtimes that freeze on response flush. Failures are logged, never fatal. No `walletClient` is needed server-side:
 
-- **Free / gated calls**: signs a zero-value authorization proving the operator controls the wallet, and POSTs with `verification_type: "eip3009_authorization"`.
-- **Paid x402 calls**: POSTs with `verification_type: "x402_settlement"` and the settlement tx hash — no additional signature needed.
+- **Paid x402 calls** → `verification_type: "x402_settlement"` with the payer address and settlement tx hash. The backend verifies the tx directly.
+- **EIP-3009-authenticated calls** (behind `predicateGate`) → `verification_type: "eip3009_authorization"`, **forwarding the caller's original signed authorization**. The caller already signed it to authenticate, so the reported identity is the real caller.
 
 ```typescript
-import { createToolHandler, createEip3009UsageReporter } from "@opensea/tool-sdk"
-import { createWalletClient, http } from "viem"
-import { privateKeyToAccount } from "viem/accounts"
-import { base } from "viem/chains"
-
-const walletClient = createWalletClient({
-  account: privateKeyToAccount("0x..."),
-  chain: base,
-  transport: http(),
-})
+import { createToolHandler } from "@opensea/tool-sdk"
 
 export const toolHandler = createToolHandler({
   manifest,
   inputSchema: InputSchema,
   outputSchema: OutputSchema,
-  onInvocation: createEip3009UsageReporter({
-    walletClient,
-    chainId: 8453,
-    // optional: aggregatorUrl, tokenAddress, toolSlug, timeoutMs
-  }),
+  gates: [/* x402 paywall and/or predicateGate */],
+  usageReporting: {
+    chainId: 8453,                // EIP-712 USDC domain / x402 chain_id fallback
+    toolChainId: 8453,            // ERC-8257: chain where the tool is registered
+    toolRegistryAddress: "0x...", // ERC-8257: registry contract
+    toolOnchainId: 42,            // ERC-8257: tool ID in the registry
+    apiKey: process.env.OPENSEA_API_KEY!,
+    // optional: aggregatorUrl, tokenAddress, timeoutMs
+  },
   handler: async (input) => {
     return { result: `Processed: ${input.query}` }
   },
 })
 ```
 
+Reporting is always the service's responsibility (authenticated by `apiKey`), never the caller's; there is no caller self-reporting path. To report from a custom pipeline instead of the handler, use the standalone `createEip3009UsageReporter` / `createX402UsageReporter` (see the tool-sdk README "Usage Reporting" section).
+
 ### onInvocation callback
 
-You can also provide a custom `onInvocation` callback for bespoke analytics:
+You can also provide a custom `onInvocation` callback for bespoke analytics. It fires after the handler succeeds and settles, before the response is returned, with an `InvocationEvent` containing caller identity, payment status, and timing:
 
 ```typescript
 import { createToolHandler } from "@opensea/tool-sdk"
@@ -531,13 +528,13 @@ PRIVATE_KEY=0x... RPC_URL=https://mainnet.base.org \
   --body '{"query": "hello"}'
 ```
 
-### Example F: NFT-gated + paid tool (both gates)
+### Example F: NFT-gated + paid tool (combined gate, single round trip)
 
 ```bash
-# Server: add both predicateGate and paywall.gate (see references/predicate-gating.md)
-# Call via CLI:
+# Server: use paidPredicateGate (see references/predicate-gating.md)
+# Single 402: identity proof + payment in one X-Payment signature
 PRIVATE_KEY=0x... RPC_URL=https://mainnet.base.org \
-  npx @opensea/tool-sdk pay --auth \
+  npx @opensea/tool-sdk pay \
   https://my-tool.vercel.app/api \
   --body '{"query": "hello"}'
 ```
@@ -545,6 +542,6 @@ PRIVATE_KEY=0x... RPC_URL=https://mainnet.base.org \
 ## References
 
 - [`references/x402.md`](references/x402.md): pay-per-call protocol, server-side paywall, `paidFetch`
-- [`references/predicate-gating.md`](references/predicate-gating.md): EIP-3009-based access control, combined gates
+- [`references/predicate-gating.md`](references/predicate-gating.md): 402-based predicate access control (zero-value `X-Payment`), combined gates
 - [`references/known-predicates.md`](references/known-predicates.md): deployed predicate contracts and SDK helpers
 - [Tool SDK GitHub](https://github.com/ProjectOpenSea/tool-sdk)

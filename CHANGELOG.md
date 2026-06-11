@@ -1,5 +1,12 @@
 # @opensea/skill
 
+## 2.15.0
+
+### Minor Changes
+
+- ef89be8: `opensea-api`: add `references/authentication.md` covering SIWE wallet authentication — getting a token via the SDK (`OpenSeaAuth`) or the CLI `auth` commands (login, status, refresh, revoke, tokens, scopes), available scopes, and manual cURL flows. Document auth scopes in `references/rest-api.md`.
+- d4dff85: `opensea-tool-sdk`: update SKILL.md and `references/predicate-gating.md` for the unified 402 + X-Payment flow and the new `paidPredicateGate` (single 402 round trip for combined identity + payment). Remove the `--auth eip3009` flag from `pay` command docs.
+
 ## 2.14.0
 
 ### Minor Changes

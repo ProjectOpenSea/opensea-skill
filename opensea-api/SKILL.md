@@ -173,6 +173,13 @@ you use those, you must save the key yourself per step 4 above.
 | Check token balances | `get_token_balances` (MCP) | |
 | Resolve API key (reuse env/cache, else fetch + save) — preferred | `auth/opensea-resolve-key.sh` | see [API key resolution](#api-key-resolution-read-this-before-your-first-request) |
 | Request instant API key (raw JSON, no persistence) | `opensea auth request-key` | `auth/opensea-auth-request-key.sh` |
+| Authenticate with SIWE | `opensea auth login --private-key $KEY [--scopes <scopes>]` | See `references/authentication.md` |
+| Check auth status | `opensea auth status` | |
+| Refresh auth token | `opensea auth refresh` | |
+| Revoke auth token | `opensea auth revoke [--address <addr>]` | |
+| List stored tokens | `opensea auth tokens` | |
+| List available scopes | `opensea auth scopes` | |
+| Clear all tokens | `opensea auth clear` | |
 
 ### Marketplace queries (read-only)
 
