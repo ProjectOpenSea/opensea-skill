@@ -1,5 +1,11 @@
 # @opensea/skill
 
+## 2.15.1
+
+### Patch Changes
+
+- ef12e56: `opensea-tool-sdk`: correct the manifest-hashing guidance. The manifest is hashed as served (ERC-8257 §2, the full JCS document including namespaced extension fields), not the schema-stripped subset. Documents the open schema and the bare-extension-key warning.
+
 ## 2.15.0
 
 ### Minor Changes

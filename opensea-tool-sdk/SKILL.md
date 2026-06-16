@@ -375,6 +375,8 @@ const account = await createBankrAccount("your-bankr-api-key")
 
 All CLI commands accept `--wallet-provider privy|turnkey|fireblocks|private-key` or auto-detect from env vars.
 
+**The manifest is hashed as served (ERC-8257 §2).** The registry hash is the JCS keccak256 of the full manifest document, including any namespaced extension fields. Nothing is stripped and no defaults are injected before hashing, so a hash computed by any RFC 8785 implementation agrees with the SDK and the backend. The schema is open: extension fields MUST be namespaced (reverse-DNS, e.g. `io.opensea.paymentHint`, or the legacy `x-` prefix); `validate`, `hash`, and `register` warn about bare un-namespaced extension fields, since those risk colliding with future normative fields.
+
 ## 7. Usage Tracking
 
 Tool-sdk reports usage to OpenSea's analytics endpoint (`POST /api/v2/tools/usage`) for each successful call. It reports the **verified caller**: the on-chain payer for paid x402 calls, or the caller's own EIP-3009 authorization for `predicateGate`-authenticated calls. A tool server never signs on the caller's behalf.
