@@ -340,9 +340,9 @@ const account = await createBankrAccount("your-bankr-api-key")
 | 200 | Success | Parse the JSON body per the manifest's `outputs` schema |
 | 400 | Invalid input | Fix request body to match the manifest's `inputs` schema |
 | 401 | Missing/invalid auth (no `operatorAddress`) | Sign an EIP-3009 zero-value authorization and include `Authorization: EIP-3009 <token>` (legacy) |
-| 402 | Payment / identity required | Read `body.accepts[0]` for `PaymentRequirements`. For predicate gates (`maxAmountRequired: "0"`), sign a zero-value `X-Payment` and retry. For x402 paywalls, sign and pay the requested amount. |
+| 402 | Payment / identity required | The challenge is in `body.accepts[0]` (x402 v1) or the `PAYMENT-REQUIRED` response header (v2). For predicate gates (amount `"0"`), sign a zero-value authorization; for x402 paywalls, sign the requested amount. Send it back in `X-PAYMENT` (v1) or `PAYMENT-SIGNATURE` (v2) — `pay`/`paidFetch` choose the right header automatically. |
 | 403 | Access denied | Inspect `body.predicate` to discover what's needed; acquire the required token/subscription |
-| 405 | Method not allowed | Use POST |
+| 405 | Method not allowed | Use the verb the tool expects. `pay` auto-retries as GET when an unspecified-method POST probe returns 404/405; otherwise pass `--method <verb>`. |
 | 500 | Internal tool error | Retry or contact the tool creator |
 | 502 | Predicate/facilitator error | The upstream predicate or payment facilitator misbehaved; retry later |
 
@@ -360,7 +360,7 @@ const account = await createBankrAccount("your-bankr-api-key")
 | `verify` | Verify a manifest against its onchain hash |
 | `deploy` | Deploy a tool to Vercel |
 | `auth` | Call a predicate-gated tool (EIP-3009) |
-| `pay` | Call an x402-paid or gated tool (probes for 402, signs X-Payment, retries) |
+| `pay` | Call an x402-paid or gated tool (probes for 402, signs, retries). Handles x402 v1/v2 and GET tools. Flags: `--method <verb>` (defaults POST; bodyless verbs put params in the query string; auto-falls back to GET on a 404/405 POST probe), `--max-amount <baseUnits>` spend cap (default 10 USDC, `unlimited` to disable), `--body`, `--wallet-provider` |
 | `smoke` | Auto-detect gate type and call |
 | `dry-run-gate` | Simulate an x402 gate check locally |
 | `dry-run-predicate-gate` | Simulate a predicate gate check locally |

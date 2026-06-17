@@ -1,5 +1,11 @@
 # @opensea/skill
 
+## 2.15.2
+
+### Patch Changes
+
+- 6f7fd26: `opensea-tool-sdk`: document x402 v2 and GET tool calling. SKILL.md and the references now cover the `pay --method` flag, the GET auto-fallback, and the version-correct payment header (`X-PAYMENT` for v1, `PAYMENT-SIGNATURE` for v2).
+
 ## 2.15.1
 
 ### Patch Changes
