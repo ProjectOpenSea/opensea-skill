@@ -1,5 +1,11 @@
 # @opensea/skill
 
+## 2.15.3
+
+### Patch Changes
+
+- d5fc6c0: `opensea-tool-sdk`: document the single-endpoint and origin-binding constraints. SKILL.md now states that a tool serves exactly one endpoint and that the manifest URL and declared endpoint must share the same origin (subdomains count as different origins).
+
 ## 2.15.2
 
 ### Patch Changes
