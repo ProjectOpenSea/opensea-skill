@@ -48,13 +48,24 @@ This SDK is for tool *providers and consumers*. To query OpenSea marketplace dat
 
 | Term | Meaning |
 |------|---------|
-| **Tool** | An HTTPS endpoint with a JSON Schema interface, discoverable via `/.well-known/ai-tool/<slug>.json` |
+| **Tool** | A single REST API endpoint with a JSON Schema interface, discoverable via `/.well-known/ai-tool/<slug>.json`. Each tool should perform one focused operation. |
 | **Manifest** | JCS-canonicalized JSON describing the tool's name, endpoint, inputs, outputs, pricing, and access policy |
 | **ToolRegistry** | Onchain contract (Base) where tools are registered with a manifest hash and optional access predicate |
 | **Access Predicate** | An `IAccessPredicate` contract that gates who can invoke a tool (NFT ownership, subscriptions, trait gating, ERC-20 balance, composites) |
 | **x402** | HTTP 402-based pay-per-call protocol (caller signs a USDC `TransferWithAuthorization`; server settles after execution) |
 | **EIP-3009 auth** | Zero-value USDC `TransferWithAuthorization` signature used to authenticate callers for predicate-gated tools |
 | **Facilitator** | Third-party service that verifies and settles x402 payments (PayAI or Coinbase CDP) |
+
+## Important Constraints
+
+**One tool = one endpoint.** Each tool registration represents a single REST API endpoint with a singular focus and intention. The endpoint URL in your manifest should point to a specific API route that performs one well-defined operation (e.g., `POST /api/price-check` or `POST /api/translate`), not a generic HTML page, documentation site, or multi-purpose URL. Think of each registered tool the same way you think of an individual REST API endpoint. It should accept a specific input, perform a specific action, and return a specific output.
+
+**Origin binding: manifest and endpoint must share the exact same origin.** Your `.well-known/ai-tool/<slug>.json` manifest and your tool's invocation endpoint must be served from the exact same origin (identical scheme, host, and port per [RFC 6454](https://datatracker.ietf.org/doc/html/rfc6454)). **Subdomains do not count as the same origin.** `example.com` and `api.example.com` are different origins. This is enforced at registration time. If the manifest origin and endpoint origin don't match exactly, the tool will be rejected and marked as deregistered.
+
+- Valid: manifest at `https://my-tool.example.com/.well-known/ai-tool/my-tool.json`, endpoint at `https://my-tool.example.com/api/my-tool`
+- Invalid: manifest at `https://example.com/.well-known/ai-tool/my-tool.json`, endpoint at `https://api.example.com/api/my-tool`
+
+If you need your API on a subdomain, serve the manifest from that same subdomain (e.g., both on `api.example.com`).
 
 ## Deployed Contracts (Ethereum mainnet, Base, Shape, Abstract)
 
