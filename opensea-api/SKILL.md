@@ -252,6 +252,9 @@ Event types: `sale`, `transfer`, `mint`, `listing`, `offer`, `trait_offer`, `col
 |------|------------|-------------|
 | Get account details | `opensea accounts get <address>` | |
 | Resolve ENS/username/address | `opensea accounts resolve <identifier>` | `accounts/opensea-resolve-account.sh <identifier>` |
+| Get wallet trading P&L | `opensea accounts pnl <address>` | `accounts/opensea-account-pnl.sh <address>` |
+| Get closed (realized) positions | `opensea accounts closed-positions <address> [--limit <n>] [--sort-by <field>] [--next <cursor>]` | `accounts/opensea-account-closed-positions.sh <address>` |
+| Get position token transfers | `opensea accounts token-transfers <address> --contract-address <addr> --chain <chain>` | `accounts/opensea-account-token-transfers.sh <address> <contract_address> <chain>` |
 
 ### Tool discovery [Beta]
 
@@ -567,6 +570,9 @@ The `scripts/` directory contains shell scripts that wrap the OpenSea REST API d
 | `accounts/opensea-account-listings.sh` | Active listings for an account |
 | `accounts/opensea-account-favorites.sh` | Items favorited by an account |
 | `accounts/opensea-account-collections.sh` | Collections owned by an account |
+| `accounts/opensea-account-pnl.sh` | Aggregated trading P&L (realized + unrealized) for a wallet |
+| `accounts/opensea-account-closed-positions.sh` | Closed (realized) trading positions for a wallet |
+| `accounts/opensea-account-token-transfers.sh` | Token transfers contributing to a wallet's position in a currency |
 
 ### Marketplace Query Scripts
 

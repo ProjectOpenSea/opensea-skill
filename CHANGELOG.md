@@ -1,5 +1,13 @@
 # @opensea/skill
 
+## 2.16.0
+
+### Minor Changes
+
+- `opensea-api`: add wallet trading P&L scripts and docs — `opensea-account-pnl.sh` (aggregated realized + unrealized P&L), `opensea-account-closed-positions.sh` (closed/realized positions), and `opensea-account-token-transfers.sh` (token transfers behind a currency position). Documents the matching `accounts pnl`, `accounts closed-positions`, and `accounts token-transfers` CLI commands and REST endpoints.
+- `opensea-tool-sdk`: unify the predicate-gating docs on the 402 + X-Payment auth path. SKILL.md and `references/predicate-gating.md` now document the required `operatorAddress` and drop the removed `Authorization: EIP-3009` and SIWE header flows.
+- `opensea-tool-sdk`: add Monad (chain 143) to the deployed-contracts and known-predicates docs.
+
 ## 2.15.3
 
 ### Patch Changes

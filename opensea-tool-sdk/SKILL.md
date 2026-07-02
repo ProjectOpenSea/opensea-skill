@@ -67,7 +67,7 @@ This SDK is for tool *providers and consumers*. To query OpenSea marketplace dat
 
 If you need your API on a subdomain, serve the manifest from that same subdomain (e.g., both on `api.example.com`).
 
-## Deployed Contracts (Ethereum mainnet, Base, Shape, Abstract)
+## Deployed Contracts (Ethereum mainnet, Base, Shape, Abstract, Monad)
 
 Canonical v0.2 deployments — identical CREATE2 address on every supported chain.
 
@@ -350,7 +350,7 @@ const account = await createBankrAccount("your-bankr-api-key")
 |------|---------|--------|
 | 200 | Success | Parse the JSON body per the manifest's `outputs` schema |
 | 400 | Invalid input | Fix request body to match the manifest's `inputs` schema |
-| 401 | Missing/invalid auth (no `operatorAddress`) | Sign an EIP-3009 zero-value authorization and include `Authorization: EIP-3009 <token>` (legacy) |
+| 401 | Invalid or expired X-Payment signature | Re-sign a fresh zero-value EIP-3009 authorization and retry with the `X-Payment` header |
 | 402 | Payment / identity required | The challenge is in `body.accepts[0]` (x402 v1) or the `PAYMENT-REQUIRED` response header (v2). For predicate gates (amount `"0"`), sign a zero-value authorization; for x402 paywalls, sign the requested amount. Send it back in `X-PAYMENT` (v1) or `PAYMENT-SIGNATURE` (v2) — `pay`/`paidFetch` choose the right header automatically. |
 | 403 | Access denied | Inspect `body.predicate` to discover what's needed; acquire the required token/subscription |
 | 405 | Method not allowed | Use the verb the tool expects. `pay` auto-retries as GET when an unspecified-method POST probe returns 404/405; otherwise pass `--method <verb>`. |

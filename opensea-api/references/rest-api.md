@@ -121,6 +121,9 @@ List endpoints support cursor-based pagination:
 | `/api/v2/account/{address}/listings` | GET | Active listings for an account |
 | `/api/v2/account/{address}/favorites` | GET | Items favorited by an account (requires `read:favorites` scope + Bearer token) |
 | `/api/v2/account/{address}/collections` | GET | Collections owned by an account |
+| `/api/v2/account/{address}/pnl` | GET | Aggregated trading P&L (realized + unrealized) for a wallet |
+| `/api/v2/account/{address}/pnl/closed-positions` | GET | Closed (realized) trading positions for a wallet |
+| `/api/v2/account/{address}/pnl/token-transfers` | GET | Token transfers contributing to a wallet's position in a currency (requires `contract_address` + `chain`) |
 
 ### Tokens
 
