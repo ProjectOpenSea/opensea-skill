@@ -1,6 +1,6 @@
 # Known Predicates
 
-These predicates are deployed on Ethereum mainnet, Base, Shape, Abstract, and Monad and available for any tool to use. They are multi-tenant: one deployment serves all tools, configured per `toolId`.
+These predicates are deployed on Ethereum mainnet, Base, Shape, Abstract, Monad, and Robinhood Chain and available for any tool to use. They are multi-tenant: one deployment serves all tools, configured per `toolId`.
 
 ## ERC721OwnerPredicate
 
@@ -283,7 +283,7 @@ if (decoded.type === "erc7496Trait") {
 
 ## ERC20BalancePredicate
 
-Gates access based on holding a configurable minimum balance of an ERC-20 token. Multi-tenant: one deployment per chain, configured per `toolId`. Canonical deployment: `0x1a834FC48B5f6e119c62C12a98b32137bCFA77cD` (Ethereum mainnet, Base, Shape, Abstract, Monad). The CLI commands default to this address; pass `--predicate-address` only to override it.
+Gates access based on holding a configurable minimum balance of an ERC-20 token. Multi-tenant: one deployment per chain, configured per `toolId`. Canonical deployment: `0x1a834FC48B5f6e119c62C12a98b32137bCFA77cD` (Ethereum mainnet, Base, Shape, Abstract, Monad, Robinhood Chain). The CLI commands default to this address; pass `--predicate-address` only to override it.
 
 | Field | Value |
 |-------|-------|

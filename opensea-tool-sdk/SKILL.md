@@ -67,7 +67,7 @@ This SDK is for tool *providers and consumers*. To query OpenSea marketplace dat
 
 If you need your API on a subdomain, serve the manifest from that same subdomain (e.g., both on `api.example.com`).
 
-## Deployed Contracts (Ethereum mainnet, Base, Shape, Abstract, Monad)
+## Deployed Contracts (Ethereum mainnet, Base, Shape, Abstract, Monad, Robinhood Chain)
 
 Canonical v0.2 deployments — identical CREATE2 address on every supported chain.
 

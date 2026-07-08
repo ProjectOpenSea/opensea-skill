@@ -1,5 +1,11 @@
 # @opensea/skill
 
+## 2.17.0
+
+### Minor Changes
+
+- f1db520: `opensea-tool-sdk`: add Robinhood Chain (4663) to the deployed-contracts and known-predicates docs.
+
 ## 2.16.0
 
 ### Minor Changes
