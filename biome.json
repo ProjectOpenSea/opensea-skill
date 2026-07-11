@@ -12,6 +12,9 @@
       "**/*.json",
       "!**/.claude",
       "!**/typechain",
+      "!**/dist",
+      "!**/coverage",
+      "!**/.vercel",
       "!**/package-lock.json",
       "!**/src/generated.ts",
       "!**/src/*-generated.ts"

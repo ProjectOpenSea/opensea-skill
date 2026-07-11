@@ -88,20 +88,32 @@ curl -X POST https://auth.opensea.io/api/refresh \
 | Scope | Description |
 |-------|-------------|
 | `read:eligibility` | Check drop eligibility for the authenticated wallet |
-| `write:orders` | Cancel orders on behalf of the authenticated wallet |
-| `read:favorites` | Read favorite items for the authenticated wallet |
-| `read:rewards` | Read rewards data for the authenticated wallet |
+| `read:favorites` | View favorites and watchlists for the authenticated account |
+| `write:favorites` | Add and remove favorites and watchlist entries |
+| `write:orders` | Cancel orders on behalf of the authenticated account |
+| `write:drops` | Manage Creator Studio drops |
+| `write:collections` | Modify collection metadata, visibility, and images |
+| `write:profile` | Modify profile settings, images, username, and shelves |
+| `write:wallets` | Link and unlink wallets |
 
 ## Auth-Gated Endpoints
 
 | Endpoint | Method | Required Scope |
 |----------|--------|---------------|
-| `/api/v2/drops/eligibility/{slug}` | GET | `read:eligibility` |
-| `/api/v2/orders/{chain}/seaport/cancel` | POST | `write:orders` |
-| `/api/v2/accounts/{address}/favorites` | GET | `read:favorites` |
-| `/api/v2/accounts/{address}/rewards` | GET | `read:rewards` |
+| `/api/v2/drops/{slug}/eligibility` | GET | `read:eligibility` |
+| `/api/v2/account/{address}/favorites` | GET | `read:favorites` |
+| `/api/v2/account/{address}/token_watchlist` | GET | `read:favorites` |
+| `/api/v2/account/{address}/perpetual_watchlist` | GET | `read:favorites` |
+| `/api/v2/watchlist` | POST, DELETE | `write:favorites` |
+| `/api/v2/orders/chain/{chain}/protocol/{protocol_address}/{order_hash}/cancel` | POST | `write:orders` |
+| `/api/v2/drops/{slug}/*` | POST, PUT, PATCH | `write:drops` |
+| `/api/v2/collections/{slug}/*` | POST, PATCH | `write:collections` |
+| `/api/v2/profile/*` | POST, PATCH, DELETE | `write:profile` |
+| `/api/v2/accounts/wallets/*` | POST, DELETE | `write:wallets` |
 
 All auth-gated endpoints also require the `X-API-KEY` header.
+Run `opensea auth scopes` for the generated current scope metadata and endpoint
+mapping.
 
 ## Auth Server Endpoints
 

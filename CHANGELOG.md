@@ -1,5 +1,12 @@
 # @opensea/skill
 
+## 2.17.1
+
+### Patch Changes
+
+- 4bef9a5: `opensea-api`: update wallet authentication guidance to the canonical eight-scope API registry, remove the deferred `read:rewards` scope, and document scoped endpoint groups.
+- ee7cc56: Align the `opensea-tool-sdk` destination with the other rows in the README decision tree.
+
 ## 2.17.0
 
 ### Minor Changes

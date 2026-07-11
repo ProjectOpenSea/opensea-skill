@@ -14,7 +14,7 @@ Want to use OpenSea?
 ├── Buy/sell NFTs (listings, offers, fulfillment) ───────── opensea-marketplace
 ├── Swap ERC20 tokens (DEX aggregator) ──────────────────── opensea-swaps
 ├── Set up wallet signing for transactions ──────────────── opensea-wallet
-└── Build/register/gate AI agent tools (ERC-8257) ────── opensea-tool-sdk
+└── Build/register/gate AI agent tools (ERC-8257) ───────── opensea-tool-sdk
 ```
 
 ## Skills
