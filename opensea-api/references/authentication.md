@@ -1,160 +1,105 @@
 # Authentication Reference
 
-## Overview
+OpenSea uses two credentials:
 
-OpenSea API supports two authentication layers:
+| Credential | Header | What it identifies |
+|---|---|---|
+| API key | `X-API-KEY: <key>` | Your application |
+| Scoped wallet token | `Authorization: Bearer <token>` | A wallet and its allowed actions |
 
-| Layer | Header | Purpose |
-|-------|--------|---------|
-| API Key | `X-API-KEY: <key>` | App identity — required for all requests |
-| Bearer Token | `Authorization: Bearer <token>` | Wallet identity — required for wallet-specific endpoints |
+Wallet-specific endpoints need both headers. Request only the scopes required for the task.
 
-API keys identify your application. Bearer tokens prove wallet ownership via SIWE (Sign-In With Ethereum) and grant access to scoped, wallet-specific operations.
+## Fastest path for agents
 
-## Getting a Token
-
-### Using opensea-js
-
-```typescript
-import { OpenSeaAuth } from "@opensea/sdk"
-
-const auth = new OpenSeaAuth({
-  authBaseUrl: "https://auth.opensea.io", // default
-})
-
-// Authenticate with a signer (ethers or viem)
-const token = await auth.authenticate(signer, {
-  scopes: ["read:eligibility", "write:orders"],
-})
-// token = { accessToken, refreshToken, expiresAt, scopes }
-
-// Auto-refresh before expiry
-const freshToken = await auth.getValidToken()
-
-// Revoke when done
-await auth.revoke(token.accessToken)
-```
-
-### Using opensea-cli
+Set the API key and private key in the environment, then let the CLI handle SIWE, scoped-token creation, and exchange:
 
 ```bash
-# Login with private key
-opensea auth login --private-key $WALLET_KEY --scopes read:eligibility,write:orders
+export OPENSEA_API_KEY="..."
+export OPENSEA_PRIVATE_KEY="..."
 
-# Check token status
+opensea auth login --scopes read:eligibility,write:wallets
 opensea auth status
-
-# Force refresh
-opensea auth refresh
-
-# Revoke
-opensea auth revoke
-
-# List all stored tokens
-opensea auth tokens
-
-# List available scopes
-opensea auth scopes
 ```
 
-Tokens are stored in `~/.opensea/auth.json` with `0600` permissions.
+The CLI stores credentials in `~/.opensea/auth.json` with mode `0600`. The private key is used locally to sign the SIWE message and is not stored there.
 
-### Manual (cURL)
+Refresh the short-lived JWT by exchanging the stored scoped token again:
 
 ```bash
-# 1. Get a nonce
-NONCE=$(curl -s https://auth.opensea.io/api/nonce | jq -r '.nonce')
-
-# 2. Build SIWE message and sign it (app-specific)
-
-# 3. Exchange signature for token
-curl -X POST https://auth.opensea.io/api/token \
-  -H "Content-Type: application/json" \
-  -d '{"message": "<siwe_message>", "signature": "<signature>"}'
-
-# 4. Use token in requests
-curl https://api.opensea.io/api/v2/drops/eligibility/my-drop \
-  -H "X-API-KEY: $OPENSEA_API_KEY" \
-  -H "Authorization: Bearer $ACCESS_TOKEN"
-
-# 5. Refresh before expiry
-curl -X POST https://auth.opensea.io/api/refresh \
-  -H "Content-Type: application/json" \
-  -d '{"refresh_token": "<refresh_token>"}'
+opensea auth refresh
 ```
+
+Revoke the scoped token and remove the local credential when the task is complete:
+
+```bash
+opensea auth revoke
+```
+
+## Discover the API after login
+
+The live OpenAPI document is the simplest way for an agent to discover request and response shapes:
+
+```text
+https://api.opensea.io/api/v2/openapi.json
+```
+
+Use the operation's declared scope and send both credentials:
+
+```bash
+curl "https://api.opensea.io/api/v2/drops/example/eligibility" \
+  -H "X-API-KEY: $OPENSEA_API_KEY" \
+  -H "Authorization: Bearer $OPENSEA_AUTH_TOKEN"
+```
+
+## Manual token flow
+
+Use this flow when the CLI is unavailable:
+
+1. `POST /api/v2/auth/siwe/nonce` to obtain a single-use nonce.
+2. Build and sign the exact SIWE message locally with the wallet private key.
+3. `POST /api/v2/auth/siwe/verify` with the parsed message, signature, and `chainArch`.
+4. Keep the session cookies returned by verification.
+5. `POST /api/v2/auth/tokens` with those cookies, a label, the minimal scope list, and `expiresInDays`.
+6. `POST /api/v2/auth/tokens/exchange` with the scoped token and `subjectTokenType: "ACCESS_TOKEN"`.
+7. Use the returned `accessToken` as the Bearer token.
+
+The scoped token is the durable credential. Keep it secret and use it to mint replacement short-lived JWTs. Revoke it with `DELETE /api/v2/auth/tokens/{id}` when finished.
+
+## Wallet linking
+
+Wallet linking uses the same API nonce endpoint. The authenticated account signs a fresh SIWX message with the wallet being linked:
+
+```bash
+export OPENSEA_AUTH_TOKEN="..."
+export OPENSEA_API_KEY="..."
+export OPENSEA_PRIVATE_KEY="..." # private key for the wallet being linked
+
+opensea auth link-wallet --chain-arch EVM --chain-id 1
+```
+
+The Bearer token needs `write:wallets`. Unlinking also needs `write:wallets`; use the wallet DELETE operation described by the live OpenAPI document.
 
 ## Scopes
 
 | Scope | Description |
-|-------|-------------|
+|---|---|
 | `read:eligibility` | Check drop eligibility for the authenticated wallet |
 | `read:favorites` | View favorites and watchlists for the authenticated account |
 | `write:favorites` | Add and remove favorites and watchlist entries |
-| `write:orders` | Cancel orders on behalf of the authenticated account |
+| `write:orders` | Cancel orders for the authenticated account |
 | `write:drops` | Manage Creator Studio drops |
 | `write:collections` | Modify collection metadata, visibility, and images |
 | `write:profile` | Modify profile settings, images, username, and shelves |
 | `write:wallets` | Link and unlink wallets |
 
-## Auth-Gated Endpoints
+Run `opensea auth scopes` for the generated current scope metadata.
 
-| Endpoint | Method | Required Scope |
-|----------|--------|---------------|
-| `/api/v2/drops/{slug}/eligibility` | GET | `read:eligibility` |
-| `/api/v2/account/{address}/favorites` | GET | `read:favorites` |
-| `/api/v2/account/{address}/token_watchlist` | GET | `read:favorites` |
-| `/api/v2/account/{address}/perpetual_watchlist` | GET | `read:favorites` |
-| `/api/v2/watchlist` | POST, DELETE | `write:favorites` |
-| `/api/v2/orders/chain/{chain}/protocol/{protocol_address}/{order_hash}/cancel` | POST | `write:orders` |
-| `/api/v2/drops/{slug}/*` | POST, PUT, PATCH | `write:drops` |
-| `/api/v2/collections/{slug}/*` | POST, PATCH | `write:collections` |
-| `/api/v2/profile/*` | POST, PATCH, DELETE | `write:profile` |
-| `/api/v2/accounts/wallets/*` | POST, DELETE | `write:wallets` |
+## Agent rules
 
-All auth-gated endpoints also require the `X-API-KEY` header.
-Run `opensea auth scopes` for the generated current scope metadata and endpoint
-mapping.
-
-## Auth Server Endpoints
-
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `https://auth.opensea.io/api/nonce` | GET | Request a nonce for SIWE message |
-| `https://auth.opensea.io/api/token` | POST | Exchange signed SIWE message for JWT |
-| `https://auth.opensea.io/api/refresh` | POST | Refresh an expired access token |
-| `https://auth.opensea.io/api/revoke` | POST | Revoke an access token |
-
-## Token Format
-
-```json
-{
-  "access_token": "eyJ...",
-  "refresh_token": "...",
-  "expires_in": 3600,
-  "scopes": ["read:eligibility"]
-}
-```
-
-Access tokens are JWTs. The `expires_in` field is in seconds.
-
-## Patterns for AI Agents
-
-1. **Auto-detect auth requirements**: If an endpoint returns `401` or `403`, check if a Bearer token is needed and authenticate.
-2. **Cache and refresh**: Store the token and use `getValidToken()` (SDK) or `opensea auth refresh` (CLI) to avoid re-authenticating.
-3. **Handle expiry gracefully**: Tokens expire. Always check `expiresAt` before making a request, or catch `401` and refresh.
-4. **Request minimal scopes**: Only request the scopes you need for your current task.
-5. **Revoke when done**: Revoke tokens when the agent session ends.
-
-```typescript
-// Agent pattern: authenticate once, auto-refresh
-const auth = new OpenSeaAuth()
-const token = await auth.authenticate(signer, {
-  scopes: ["read:eligibility"],
-})
-
-const sdk = new OpenSeaSDK(provider, {
-  chain: Chain.Mainnet,
-  apiKey: "YOUR_API_KEY",
-  authToken: token.accessToken,
-})
-```
+- Never print, log, or send a private key to an API.
+- Prefer the CLI login flow over hand-building SIWE requests.
+- Request the smallest useful scope set.
+- Treat both the scoped token and exchanged JWT as secrets.
+- A `401` usually means the JWT is missing, invalid, or expired. Refresh it once.
+- A `403` usually means the token lacks the required scope. Mint a new scoped token rather than retrying.
+- Revoke task-specific credentials when the task is complete.

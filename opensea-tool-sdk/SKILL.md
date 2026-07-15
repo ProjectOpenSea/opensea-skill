@@ -67,6 +67,78 @@ This SDK is for tool *providers and consumers*. To query OpenSea marketplace dat
 
 If you need your API on a subdomain, serve the manifest from that same subdomain (e.g., both on `api.example.com`).
 
+## Wallet-Authenticated REST and MCP
+
+OpenSea uses separate credentials for application access and wallet identity:
+
+| Credential | Header | Purpose |
+|---|---|---|
+| API key | `X-API-KEY: <key>` | Identifies the calling application |
+| Scoped wallet token | `Authorization: Bearer <token>` | Identifies a wallet and its allowed actions |
+
+Wallet-authenticated REST endpoints require **both** headers. Request the smallest useful scope set; a token's granted scopes are determined server-side and may be narrower than requested. After authenticating, use the public [OpenAPI document](https://api.opensea.io/api/v2/openapi.json) to discover request/response schemas and each operation's required scope. The canonical scope list, endpoint mapping, and current wallet-auth flow are in the [authentication reference](https://github.com/ProjectOpenSea/opensea-skill/blob/main/opensea-api/references/authentication.md).
+
+For agent workflows, prefer the CLI rather than hand-building SIWE requests:
+
+```bash
+export OPENSEA_API_KEY="..."
+export OPENSEA_PRIVATE_KEY="..."
+
+opensea auth login --scopes read:eligibility,write:orders
+opensea api request GET /api/v2/drops/example/eligibility
+opensea auth refresh
+```
+
+If a CLI is unavailable, the SIWE wallet-linking flow is:
+
+1. `POST https://api.opensea.io/api/v2/auth/siwe/nonce` with no body and read the single-use `{ "nonce": "..." }` response.
+2. Build and sign this EIP-4361 message. Use the exact canonical statement below as both `statement` and any client field named `originalStatement`; do not paraphrase it or add a newline:
+
+```text
+opensea.io wants you to sign in with your Ethereum account:
+<EIP-55_CHECKSUMMED_WALLET_ADDRESS>
+
+Click to sign in and accept the OpenSea Terms of Service (https://opensea.io/tos) and Privacy Policy (https://opensea.io/privacy).
+
+URI: https://opensea.io
+Version: 1
+Chain ID: 1
+Nonce: <NONCE_FROM_NONCE_ENDPOINT>
+Issued At: <CURRENT_ISO_8601_TIMESTAMP>
+```
+
+The signed message must preserve the EIP-4361 fields and constraints: domain `opensea.io`, checksummed EVM address, URI `https://opensea.io`, version `1`, numeric chain ID `1`, the server-issued nonce, and an ISO-8601 `Issued At`; the statement is single-line. Sign the exact bytes sent for verification, and never accept a client-chosen nonce.
+
+3. `POST https://api.opensea.io/api/v2/auth/siwe/verify` with the parsed message, signature, and `{ "chainArch": "EVM" }`. Verification must bind the recovered signer to `message.address`, validate the single-use nonce and message fields, and retain the returned session cookies before minting the scoped PAT.
+
+The CLI stores the durable scoped token (PAT) in `~/.opensea/auth.json` with mode `0600`. The PAT is the refresh credential; the CLI exchanges it for a short-lived wallet identity JWT. Treat both credentials as secrets, refresh once on `401`, mint a token with the required scope on `403`, and revoke task-specific credentials when finished. Never send the PAT directly to REST or MCP. For direct REST calls, send the API key plus the exchanged JWT:
+
+```bash
+export OPENSEA_WALLET_JWT="..." # short-lived JWT returned by /api/v2/auth/tokens/exchange
+
+curl "https://api.opensea.io/api/v2/drops/example/eligibility" \
+  -H "X-API-KEY: $OPENSEA_API_KEY" \
+  -H "Authorization: Bearer $OPENSEA_WALLET_JWT"
+```
+
+MCP uses the application API key for access/quota and the exchanged wallet JWT for wallet identity:
+
+```json
+{
+  "mcpServers": {
+    "opensea": {
+      "url": "https://mcp.opensea.io/mcp",
+      "headers": {
+        "X-API-KEY": "<OPENSEA_API_KEY>",
+        "Authorization": "Bearer <SHORT_LIVED_WALLET_JWT>"
+      }
+    }
+  }
+}
+```
+
+An API key in an MCP `Authorization: Bearer` header is still an API key, not a wallet token. For wallet-scoped MCP tools such as `get_favorites`, the server injects the wallet from the JWT; a successful response includes a `wallet` field alongside `result`. If the JWT is missing or is a PAT/API key instead, the tool returns `Wallet identity required` rather than silently using an arbitrary wallet address.
+
 ## Deployed Contracts (Ethereum mainnet, Base, Shape, Abstract, Monad, Robinhood Chain)
 
 Canonical v0.2 deployments — identical CREATE2 address on every supported chain.

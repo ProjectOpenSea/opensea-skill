@@ -1,5 +1,12 @@
 # @opensea/skill
 
+## 2.18.0
+
+### Minor Changes
+
+- bbe8f9d: Add a concise agent workflow for wallet-authenticated REST and MCP, including CLI login, scoped-token refresh and revocation, wallet linking, the live OpenAPI document, and the rule that wallet endpoints require both API-key and Bearer credentials.
+- d846160: Replace the retired auth-server examples with the current OpenSea API endpoints for SIWE, scoped-token exchange, refresh, revocation, and wallet-link nonces.
+
 ## 2.17.1
 
 ### Patch Changes
