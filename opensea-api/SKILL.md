@@ -1,6 +1,6 @@
 ---
 name: opensea-api
-description: Query OpenSea marketplace data and authenticate wallets for scoped REST and MCP operations via the official CLI, SDK, MCP server, or shell scripts. Get floor prices, collection stats, NFT details, token data, trending collections, drops, events, search, favorites, profile and collection settings, and more. For trading use opensea-marketplace, for token swaps use opensea-swaps.
+description: Query OpenSea marketplace data via the official CLI, SDK, MCP server, or shell scripts. Get floor prices, collection stats, NFT details, token data, trending collections, drops, events, search, favorites, profile and collection settings, and other wallet-scoped operations. For trading use opensea-marketplace, for token swaps use opensea-swaps.
 homepage: https://github.com/ProjectOpenSea/opensea-skill
 repository: https://github.com/ProjectOpenSea/opensea-skill
 license: MIT

@@ -1,5 +1,11 @@
 # @opensea/skill
 
+## 2.18.3
+
+### Patch Changes
+
+- f9a1961: Keep wallet authentication in task routing and reference docs instead of the top-level skill summary.
+
 ## 2.18.2
 
 ### Patch Changes
