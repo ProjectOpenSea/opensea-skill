@@ -1,6 +1,6 @@
 ---
 name: opensea
-description: Query NFT and token data, trade NFTs on Seaport, swap ERC20 tokens via DEX aggregator, configure wallet signing providers, and build/register/gate AI agent tools on Base. Covers the full OpenSea developer surface across CLI, MCP server, shell scripts, and SDK. Pick the right sub-skill using the routing table below, then read that sub-skill's SKILL.md for operational detail.
+description: Query NFT and token data, authenticate agents for scoped REST and MCP access, trade NFTs on Seaport, swap ERC20 tokens via DEX aggregator, configure wallet signing providers, and build/register/gate AI agent tools on Base. Covers the full OpenSea developer surface across CLI, MCP server, shell scripts, and SDK. Pick the right sub-skill using the routing table below, then read that sub-skill's SKILL.md for operational detail.
 homepage: https://github.com/ProjectOpenSea/opensea-skill
 repository: https://github.com/ProjectOpenSea/opensea-skill
 license: MIT
@@ -22,6 +22,7 @@ Entry point for OpenSea agent skills. Pick the sub-skill based on task, then rea
 | Task | Sub-skill |
 |---|---|
 | Query NFT/token data, search, drops, events | [`opensea-api/SKILL.md`](opensea-api/SKILL.md) |
+| Authenticate a wallet for scoped REST or MCP | [`opensea-api/SKILL.md`](opensea-api/SKILL.md) |
 | Buy/sell NFTs on Seaport, sweeps, cross-chain | [`opensea-marketplace/SKILL.md`](opensea-marketplace/SKILL.md) |
 | Swap ERC20 tokens via DEX aggregator | [`opensea-swaps/SKILL.md`](opensea-swaps/SKILL.md) |
 | Configure wallet signing (Privy/Turnkey/Fireblocks/Bankr) | [`opensea-wallet/SKILL.md`](opensea-wallet/SKILL.md) |
@@ -32,6 +33,7 @@ Always read the sub-skill `SKILL.md` before executing. This router intentionally
 ## Quick decision guide
 
 - **Read-only queries** (collections, NFTs, tokens, search, stats, events, drops): `opensea-api`
+- **Wallet-authenticated REST or MCP** (SIWE, scoped PAT, short-lived JWT): `opensea-api`
 - **Write operations** (buy, sell, make offers, fulfill listings): `opensea-marketplace`
 - **Token swaps** (ERC20 to ERC20, cross-chain): `opensea-swaps`
 - **Wallet setup** (before any write operation): `opensea-wallet`

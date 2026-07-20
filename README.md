@@ -11,6 +11,7 @@ Pick the right skill in one question:
 ```
 Want to use OpenSea?
 ├── Query NFT/token data, search, collection stats ──────── opensea-api
+├── Authenticate a wallet for scoped REST or MCP ───────── opensea-api
 ├── Buy/sell NFTs (listings, offers, fulfillment) ───────── opensea-marketplace
 ├── Swap ERC20 tokens (DEX aggregator) ──────────────────── opensea-swaps
 ├── Set up wallet signing for transactions ──────────────── opensea-wallet
@@ -21,9 +22,9 @@ Want to use OpenSea?
 
 ### `opensea-api`
 
-Query NFT and token data via the OpenSea CLI, MCP server, or shell scripts. Collections, NFTs, tokens, search, drops, events, and account lookups.
+Query NFT and token data or authenticate a wallet for scoped REST and MCP access via the OpenSea CLI, SDK, MCP server, or shell scripts. Covers collections, NFTs, tokens, search, drops, events, account lookups, and wallet-scoped operations.
 
-- **Auth**: `OPENSEA_API_KEY` environment variable
+- **Auth**: `OPENSEA_API_KEY`; `OPENSEA_PRIVATE_KEY` only for headless SIWE login
 - **Setup**: Get a key at [opensea.io/settings/developer](https://opensea.io/settings/developer) or instantly via API
 - **Entry point**: [`opensea-api/SKILL.md`](opensea-api/SKILL.md)
 
@@ -60,6 +61,7 @@ The tree above covers the common cases. These edge cases catch the easy-to-misro
 
 | Scenario | Skill |
 |---|---|
+| Authenticate an agent for wallet-scoped REST or MCP | `opensea-api` |
 | Browse and mint NFT drops | `opensea-api` |
 | Stream real-time marketplace events (WebSocket) | `opensea-api` |
 | Cross-chain NFT purchase (pay from a different chain) | `opensea-marketplace` |

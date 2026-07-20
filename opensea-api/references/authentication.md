@@ -1,126 +1,94 @@
-# Authentication Reference
+# Wallet Authentication
 
-OpenSea uses two credentials:
+Use wallet auth when an operation must act as a wallet. Start with the [public auth guide](https://docs.opensea.io/reference/auth); use the [live OpenAPI document](https://api.opensea.io/api/v2/openapi.json) for current paths, schemas, and scopes.
 
-| Credential | Header | What it identifies |
+## Credential model
+
+| Credential | Purpose | Where it goes |
 |---|---|---|
-| API key | `X-API-KEY: <key>` | Your application |
-| Scoped wallet token | `Authorization: Bearer <token>` | A wallet and its allowed actions |
+| API key | Application access and quota | `X-API-KEY` on REST and MCP requests |
+| SIWE session | Create, list, rotate, or revoke PATs | Session cookies; managed by the CLI or SDK |
+| Scoped personal access token (PAT) | Durable credential used only to mint JWTs | Token exchange only |
+| Wallet JWT | Short-lived wallet identity and scopes | `Authorization: Bearer <JWT>` on REST and MCP requests |
 
-Wallet-specific endpoints need both headers. Request only the scopes required for the task.
+Wallet-scoped REST and MCP calls need both the API key and wallet JWT. Never send a PAT to either surface.
 
-## Fastest path for agents
-
-Set the API key and private key in the environment, then let the CLI handle SIWE, scoped-token creation, and exchange:
+## CLI: wallet-scoped REST
 
 ```bash
 export OPENSEA_API_KEY="..."
 export OPENSEA_PRIVATE_KEY="..."
 
-opensea auth login --scopes read:eligibility,write:wallets
-opensea auth status
-```
-
-The CLI stores the PAT, JWT, and revocable SIWE session in `~/.opensea/auth.json` with mode `0600`. The private key is used locally to sign the SIWE message and is not stored there.
-
-Refresh the short-lived JWT by exchanging the stored scoped token again:
-
-```bash
-opensea auth refresh
-```
-
-Revoke the scoped token and remove the local credential when the task is complete:
-
-```bash
+# Private-key login requires an explicit, least-privilege scope list.
+opensea login --private-key --scopes read:favorites
+WALLET=$(opensea --format json whoami | jq -r '.address')
+opensea api request GET "/api/v2/account/$WALLET/favorites" --params '{"limit":1}'
 opensea auth revoke
 ```
 
-## Discover the API after login
+The private key signs locally and is not stored. The CLI stores the session, PAT, and JWT in `~/.opensea/auth.json` with mode `0600`; `api request` automatically sends the stored JWT. Use `opensea auth refresh` after the JWT expires and `opensea auth scopes` to discover current scopes. `auth revoke` invalidates the current PAT and removes that wallet login. `auth clear` only deletes local state.
 
-The live OpenAPI document is the simplest way for an agent to discover request and response shapes:
+## SDK: REST and in-process MCP
 
-```text
-https://api.opensea.io/api/v2/openapi.json
+```typescript
+import { Wallet } from "ethers"
+import { OpenSeaAPI, OpenSeaAuth } from "@opensea/sdk"
+
+const signer = new Wallet(process.env.OPENSEA_PRIVATE_KEY!)
+const auth = new OpenSeaAuth()
+let token = await auth.authenticate(signer, { scopes: ["read:favorites"] })
+
+try {
+  token = await auth.getValidToken()
+  const api = new OpenSeaAPI({
+    apiKey: process.env.OPENSEA_API_KEY,
+    authToken: token.accessToken,
+  })
+  await api.walletAuth.getFavorites(await signer.getAddress(), { limit: 1 })
+} finally {
+  await auth.revoke(token.accessToken)
+}
 ```
 
-Use the operation's declared scope and send both credentials:
+Keep the same `OpenSeaAuth` instance through cleanup: it holds the SIWE session required to revoke the PAT. Create a new `OpenSeaAPI` with the latest `accessToken` after `getValidToken()` refreshes it. `revoke()` accepts the current JWT as a guard, revokes its backing PAT, and clears the SDK's in-memory auth state.
+
+## REST
+
+Send the application key and short-lived wallet JWT:
 
 ```bash
-curl "https://api.opensea.io/api/v2/drops/example/eligibility" \
+curl "https://api.opensea.io/api/v2/account/0xYOUR_WALLET/favorites?limit=1" \
   -H "X-API-KEY: $OPENSEA_API_KEY" \
   -H "Authorization: Bearer $OPENSEA_WALLET_JWT"
 ```
 
-The scoped wallet PAT is the durable refresh credential; exchange it for the short-lived wallet JWT before REST or MCP requests. Never put the PAT directly in the `Authorization` header.
+Do not guess paths or scopes. Read them from the live OpenAPI document. If the CLI and SDK are unavailable, follow the public auth guide for the raw SIWE session, PAT creation, and token-exchange flow. PAT management is session-only; a Bearer JWT cannot create, list, rotate, or revoke PATs.
 
-## Manual token flow
+## MCP
 
-Use this flow when the CLI is unavailable:
+Every data tool needs the application key. Wallet-scoped tools also need the wallet JWT:
 
-1. `POST /api/v2/auth/siwe/nonce` to obtain a single-use nonce.
-2. Build and sign the exact SIWE message locally with the wallet private key.
-3. `POST /api/v2/auth/siwe/verify` with the parsed message, signature, and `chainArch`.
-4. Keep the session cookies returned by verification.
-5. `POST /api/v2/auth/tokens` with those cookies, a label, the minimal scope list, and `expiresInDays`.
-6. `POST /api/v2/auth/tokens/exchange` with the scoped token and `subjectTokenType: "ACCESS_TOKEN"`.
-7. Use the returned `accessToken` as the Bearer token.
-
-The scoped token is the durable credential. Keep it secret and use it to mint replacement short-lived JWTs. Token management is session-only: refresh the SIWE session with `POST /api/v2/auth/session/refresh`, then revoke with `DELETE /api/v2/auth/tokens/{id}` using the rotated session cookies. A Bearer JWT cannot list, rotate, or revoke PATs.
-
-## Authenticated REST operations
-
-All wallet-authenticated writes require `X-API-KEY: $OPENSEA_API_KEY`, `Authorization: Bearer $OPENSEA_WALLET_JWT`, and the listed scope. Use the [live OpenAPI document](https://api.opensea.io/api/v2/openapi.json) for the complete schemas and current operation metadata.
-
-| Scope | Authenticated REST operations |
-|---|---|
-| `write:profile` | `PATCH /api/v2/profile` updates `displayName`, `bio`, `externalUrl`, and image tokens; `POST /api/v2/profile/username` claims a username; `POST/PATCH/DELETE /api/v2/profile/shelves...` manages shelves |
-| `write:collections` | `PATCH /api/v2/collections/{slug}`, `PATCH /api/v2/collections/{slug}/metadata`, and `PATCH /api/v2/collections/{slug}/visibility` edit collection settings; `POST /api/v2/collections/{slug}/images/{image_type}` starts an image upload |
-| `write:favorites` | `POST` or `DELETE /api/v2/watchlist` manages watchlist entries |
-| `write:orders` | `POST /api/v2/orders/chain/{chain}/protocol/{protocol_address}/{order_hash}/cancel` cancels an order |
-| `write:drops` | Creator Studio drop, allowlist, item, and media operations under `/api/v2/drops/{slug}` |
-| `write:wallets` | `POST /api/v2/accounts/wallets/siwx` links a wallet; `DELETE /api/v2/accounts/wallets/{wallet}` unlinks one |
-
-For profile images, call `POST /api/v2/profile/images` with `imageType` and the exact image `contentType`, upload the bytes using the returned short-lived URL, method, and fields, then pass the returned token as `profileImageToken` or `bannerImageToken` to `PATCH /api/v2/profile`. Collection image uploads use the analogous `POST /api/v2/collections/{slug}/images/{image_type}` flow and pass the returned token in the collection PATCH request. Preserve returned multipart fields, put the file part last for `POST`, let the HTTP library create the boundary, and never log or persist the URL, fields, or token.
-
-## Wallet linking
-
-Wallet linking uses the same API nonce endpoint. The authenticated account signs a fresh SIWX message with the wallet being linked:
-
-```bash
-export OPENSEA_AUTH_TOKEN="..."
-export OPENSEA_API_KEY="..."
-export OPENSEA_PRIVATE_KEY="..." # private key for the wallet being linked
-
-opensea auth link-wallet --chain-arch EVM --chain-id 1
+```json
+{
+  "mcpServers": {
+    "opensea": {
+      "url": "https://mcp.opensea.io/mcp",
+      "headers": {
+        "X-API-KEY": "<OPENSEA_API_KEY>",
+        "Authorization": "Bearer <SHORT_LIVED_WALLET_JWT>"
+      }
+    }
+  }
+}
 ```
 
-The Bearer token needs `write:wallets`. Unlinking also needs `write:wallets`; use the wallet DELETE operation described by the live OpenAPI document.
+Keep the resolved values in the client's secret store, not committed configuration. The CLI intentionally does not print stored tokens; use an OAuth-capable MCP client or obtain a JWT with `OpenSeaAuth` and pass it to an in-process client. Reconnect after replacing an expired JWT. The server derives the wallet from the verified JWT; do not pass an arbitrary wallet as a substitute for authentication.
 
-## Scopes
+## Recovery and safety
 
-| Scope | Description |
-|---|---|
-| `read:eligibility` | Check drop eligibility for the authenticated wallet |
-| `read:favorites` | View favorites and watchlists for the authenticated account |
-| `read:social` | View viewer-relative social relationships |
-| `read:tools` | Read saved agent tools |
-| `write:favorites` | Add and remove favorites and watchlist entries |
-| `write:social` | Follow and unfollow accounts |
-| `write:tools` | Save and remove agent tools |
-| `write:orders` | Cancel orders for the authenticated account |
-| `write:drops` | Manage Creator Studio drops |
-| `write:collections` | Modify collection metadata, visibility, and images |
-| `write:profile` | Modify profile settings, images, username, and shelves |
-| `write:wallets` | Link and unlink wallets |
-
-Run `opensea auth scopes` for the generated current scope metadata.
-
-## Agent rules
-
-- Never print, log, or send a private key to an API.
-- Prefer the CLI login flow over hand-building SIWE requests.
-- Request the smallest useful scope set.
-- Treat both the scoped token and exchanged JWT as secrets.
-- A `401` usually means the JWT is missing, invalid, or expired. Refresh it once.
-- A `403` usually means the token lacks the required scope. Mint a new scoped token rather than retrying.
-- Revoke task-specific credentials when the task is complete.
+- `401`: the API key or JWT is missing, invalid, or expired. Check the response, refresh the JWT once, and retry once.
+- If PAT exchange or session refresh fails because the credential expired or was revoked, run SIWE authentication again instead of looping.
+- `403`: the JWT lacks the required scope. Sign in again with that scope; unchanged retries will not help.
+- `429`: respect `Retry-After` and back off.
+- Load secrets from environment variables or a secret manager instead of typing them into shell history. Never print or transmit private keys, PATs, JWTs, cookies, signatures, or authorization headers.
+- Request the smallest useful scope set and revoke task-specific PATs when finished.

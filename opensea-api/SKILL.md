@@ -1,6 +1,6 @@
 ---
 name: opensea-api
-description: Query OpenSea marketplace data and perform authenticated account, profile, and collection settings operations via the official CLI, MCP server, or shell scripts. Get floor prices, collection stats, NFT details, token data, trending collections, drops, events, and search across Ethereum, Base, Arbitrum, Polygon, and more. For trading use opensea-marketplace, for token swaps use opensea-swaps.
+description: Query OpenSea marketplace data and authenticate wallets for scoped REST and MCP operations via the official CLI, SDK, MCP server, or shell scripts. Get floor prices, collection stats, NFT details, token data, trending collections, drops, events, search, favorites, profile and collection settings, and more. For trading use opensea-marketplace, for token swaps use opensea-swaps.
 homepage: https://github.com/ProjectOpenSea/opensea-skill
 repository: https://github.com/ProjectOpenSea/opensea-skill
 license: MIT
@@ -9,6 +9,9 @@ env:
     description: API key for all OpenSea services (REST API, CLI, SDK, and MCP server)
     required: true
     obtain: https://docs.opensea.io/reference/api-keys#instant-api-key-for-agents
+  OPENSEA_PRIVATE_KEY:
+    description: Optional EVM private key used locally for headless SIWE login; never sent to OpenSea
+    required: false
 dependencies:
   - node >= 18.0.0
   - curl
@@ -33,6 +36,7 @@ Use `opensea-api` for:
 - Drops and mint eligibility
 - Account lookups and ENS resolution
 - Authenticated profile, collection settings, watchlist, drop, order-cancellation, and wallet-linking operations described in `references/authentication.md`
+- Headless SIWE, scoped PAT creation, short-lived JWT exchange, and wallet-authenticated REST or MCP
 
 ## When NOT to use this skill (`scope_out`, handoff)
 
@@ -70,6 +74,7 @@ opensea search "cool cats"
 
 # Get trending tokens
 opensea tokens trending --limit 5
+
 ```
 
 ## API key resolution (read this before your first request)
@@ -168,21 +173,16 @@ you use those, you must save the key yourself per step 4 above.
 | Get trending tokens | `opensea tokens trending [--chains <chains>] [--limit <n>]` | `get_trending_tokens` (MCP) |
 | Get top tokens by volume | `opensea tokens top [--chains <chains>] [--limit <n>]` | `get_top_tokens` (MCP) |
 | Get token details | `opensea tokens get <chain> <address>` | `get_tokens` (MCP) |
+| Get token swap activity | `opensea tokens activity <chain> <address> [--limit <n>] [--next <cursor>]` | `tokens/opensea-token-activity.sh` |
+| Get account token activity | `opensea tokens account-activity <address> [--chains <chains>] [--tokens <tokens>] [--type <types>] [--limit <n>] [--next <cursor>]` | |
 | List token groups | `opensea token-groups list [--limit <n>] [--next <cursor>]` | `tokens/opensea-token-groups.sh [limit] [cursor]` |
 | Get token group by slug | `opensea token-groups get <slug>` | `tokens/opensea-token-group.sh <slug>` |
 | Search tokens | `opensea search <query> --types token` | `search_tokens` (MCP) |
 | Check token balances | `get_token_balances` (MCP) | |
-| Resolve API key (reuse env/cache, else fetch + save) — preferred | `auth/opensea-resolve-key.sh` | see [API key resolution](#api-key-resolution-read-this-before-your-first-request) |
-| Request instant API key (raw JSON, no persistence) | `opensea auth request-key` | `auth/opensea-auth-request-key.sh` |
-| Authenticate with SIWE | `opensea auth login --private-key $KEY [--scopes <scopes>]` | See `references/authentication.md` |
-| Check auth status | `opensea auth status` | |
-| Refresh auth token | `opensea auth refresh` | |
-| Revoke auth token | `opensea auth revoke [--address <addr>]` | |
-| List stored tokens | `opensea auth tokens` | |
-| List available scopes | `opensea auth scopes` | |
-| Clear all tokens | `opensea auth clear` | |
 
-Authenticated REST operations are documented in [`references/authentication.md`](references/authentication.md). That reference covers the dual API-key/JWT headers, scoped profile and collection settings edits, profile and collection image uploads, username claims, shelves, watchlists, order cancellation, drops, and wallet linking.
+### Wallet-authenticated REST and MCP
+
+Read the [`wallet authentication` reference](references/authentication.md) before acting as a wallet. It contains the CLI and SDK happy paths, REST and MCP headers, credential lifecycle, and recovery rules.
 
 ### Marketplace queries (read-only)
 
@@ -265,9 +265,10 @@ Search for verified registered AI agent tools (ERC-8257) by name, tags, creator,
 
 | Task | CLI Command | Alternative |
 |------|------------|-------------|
-| List registered tools | `opensea tools list [--sort-by <sort>] [--type <type>]` | `opensea-get.sh "tools" "sort_by=newest&limit=10"` |
-| Search registered tools | `opensea tools search [--query <text>] [--tags <tags>]` | `opensea-get.sh "tools/search" "query=<text>"` |
-| Get a registered tool | `opensea tools get <chain> <registry_addr> <tool_id>` | `opensea-get.sh "tools/<chain>/<registry_address>/<tool_id>"` |
+| List registered tools | `opensea tools list [--sort-by <sort>] [--type <type>]` | `opensea-get.sh "/api/v2/tools" "sort_by=newest&limit=10"` |
+| Search registered tools | `opensea tools search [--query <text>] [--tags <tags>]` | `opensea-get.sh "/api/v2/tools/search" "query=<text>"` |
+| Get a registered tool | `opensea tools get <chain> <registry_addr> <tool_id>` | `opensea-get.sh "/api/v2/tools/<chain>/<registry_address>/<tool_id>"` |
+| Get tool activity | `opensea tools activity <registry_chain> <registry_addr> <tool_id> [--include-creator-payments] [--limit <n>] [--offset <offset>]` | |
 
 **Endpoint:** `GET /api/v2/tools` ([docs](https://docs.opensea.io/reference/list_tools))
 
@@ -289,7 +290,7 @@ Search for verified registered AI agent tools (ERC-8257) by name, tags, creator,
 | `creator` | No | Filter by creator address |
 | `sort_by` | No | Sort by: `relevance` (default), `newest`, `most_used` |
 | `limit` | No | Results per page (1–200) |
-| `cursor.value` | No | Pagination cursor |
+| `cursor` | No | Pagination cursor |
 
 ```bash
 # List tools sorted by newest
@@ -311,6 +312,46 @@ curl -s "https://api.opensea.io/api/v2/tools/search?access_type=open&limit=10" \
 # Filter by creator
 curl -s "https://api.opensea.io/api/v2/tools/search?creator=0xYOUR_ADDRESS&sort_by=newest" \
   -H "x-api-key: $OPENSEA_API_KEY" | jq
+```
+
+**Endpoint:** `GET /api/v2/tools/{registry_chain}/{registry_addr}/{tool_id}/activity`
+
+| Parameter | Required | Description |
+|-----------|----------|-------------|
+| `registry_chain` | Yes | Registry chain ID (e.g. `8453`) |
+| `registry_addr` | Yes | Registry contract address |
+| `tool_id` | Yes | Numeric tool ID |
+| `include_creator_payments` | No | Include payments attributed only by creator address |
+| `limit` | No | Results per page (1–100) |
+| `offset` | No | Offset for pagination |
+
+```bash
+# Get activity for a registered tool
+curl -s "https://api.opensea.io/api/v2/tools/8453/0x265BB2DBFC0A8165C9A1941Eb1372F349baD2cf1/42/activity?limit=10" \
+  -H "x-api-key: $OPENSEA_API_KEY" | jq
+```
+
+### Saved tools [Beta]
+
+Save and remove registered tools for the authenticated wallet. Requires wallet authentication with the `read:tools` scope to list and `write:tools` scope to save or remove.
+
+| Task | CLI Command | Alternative |
+|---|---|---|
+| List saved tools | `opensea tools saved list [--toolkit-name <name>]` | `opensea api request GET /api/v2/saved-tools --params '{"toolkit_name":"<name>","limit":10}'` |
+| Save a tool | `opensea tools saved save <registry_chain> <registry_addr> <tool_id> [--toolkit-name <name>]` | `opensea api request POST /api/v2/saved-tools --body saved-tool.json` |
+| Remove a saved tool | `opensea tools saved remove <registry_chain> <registry_addr> <tool_id> [--toolkit-name <name>]` | `opensea api request DELETE /api/v2/saved-tools --params '{"tool_id":"<id>","registry_chain":"<chain>","registry_addr":"<addr>"}'` |
+
+```bash
+# List saved tools
+opensea auth login --private-key --scopes read:tools
+opensea tools saved list --limit 10
+
+# Save a tool
+opensea auth login --private-key --scopes write:tools
+opensea tools saved save 8453 0x265BB2DBFC0A8165C9A1941Eb1372F349baD2cf1 42
+
+# Remove a saved tool
+opensea tools saved remove 8453 0x265BB2DBFC0A8165C9A1941Eb1372F349baD2cf1 42
 ```
 
 ### Generic requests
@@ -349,8 +390,8 @@ opensea collections get mfers
 | `offers` | Get all, collection, best-for-nft, and trait offers |
 | `events` | List marketplace events (sales, transfers, mints, etc.) |
 | `search` | Search collections, NFTs, tokens, and accounts |
-| `tokens` | Get trending tokens, top tokens, and token details |
-| `tools` | Search, list, and inspect registered AI agent tools (ERC-8257) |
+| `tokens` | Get trending tokens, top tokens, token details, token activity, and account token activity |
+| `tools` | Search, list, and inspect registered AI agent tools (ERC-8257); view tool activity; manage saved tools with `tools saved` |
 | `accounts` | Get account details |
 
 Global options: `--api-key`, `--chain` (default: ethereum), `--format` (json/table/toon), `--base-url`, `--timeout`, `--verbose`
@@ -404,7 +445,7 @@ The [OpenSea MCP server](https://mcp.opensea.io) provides direct LLM integration
 }
 ```
 
-The key can also be supplied as an `Authorization: Bearer <OPENSEA_API_KEY>` header instead of `X-API-KEY`. The MCP handshake and tool discovery work without a key, so an agent with no key can connect, call `get_instant_api_key` to mint a free-tier key, then reconnect with it; all other tools require a key.
+Data tools require `X-API-KEY`; wallet-scoped tools also require a wallet JWT. Follow the [`wallet authentication` reference](references/authentication.md). The handshake and tool discovery work without credentials.
 
 ### NFT Tools
 
@@ -460,6 +501,27 @@ The key can also be supplied as an `Authorization: Bearer <OPENSEA_API_KEY>` hea
 | `search_tools` | Search registered AI agent tools by name, tags, creator |
 | `get_tool` | Get detailed info for a specific registered tool |
 | `get_wallet_tools` | List NFT-gated tools accessible to a wallet with eligibility status |
+
+### Wallet-authenticated tools
+
+These tools derive the wallet from the JWT and enforce the listed scope. Do not supply an arbitrary wallet in place of authentication.
+
+| Scope | MCP tools |
+|---|---|
+| `read:eligibility` | `check_drop_eligibility` |
+| `read:favorites` | `get_favorites` |
+| `read:social` | `view_social_graph` |
+| `read:tools` | `list_saved_tools`, `list_toolkits`, `get_toolkit` |
+| `write:favorites` | `manage_watchlist` |
+| `write:social` | `manage_social_graph` |
+| `write:tools` | `save_tool`, `unsave_tool`, `create_toolkit`, `save_toolkit`, `unsave_toolkit` |
+| `write:orders` | `cancel_orders` |
+| `write:drops` | `manage_drops` |
+| `write:collections` | `manage_collections` |
+| `write:profile` | `manage_profile` |
+| `write:wallets` | `manage_wallets` |
+
+If a wallet-scoped tool returns `Wallet identity required`, the `Authorization` header is missing, contains an API key/PAT instead of a wallet JWT, or the JWT no longer validates. A missing scope returns a scope error; authenticate again with the smallest required scope rather than retrying unchanged.
 
 ### Auto-resolve for batch GET tools
 
@@ -640,7 +702,7 @@ When using the CLI, check the exit code: `0` = success, `1` = API error, `2` = a
 | HTTP Status | Meaning | Recommended Action |
 |---|---|---|
 | 400 | Bad Request | Check parameters against the endpoint docs in `references/rest-api.md` |
-| 401 | Unauthorized | Verify `OPENSEA_API_KEY` is set and valid |
+| 401 | Unauthorized | Check the API key; for wallet-scoped calls, refresh the JWT once |
 | 404 | Not Found | Verify the collection slug, chain identifier, contract address, or token ID |
 | 429 | Rate Limited | Stop all requests, wait 60 seconds, then retry with exponential backoff |
 | 500 | Server Error | Retry up to 3 times with exponential backoff (2s, 4s, 8s) |

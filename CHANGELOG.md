@@ -1,5 +1,13 @@
 # @opensea/skill
 
+## 2.18.2
+
+### Patch Changes
+
+- bf5874d: Document account token activity, tool activity, and wallet-authenticated saved-tools commands with canonical cursor parameters and auth-aware fallbacks.
+- ac24487: Require explicit private-key login scopes and streamline the wallet-auth guidance for agents.
+- 89b0531: Route wallet-auth requests to the `opensea-api` skill.
+
 ## 2.18.1
 
 ### Patch Changes
