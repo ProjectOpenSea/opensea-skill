@@ -1,6 +1,6 @@
 ---
 name: opensea-api
-description: Query OpenSea marketplace data via the official CLI, MCP server, or shell scripts. Get floor prices, collection stats, NFT details, token data, trending collections, drops, events, and search across Ethereum, Base, Arbitrum, Polygon, and more. Read-only operations; for trading use opensea-marketplace, for token swaps use opensea-swaps.
+description: Query OpenSea marketplace data and perform authenticated account, profile, and collection settings operations via the official CLI, MCP server, or shell scripts. Get floor prices, collection stats, NFT details, token data, trending collections, drops, events, and search across Ethereum, Base, Arbitrum, Polygon, and more. For trading use opensea-marketplace, for token swaps use opensea-swaps.
 homepage: https://github.com/ProjectOpenSea/opensea-skill
 repository: https://github.com/ProjectOpenSea/opensea-skill
 license: MIT
@@ -21,7 +21,7 @@ Query NFT and token data, browse drops, stream events, and search across Ethereu
 
 ## When to use this skill (`scope_in`)
 
-Use `opensea-api` for **read-only** operations:
+Use `opensea-api` for:
 
 - Collection details, stats, traits, trending, and top collections
 - NFT details, ownership, metadata refresh
@@ -32,6 +32,7 @@ Use `opensea-api` for **read-only** operations:
 - Events and activity monitoring (including real-time WebSocket streams)
 - Drops and mint eligibility
 - Account lookups and ENS resolution
+- Authenticated profile, collection settings, watchlist, drop, order-cancellation, and wallet-linking operations described in `references/authentication.md`
 
 ## When NOT to use this skill (`scope_out`, handoff)
 
@@ -180,6 +181,8 @@ you use those, you must save the key yourself per step 4 above.
 | List stored tokens | `opensea auth tokens` | |
 | List available scopes | `opensea auth scopes` | |
 | Clear all tokens | `opensea auth clear` | |
+
+Authenticated REST operations are documented in [`references/authentication.md`](references/authentication.md). That reference covers the dual API-key/JWT headers, scoped profile and collection settings edits, profile and collection image uploads, username claims, shelves, watchlists, order cancellation, drops, and wallet linking.
 
 ### Marketplace queries (read-only)
 

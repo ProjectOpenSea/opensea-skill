@@ -1,5 +1,11 @@
 # @opensea/skill
 
+## 2.18.1
+
+### Patch Changes
+
+- 06e96e1: Clarify that scoped-token management requires a revocable SIWE session, while agents can continue exchanging their PAT for short-lived scoped JWTs autonomously.
+
 ## 2.18.0
 
 ### Minor Changes

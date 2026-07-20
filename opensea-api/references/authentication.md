@@ -21,7 +21,7 @@ opensea auth login --scopes read:eligibility,write:wallets
 opensea auth status
 ```
 
-The CLI stores credentials in `~/.opensea/auth.json` with mode `0600`. The private key is used locally to sign the SIWE message and is not stored there.
+The CLI stores the PAT, JWT, and revocable SIWE session in `~/.opensea/auth.json` with mode `0600`. The private key is used locally to sign the SIWE message and is not stored there.
 
 Refresh the short-lived JWT by exchanging the stored scoped token again:
 
@@ -48,8 +48,10 @@ Use the operation's declared scope and send both credentials:
 ```bash
 curl "https://api.opensea.io/api/v2/drops/example/eligibility" \
   -H "X-API-KEY: $OPENSEA_API_KEY" \
-  -H "Authorization: Bearer $OPENSEA_AUTH_TOKEN"
+  -H "Authorization: Bearer $OPENSEA_WALLET_JWT"
 ```
+
+The scoped wallet PAT is the durable refresh credential; exchange it for the short-lived wallet JWT before REST or MCP requests. Never put the PAT directly in the `Authorization` header.
 
 ## Manual token flow
 
@@ -63,7 +65,22 @@ Use this flow when the CLI is unavailable:
 6. `POST /api/v2/auth/tokens/exchange` with the scoped token and `subjectTokenType: "ACCESS_TOKEN"`.
 7. Use the returned `accessToken` as the Bearer token.
 
-The scoped token is the durable credential. Keep it secret and use it to mint replacement short-lived JWTs. Revoke it with `DELETE /api/v2/auth/tokens/{id}` when finished.
+The scoped token is the durable credential. Keep it secret and use it to mint replacement short-lived JWTs. Token management is session-only: refresh the SIWE session with `POST /api/v2/auth/session/refresh`, then revoke with `DELETE /api/v2/auth/tokens/{id}` using the rotated session cookies. A Bearer JWT cannot list, rotate, or revoke PATs.
+
+## Authenticated REST operations
+
+All wallet-authenticated writes require `X-API-KEY: $OPENSEA_API_KEY`, `Authorization: Bearer $OPENSEA_WALLET_JWT`, and the listed scope. Use the [live OpenAPI document](https://api.opensea.io/api/v2/openapi.json) for the complete schemas and current operation metadata.
+
+| Scope | Authenticated REST operations |
+|---|---|
+| `write:profile` | `PATCH /api/v2/profile` updates `displayName`, `bio`, `externalUrl`, and image tokens; `POST /api/v2/profile/username` claims a username; `POST/PATCH/DELETE /api/v2/profile/shelves...` manages shelves |
+| `write:collections` | `PATCH /api/v2/collections/{slug}`, `PATCH /api/v2/collections/{slug}/metadata`, and `PATCH /api/v2/collections/{slug}/visibility` edit collection settings; `POST /api/v2/collections/{slug}/images/{image_type}` starts an image upload |
+| `write:favorites` | `POST` or `DELETE /api/v2/watchlist` manages watchlist entries |
+| `write:orders` | `POST /api/v2/orders/chain/{chain}/protocol/{protocol_address}/{order_hash}/cancel` cancels an order |
+| `write:drops` | Creator Studio drop, allowlist, item, and media operations under `/api/v2/drops/{slug}` |
+| `write:wallets` | `POST /api/v2/accounts/wallets/siwx` links a wallet; `DELETE /api/v2/accounts/wallets/{wallet}` unlinks one |
+
+For profile images, call `POST /api/v2/profile/images` with `imageType` and the exact image `contentType`, upload the bytes using the returned short-lived URL, method, and fields, then pass the returned token as `profileImageToken` or `bannerImageToken` to `PATCH /api/v2/profile`. Collection image uploads use the analogous `POST /api/v2/collections/{slug}/images/{image_type}` flow and pass the returned token in the collection PATCH request. Preserve returned multipart fields, put the file part last for `POST`, let the HTTP library create the boundary, and never log or persist the URL, fields, or token.
 
 ## Wallet linking
 
@@ -85,7 +102,11 @@ The Bearer token needs `write:wallets`. Unlinking also needs `write:wallets`; us
 |---|---|
 | `read:eligibility` | Check drop eligibility for the authenticated wallet |
 | `read:favorites` | View favorites and watchlists for the authenticated account |
+| `read:social` | View viewer-relative social relationships |
+| `read:tools` | Read saved agent tools |
 | `write:favorites` | Add and remove favorites and watchlist entries |
+| `write:social` | Follow and unfollow accounts |
+| `write:tools` | Save and remove agent tools |
 | `write:orders` | Cancel orders for the authenticated account |
 | `write:drops` | Manage Creator Studio drops |
 | `write:collections` | Modify collection metadata, visibility, and images |
