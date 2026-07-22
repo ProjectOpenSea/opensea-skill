@@ -246,8 +246,17 @@ Event types: `sale`, `transfer`, `mint`, `listing`, `offer`, `trait_offer`, `col
 | List drops (featured/upcoming/recent) | `opensea drops list [--type <type>] [--chains <chains>]` | `drops/opensea-drops.sh [type] [limit] [chains]` |
 | Get drop details and stages | `opensea drops get <slug>` | `drops/opensea-drop.sh <slug>` |
 | Build mint transaction | `opensea drops mint <slug> --minter <address> [--quantity <n>]` | `drops/opensea-drop-mint.sh <slug> <minter> [quantity]` |
+| Build cross-chain mint transactions | `opensea drops cross-chain-mint <slug> --payer <address> --minter <address> --payment-chain <chain> --payment-token <address> [--quantity <n>]` | `drops/opensea-drop-cross-chain-mint.sh <slug> <payer> <minter> <payment_chain> <payment_token> [quantity]` |
 | Deploy a new SeaDrop contract | | `deploy_seadrop_contract` (MCP) |
 | Check deployment status | | `get_deploy_receipt` (MCP) |
+
+For a cross-chain mint, submit every returned transaction in order. Save the
+returned `receipt_request` object exactly as received, then poll it until the
+status is `SUCCESS` or `FAILED`:
+
+```bash
+opensea transactions receipt --request receipt-request.json
+```
 
 ### Accounts
 
@@ -660,6 +669,7 @@ The `scripts/` directory contains shell scripts that wrap the OpenSea REST API d
 | `drops/opensea-drops.sh` | List drops (featured, upcoming, recently minted) |
 | `drops/opensea-drop.sh` | Get detailed drop info by slug |
 | `drops/opensea-drop-mint.sh` | Build mint transaction for a drop |
+| `drops/opensea-drop-cross-chain-mint.sh` | Build ordered cross-chain mint transactions and a receipt request |
 | `drops/opensea-drop-deploy.sh` | Build deploy-contract transaction for a new drop |
 | `drops/opensea-drop-deploy-receipt.sh` | Get the receipt of a deploy transaction |
 

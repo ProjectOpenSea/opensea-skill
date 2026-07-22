@@ -104,6 +104,7 @@ List endpoints support cursor-based pagination:
 | `/api/v2/drops` | GET | List drops (featured, upcoming, recently_minted) |
 | `/api/v2/drops/{slug}` | GET | Detailed drop info with stages and supply |
 | `/api/v2/drops/{slug}/mint` | POST | Build mint transaction data |
+| `/api/v2/drops/{slug}/cross_chain_mint` | POST | Build ordered transactions to pay on one chain and mint on another |
 | `/api/v2/drops/eligibility/{slug}` | GET | Check drop eligibility (requires `read:eligibility` scope + Bearer token) |
 | `/api/v2/drops/deploy` | POST | Build deploy-contract transaction for a new drop |
 | `/api/v2/drops/deploy/{chain}/{tx_hash}/receipt` | GET | Receipt for a previously submitted deploy transaction |

@@ -1,5 +1,11 @@
 # @opensea/skill
 
+## 2.19.0
+
+### Minor Changes
+
+- cba26dd: Document cross-chain drop minting, including ordered transaction submission and receipt polling, and add a validated REST helper script.
+
 ## 2.18.3
 
 ### Patch Changes
