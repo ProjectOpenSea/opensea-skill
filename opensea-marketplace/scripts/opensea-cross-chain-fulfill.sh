@@ -55,13 +55,14 @@ if [[ ! "$fulfiller" =~ ^0x[0-9a-fA-F]{40}$ ]]; then
   exit 1
 fi
 
-valid_evm_chains="^(ethereum|matic|arbitrum|optimism|base|avalanche|klaytn|zora|blast|sepolia)$"
+# Format checks only; the API validates chain support (see GET /api/v2/chains)
+valid_evm_chains="^[a-z0-9_]+$"
 if [[ ! "$listing_chain" =~ $valid_evm_chains ]]; then
   echo "opensea-cross-chain-fulfill.sh: invalid listing_chain '$listing_chain'" >&2
   exit 1
 fi
 
-valid_payment_chains="^(ethereum|matic|arbitrum|optimism|base|avalanche|klaytn|zora|blast|sepolia|solana)$"
+valid_payment_chains="^[a-z0-9_]+$"
 if [[ ! "$payment_chain" =~ $valid_payment_chains ]]; then
   echo "opensea-cross-chain-fulfill.sh: invalid payment_chain '$payment_chain'" >&2
   exit 1

@@ -19,18 +19,11 @@ List endpoints support cursor-based pagination:
 
 ## Supported Chains
 
-| Chain | Identifier |
-|-------|------------|
-| Ethereum | `ethereum` |
-| Polygon | `matic` |
-| Arbitrum | `arbitrum` |
-| Optimism | `optimism` |
-| Base | `base` |
-| Avalanche | `avalanche` |
-| Klaytn | `klaytn` |
-| Zora | `zora` |
-| Blast | `blast` |
-| Sepolia (testnet) | `sepolia` |
+The set of supported chains changes as new chains launch. Fetch the current list, including chain identifiers, native symbols, and swap support, from `GET /api/v2/chains`:
+
+```bash
+opensea-get.sh "/api/v2/chains"
+```
 
 ## Endpoint Reference
 

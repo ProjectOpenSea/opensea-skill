@@ -1,5 +1,17 @@
 # @opensea/skill
 
+## 2.19.2
+
+### Patch Changes
+
+- Document ERC20-denominated listing fulfillment: read prices with the `decimals` field (stablecoins commonly use 6, not 18), and check payment-token balance and conduit allowance (via ConduitController `getConduit`) before submitting.
+
+## 2.19.1
+
+### Patch Changes
+
+- Replace hardcoded supported-chain lists with a pointer to `GET /api/v2/chains`, and relax marketplace script chain validation to a format check so newer chains (e.g. `robinhood`) work.
+
 ## 2.19.0
 
 ### Minor Changes

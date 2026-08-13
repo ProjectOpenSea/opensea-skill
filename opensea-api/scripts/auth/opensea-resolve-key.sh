@@ -63,7 +63,7 @@ http_code=$(curl -sS --connect-timeout 10 --max-time 30 -X POST \
 
 if [[ ! "$http_code" =~ ^2 ]]; then
   if [ "$http_code" = "429" ]; then
-    echo "opensea-resolve-key.sh: HTTP 429 rate limited (instant key creation is rate limited per IP). Reuse the cached key if you have one, try again later, or create a key at https://opensea.io/settings/developer" >&2
+    echo "opensea-resolve-key.sh: HTTP 429 rate limited. Reuse the cached key if you have one, try again later, or create a key at https://opensea.io/settings/developer" >&2
   else
     echo "opensea-resolve-key.sh: HTTP $http_code error while requesting an instant key" >&2
   fi

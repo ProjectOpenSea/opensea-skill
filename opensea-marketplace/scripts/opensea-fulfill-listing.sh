@@ -12,7 +12,8 @@ chain="$1"
 order_hash="$2"
 fulfiller="$3"
 
-valid_chains="^(ethereum|matic|arbitrum|optimism|base|avalanche|klaytn|zora|blast|sepolia)$"
+# Format check only; the API validates chain support (see GET /api/v2/chains)
+valid_chains="^[a-z0-9_]+$"
 if [[ ! "$chain" =~ $valid_chains ]]; then
   echo "opensea-fulfill-listing.sh: invalid chain '$chain'" >&2
   exit 1

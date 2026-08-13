@@ -21,18 +21,7 @@ Auth: x-api-key: $OPENSEA_API_KEY
 
 ## Supported Chains
 
-| Chain | Identifier |
-|-------|------------|
-| Ethereum | `ethereum` |
-| Polygon | `matic` |
-| Arbitrum | `arbitrum` |
-| Optimism | `optimism` |
-| Base | `base` |
-| Avalanche | `avalanche` |
-| Klaytn | `klaytn` |
-| Zora | `zora` |
-| Blast | `blast` |
-| Sepolia (testnet) | `sepolia` |
+The set of supported chains changes as new chains launch. Fetch the current list of chain identifiers from `GET /api/v2/chains` (see `opensea-api/scripts/opensea-get.sh`).
 
 ---
 
@@ -373,6 +362,45 @@ POST /api/v2/listings/fulfillment_data
 ```
 
 **Response:** Returns transaction data for the buyer to submit onchain.
+
+### Fulfilling ERC20-denominated listings
+
+Listings can be priced in an ERC20 token (stablecoins like USDG/USDC, WETH) instead of the native currency. The listing price and the fulfillment flow differ from native-priced listings in three ways:
+
+**1. Prices are raw base units, so always use the `decimals` field.**
+
+```json
+"price": { "current": { "currency": "USDG", "decimals": 6, "value": "89000000" } }
+```
+
+Human-readable price = `value / 10^decimals` = 89 USDG here. Never divide by 10^18 unconditionally. Stablecoins commonly use 6 decimals, so assuming 18 understates the price by a factor of 10^12.
+
+**2. The fulfillment transaction sends no native value.**
+
+For an ERC20-priced listing, `fulfillment_data.transaction.value` is `"0"` and the consideration amounts are denominated in the ERC20 token (`itemType: 1`). Payment is pulled from the buyer with `transferFrom` when the transaction executes. Do not attach native value.
+
+**3. The buyer needs both balance and an approval before submitting.**
+
+The amount owed is the sum of every ERC20 consideration item, seller proceeds plus marketplace and creator fees, not just the first one. Before executing the returned transaction:
+
+1. Check the buyer's `balanceOf` on the payment token covers that total.
+2. Work out which address will pull the payment, and it is not always a conduit:
+   - `fulfillerConduitKey` is `0x0000...0000` (`bytes32(0)`): Seaport transfers directly, so the buyer approves the Seaport contract in `transaction.to`.
+   - `fulfillerConduitKey` is non-zero: resolve it with `getConduit(bytes32)` on the Seaport ConduitController, deployed at `0x00000000F9490004C11Cef243f5400493c00Ad63` on every chain, and approve the conduit it returns.
+   ```bash
+   cast call 0x00000000F9490004C11Cef243f5400493c00Ad63 \
+     "getConduit(bytes32)(address,bool)" 0xFULFILLER_CONDUIT_KEY \
+     --rpc-url <chain-rpc-url>
+   ```
+   The second return value is `exists`. If it is `false`, the key is not registered and the address is meaningless.
+3. Check `allowance(buyer, spender)` on the payment token. If it is below the total, send an ERC20 `approve(spender, amount)` from the buyer first.
+
+Insufficient allowance or balance is the most common cause of "execution reverted" when simulating or submitting ERC20-priced fulfillments. Native-priced listings skip all of this, because the payment travels as `transaction.value`.
+
+Two ways to avoid doing this by hand:
+
+- `POST /api/v2/listings/cross_chain_fulfillment_data` (see the cross-chain scripts) returns an ordered list of transactions that includes any required ERC20 approval, even for same-chain same-token purchases.
+- `@opensea/sdk`'s `fulfillOrder` runs this check itself and throws with the spender and the exact `approve` amount before spending gas.
 
 ### Fulfill an Offer (Sell NFT)
 

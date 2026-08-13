@@ -55,6 +55,15 @@ Use `opensea-marketplace` when you need to **execute trades**:
 
 3. The response contains transaction data to execute onchain.
 
+### ERC20-denominated listings (stablecoins, WETH, etc.)
+
+Some listings are priced in an ERC20 token instead of the native currency (e.g. USDG on `robinhood`, USDC on `base`). The fulfillment response looks the same, but two extra steps are required before the transaction will succeed:
+
+1. Read the price using its `decimals` field. Listing prices are returned as raw base units with an explicit `decimals` value (e.g. `{"currency": "USDG", "decimals": 6, "value": "89000000"}` = 89 USDG). Never assume 18 decimals, because stablecoins commonly use 6.
+2. Approve the payment token before fulfilling. The fulfillment transaction has `value: 0` and the payment is pulled with `transferFrom`, so the buyer must hold enough of the payment token and have approved the address that pulls it. That address is the Seaport contract in `transaction.to` when `fulfillerConduitKey` is `bytes32(0)`, otherwise the conduit returned by `getConduit(conduitKey)` on the Seaport ConduitController (`0x00000000F9490004C11Cef243f5400493c00Ad63`). Approve the total of all ERC20 consideration items, fees included. Missing approval or balance is the most common cause of "simulation reverted" on ERC20-priced listings.
+
+See `references/marketplace-api.md` → **Fulfilling ERC20-denominated listings** for the full walkthrough.
+
 ## Selling an NFT (accepting an offer)
 
 1. Check offers on your NFT (use `opensea-api` skill):

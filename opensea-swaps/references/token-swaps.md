@@ -10,11 +10,7 @@ The `get_token_swap_quote` tool returns:
 
 ## Supported Chains
 
-- Ethereum (`ethereum`)
-- Base (`base`)
-- Polygon (`matic`)
-- Arbitrum (`arbitrum`)
-- Optimism (`optimism`)
+The set of supported chains changes as new chains launch. Fetch the current list from `GET /api/v2/chains`; chains with `"supports_swaps": true` can be used for swaps.
 
 ## Getting a Swap Quote
 

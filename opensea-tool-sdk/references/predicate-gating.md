@@ -197,6 +197,8 @@ Agent                        Tool Server                   ToolRegistry + Facili
 
 The caller's real-value `X-Payment` signature simultaneously proves identity (`from` = caller) AND authorizes payment. The predicate is checked BEFORE the facilitator settles — if the caller doesn't meet the access requirement, a 403 is returned and no funds move.
 
+Because settlement happens after the handler runs, `paidPredicateGate` carries the same two caveats as any paid gate: a failed settlement costs you the handler's work (and returns the output anyway if you opt into `settlement: "best-effort"`), and one authorization replayed concurrently passes verification every time unless you configure a `replayGuard`. See [x402.md](x402.md#a-failed-settlement-withholds-the-output).
+
 ### Server side: `paidPredicateGate`
 
 ```typescript

@@ -82,8 +82,8 @@ opensea tokens trending --limit 5
 Every OpenSea request needs `OPENSEA_API_KEY`. If you don't already have a key,
 you can fetch an **instant** free-tier key with no signup. The one rule that
 matters: **once you fetch an instant key, save it to disk and reuse it.** Do not
-re-fetch on every request — instant key creation is rate limited per IP, so a
-second fetch can fail and leave you with no key. The previous successful request
+re-fetch on every request. A second fetch can fail and leave you with no key.
+The previous successful request
 will not have persisted the key for you.
 
 ### The flow (follow these steps in order, every time)
@@ -130,8 +130,8 @@ fi
 ### Edge cases
 
 - **Key already exists (env var or cached file):** reuse it; do not fetch a new
-  one. Re-fetching wastes the per-IP rate limit and can fail.
-- **Key invalid or expired** (instant keys expire after 30 days; a request
+  one. Re-fetching wastes the rate limit and can fail.
+- **Key invalid or expired** (instant keys expire after 7 days; a request
   returns HTTP `401`/`403`): the cached key is stale. Re-fetch and overwrite the
   cache with `scripts/auth/opensea-resolve-key.sh --force` (or delete
   `~/.opensea/api_key` and re-run the flow). `--force` never overrides a key
@@ -697,7 +697,7 @@ The `scripts/` directory contains shell scripts that wrap the OpenSea REST API d
 
 | Script | Purpose |
 |--------|---------|
-| `auth/opensea-auth-request-key.sh` | Request a free-tier API key (3/hour per IP) |
+| `auth/opensea-auth-request-key.sh` | Request a free-tier API key |
 
 ## Error handling
 
@@ -768,7 +768,11 @@ Credentials must only be set via environment variables. Never log, print, or inc
 
 ## Supported chains
 
-`ethereum`, `matic`, `arbitrum`, `optimism`, `base`, `avalanche`, `klaytn`, `zora`, `blast`, `sepolia`
+The set of supported chains changes as new chains launch. Fetch the current list of chain identifiers from `GET /api/v2/chains`:
+
+```bash
+scripts/opensea-get.sh "/api/v2/chains"
+```
 
 ## References
 

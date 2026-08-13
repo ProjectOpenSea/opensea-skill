@@ -63,8 +63,10 @@ curl -X POST "https://api.opensea.io/api/v2/listings/fulfillment_data" \
 
 **Response contains:**
 - `fulfillment_data.transaction.to` - Seaport contract
-- `fulfillment_data.transaction.value` - ETH to send (wei)
+- `fulfillment_data.transaction.value` - Native currency to send (wei); `"0"` for ERC20-priced listings
 - `fulfillment_data.transaction.input_data` - Encoded calldata
+
+**ERC20-priced listings** (stablecoins, WETH): `value` is `0` and the payment is pulled with `transferFrom`, so the buyer must hold the payment token and have approved whichever address pulls it: Seaport itself for a `bytes32(0)` `fulfillerConduitKey`, otherwise the conduit registered for that key. See `references/marketplace-api.md` → **Fulfilling ERC20-denominated listings**.
 
 ### Step 3: Submit Transaction
 
@@ -215,7 +217,7 @@ See `references/marketplace-api.md` → **Build a Listing** and **Signing Orders
 ## Key Points
 
 - **Fulfillment API returns ready-to-use calldata** - No SDK needed for buying
-- **Value field** tells you exactly how much ETH to send
+- **Value field** tells you exactly how much native currency to send (`0` for ERC20-priced listings, which need a payment-token approval instead)
 - **Works on all EVM chains** OpenSea supports
 - **Basic orders** use `fulfillBasicOrder_efficient_6GL6yc` function
 - **Advanced orders** use `fulfillAvailableAdvancedOrders` for partial fills

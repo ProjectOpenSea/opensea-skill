@@ -14,7 +14,8 @@ fulfiller="$3"
 contract="$4"
 token_id="$5"
 
-valid_chains="^(ethereum|matic|arbitrum|optimism|base|avalanche|klaytn|zora|blast|sepolia)$"
+# Format check only; the API validates chain support (see GET /api/v2/chains)
+valid_chains="^[a-z0-9_]+$"
 if [[ ! "$chain" =~ $valid_chains ]]; then
   echo "opensea-fulfill-offer.sh: invalid chain '$chain'" >&2
   exit 1

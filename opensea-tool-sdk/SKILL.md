@@ -86,7 +86,7 @@ Search or look up registered tools via the OpenSea REST API. Requires `OPENSEA_A
 
 ```bash
 # Reuse OPENSEA_API_KEY if already set; otherwise fetch an instant free-tier key
-# (no signup — 60/min read, 5/min write, 30-day expiry) and SAVE it for reuse.
+# (no signup — 600/h read, 30/h write, 7-day expiry) and SAVE it for reuse.
 if [ -z "${OPENSEA_API_KEY:-}" ]; then
   KEY_FILE="${OPENSEA_CONFIG_DIR:-$HOME/.opensea}/api_key"
   if [ -s "$KEY_FILE" ]; then
@@ -100,8 +100,8 @@ if [ -z "${OPENSEA_API_KEY:-}" ]; then
 fi
 ```
 
-Instant key creation is rate limited per IP, so always save a fetched key and
-reuse it rather than re-fetching. The `opensea-api` skill ships an
+Always save a fetched instant key and reuse it rather than re-fetching. The
+`opensea-api` skill ships an
 `auth/opensea-resolve-key.sh` helper that does this (env → cached file → fetch +
 save); see its "API key resolution" section. For higher rate limits, create a
 full key at [Settings → Developer](https://docs.opensea.io/reference/api-keys).
@@ -321,11 +321,13 @@ The SDK supports multiple wallet providers via `@opensea/wallet-adapters`. Set e
 
 | Provider | Env vars | Best for |
 |----------|----------|----------|
-| Private Key | `PRIVATE_KEY`, `RPC_URL` | Local dev, scripts |
+| Private Key | `PRIVATE_KEY` | Local dev, scripts |
 | Privy | `PRIVY_APP_ID`, `PRIVY_APP_SECRET`, `PRIVY_WALLET_ID` | Server wallets |
 | Turnkey | `TURNKEY_API_PUBLIC_KEY`, `TURNKEY_API_PRIVATE_KEY`, `TURNKEY_ORGANIZATION_ID` | Enterprise signing |
 | Fireblocks | `FIREBLOCKS_API_KEY`, `FIREBLOCKS_API_SECRET`, `FIREBLOCKS_VAULT_ACCOUNT_ID` | Institutional custody |
 | Bankr | `BANKR_API_KEY` | Agent wallets (via HTTP API) |
+
+For any provider, `RPC_URL` (or the `--rpc-url` flag) sets the RPC endpoint for onchain reads and writes. When neither is set, CLI commands fall back to the network's default public RPC, which can be slow or rate-limited.
 
 ```typescript
 import { createWalletFromEnv } from "@opensea/tool-sdk"
