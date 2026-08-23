@@ -1,21 +1,19 @@
-## Thanks for opening a PR!
+<!--
+Thanks for opening a pull request.
 
-We really appreciate you taking the time to contribute. It means a lot to the OpenSea team and the broader developer community.
+This repository is a read-only mirror of a package maintained in an internal
+monorepo, so pull requests cannot be merged here. We read every one, and when a
+change looks right we recreate it in the monorepo. It reaches this repo on the
+next release sync.
 
-### A quick note about how this repo works
+Reporting a bug rather than fixing one? An issue is usually the faster route.
 
-This repository is a **read-only mirror** of a package maintained in an internal monorepo. Because of that, pull requests cannot be merged directly here.
+Do not report security vulnerabilities in a public pull request or issue. Use
+https://bugcrowd.com/engagements/opensea instead.
 
-**But don't worry -- your contribution won't be lost!** Here's what happens next:
+Describe your change in the two sections below.
+-->
 
-1. Our team reviews every PR that comes in.
-2. If the change looks good, we'll recreate it internally in our monorepo.
-3. The fix will be synced back to this public repo on the next release.
+## Motivation
 
-We'll keep you posted on the PR as things progress.
-
-### Is this a bug report?
-
-If you're reporting a bug rather than submitting a code fix, opening an **issue** is usually the fastest path to a resolution. Bug report issues help us triage and prioritize effectively.
-
-Thanks again for helping make OpenSea better for everyone!
+## Solution

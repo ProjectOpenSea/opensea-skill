@@ -1,5 +1,11 @@
 # @opensea/skill
 
+## 2.20.0
+
+### Minor Changes
+
+- Document agent accounts: declaring an account an agent, the two-sided ownership handshake, the new `opensea agent` CLI group, and the `accounts/opensea-agent-relationships.sh` public read. Records that the writes take `write:wallets` while listing your own relationships takes `read:wallets`, so a client running the whole handshake needs both.
+
 ## 2.19.2
 
 ### Patch Changes

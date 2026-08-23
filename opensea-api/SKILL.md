@@ -363,6 +363,43 @@ opensea tools saved save 8453 0x265BB2DBFC0A8165C9A1941Eb1372F349baD2cf1 42
 opensea tools saved remove 8453 0x265BB2DBFC0A8165C9A1941Eb1372F349baD2cf1 42
 ```
 
+### Agent accounts
+
+Declare yourself an agent and record who owns you. An agent is an account, not a flag on a wallet, and ownership is a relationship between two accounts that both sides confirm.
+
+Three things this is not. It is not sub-accounts: no new account type is created. It is not delegation: naming an account as your agent grants it no ability to act for you, so this is a declaration rather than an authorization. It is not verification: it is self-reported and OpenSea does not check it.
+
+An agent can have no owner at all, so a self-launched agent nobody declared is valid. An agent has at most one confirmed owner. Either side may withdraw or revoke at any time, which deletes the relationship. Only confirmed relationships are public; a pending proposal is visible to the two parties alone.
+
+| Task | CLI Command | Alternative |
+|---|---|---|
+| Declare self an agent | `opensea agent declare` | `opensea api request PUT /api/v2/accounts/agent` |
+| Withdraw the declaration | `opensea agent withdraw` | `opensea api request DELETE /api/v2/accounts/agent` |
+| Propose a relationship | `opensea agent propose <address> --role AGENT\|OWNER` | `opensea api request POST /api/v2/accounts/agent-relationships --body propose.json` |
+| Confirm a proposal | `opensea agent confirm <address> --role AGENT\|OWNER` | `opensea api request POST /api/v2/accounts/agent-relationships/confirm --body confirm.json` |
+| Withdraw or revoke | `opensea agent revoke <address> --role AGENT\|OWNER` | `opensea api request DELETE /api/v2/accounts/agent-relationships --params '{"counterparty_address":"0x...","caller_role":"AGENT"}'` |
+| List your own relationships | `opensea agent list` | `opensea api request GET /api/v2/accounts/agent-relationships` |
+| Read a public profile | `opensea agent profile <address_or_username>` | `opensea-agent-relationships.sh <address_or_username>` |
+
+The writes require `write:wallets` but `agent list` requires `read:wallets`. Authenticate with both or the list call returns 403 "Insufficient permissions". Reading another profile is public and needs only the API key.
+
+`--role` is the side you are on, so `--role AGENT` means "I am an agent and the counterparty owns me". Your own account is never in the request; it comes from the token.
+
+```bash
+# On the agent.
+opensea auth login --private-key --scopes read:wallets,write:wallets
+opensea agent declare
+opensea agent propose 0xOWNER --role AGENT
+opensea agent list   # status PENDING_OWNER until the owner confirms
+
+# On the owner. Either call lands the same confirmed relationship, because
+# proposing something already awaiting you confirms it.
+opensea agent confirm 0xAGENT --role OWNER
+opensea agent propose 0xAGENT --role OWNER
+```
+
+`declare` and `withdraw` return `changed`, and `propose` and `confirm` return `created`. Both are false when the call was a no-op, so a retry is distinguishable from a real change. `revoke` returns `removed`, false when no such relationship existed.
+
 ### Generic requests
 
 | Task | Script |
@@ -402,6 +439,7 @@ opensea collections get mfers
 | `tokens` | Get trending tokens, top tokens, token details, token activity, and account token activity |
 | `tools` | Search, list, and inspect registered AI agent tools (ERC-8257); view tool activity; manage saved tools with `tools saved` |
 | `accounts` | Get account details |
+| `agent` | Declare an agent account and run the two-sided ownership handshake |
 
 Global options: `--api-key`, `--chain` (default: ethereum), `--format` (json/table/toon), `--base-url`, `--timeout`, `--verbose`
 
@@ -521,6 +559,7 @@ These tools derive the wallet from the JWT and enforce the listed scope. Do not 
 | `read:favorites` | `get_favorites` |
 | `read:social` | `view_social_graph` |
 | `read:tools` | `list_saved_tools`, `list_toolkits`, `get_toolkit` |
+| `read:wallets` | none yet; REST only, for `GET /api/v2/accounts/agent-relationships` |
 | `write:favorites` | `manage_watchlist` |
 | `write:social` | `manage_social_graph` |
 | `write:tools` | `save_tool`, `unsave_tool`, `create_toolkit`, `save_toolkit`, `unsave_toolkit` |
@@ -647,6 +686,7 @@ The `scripts/` directory contains shell scripts that wrap the OpenSea REST API d
 | `accounts/opensea-account-pnl.sh` | Aggregated trading P&L (realized + unrealized) for a wallet |
 | `accounts/opensea-account-closed-positions.sh` | Closed (realized) trading positions for a wallet |
 | `accounts/opensea-account-token-transfers.sh` | Token transfers contributing to a wallet's position in a currency |
+| `accounts/opensea-agent-relationships.sh` | Public agent ownership relationships for a profile |
 
 ### Marketplace Query Scripts
 

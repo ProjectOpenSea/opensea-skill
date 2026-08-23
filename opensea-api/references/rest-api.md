@@ -118,6 +118,54 @@ opensea-get.sh "/api/v2/chains"
 | `/api/v2/account/{address}/pnl` | GET | Aggregated trading P&L (realized + unrealized) for a wallet |
 | `/api/v2/account/{address}/pnl/closed-positions` | GET | Closed (realized) trading positions for a wallet |
 | `/api/v2/account/{address}/pnl/token-transfers` | GET | Token transfers contributing to a wallet's position in a currency (requires `contract_address` + `chain`) |
+| `/api/v2/accounts/{address_or_username}/agent-relationships` | GET | Public agent ownership relationships for a profile (API key only) |
+
+### Agent accounts
+
+An agent is an account, not a flag on a wallet. Ownership is a relationship
+between two accounts that both sides confirm. It is a declaration, not an
+authorization: naming an account as your agent grants it no ability to act for
+you. It is self-reported and OpenSea does not verify it. An agent can have no
+owner at all, and at most one confirmed owner.
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/v2/accounts/agent` | PUT | Declare the authenticated account an agent (`write:wallets`) |
+| `/api/v2/accounts/agent` | DELETE | Withdraw the agent declaration (`write:wallets`) |
+| `/api/v2/accounts/agent-relationships` | POST | Propose a relationship (`write:wallets`) |
+| `/api/v2/accounts/agent-relationships/confirm` | POST | Confirm a proposal made to you (`write:wallets`) |
+| `/api/v2/accounts/agent-relationships` | DELETE | Withdraw a proposal or revoke a confirmed relationship (`write:wallets`) |
+| `/api/v2/accounts/agent-relationships` | GET | List your own relationships, including pending (`read:wallets`) |
+
+The writes take `write:wallets` but the list takes `read:wallets`. A client
+driving the whole handshake needs both, or the list call returns 403
+"Insufficient permissions".
+
+Propose and confirm take `{"counterparty_address": "0x...", "caller_role":
+"AGENT"|"OWNER"}`. Your own account is never in the body; it comes from the
+token. `caller_role` is the side *you* are on, so `AGENT` means "I am an agent
+and this account owns me".
+
+Revoke takes `counterparty_address` and `caller_role` as query parameters
+rather than a body, because fetch, OkHttp and urllib all drop DELETE bodies by
+default and proxies may strip them.
+
+Proposing a relationship that is already awaiting you confirms it, so a client
+that cannot tell who moved first can just propose.
+
+Responses: declare and withdraw return `{"is_agent", "changed"}`, where
+`changed` is false if the account already had that status. Propose and confirm
+return `{"relation", "created"}`. Revoke returns `{"removed"}`, false when no
+such relationship existed. The list returns `{"relationships": [...]}`.
+
+A relationship carries `status` (`PENDING_AGENT`, `PENDING_OWNER` or
+`CONFIRMED`), `initiated_by`, `awaiting_confirmation_from` (null once
+confirmed), `agent_account_id`, `owner_account_id`, the two wallet addresses,
+and `created_at` / `confirmed_at` as Unix timestamps in seconds. `status` is
+authoritative; `awaiting_confirmation_from` is derived from it.
+
+Either side may withdraw or revoke at any time, which deletes the
+relationship. Only confirmed relationships appear on a public profile.
 
 ### Tokens
 

@@ -89,6 +89,7 @@ Keep the resolved values in the client's secret store, not committed configurati
 - `401`: the API key or JWT is missing, invalid, or expired. Check the response, refresh the JWT once, and retry once.
 - If PAT exchange or session refresh fails because the credential expired or was revoked, run SIWE authentication again instead of looping.
 - `403`: the JWT lacks the required scope. Sign in again with that scope; unchanged retries will not help.
+- A read and its matching writes do not always share one scope. Agent relationships are the case to watch: every write takes `write:wallets`, but listing your own relationships takes `read:wallets`. A client that drives the whole handshake needs both, so sign in with `--scopes read:wallets,write:wallets` rather than assuming the write scope covers the read.
 - `429`: respect `Retry-After` and back off.
 - Load secrets from environment variables or a secret manager instead of typing them into shell history. Never print or transmit private keys, PATs, JWTs, cookies, signatures, or authorization headers.
 - Request the smallest useful scope set and revoke task-specific PATs when finished.
