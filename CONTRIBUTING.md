@@ -26,7 +26,7 @@ The more detail, the faster we can help.
 
 ## Security issues
 
-If you've found a security vulnerability, **please do not open a public issue.** Instead, email us at **security@opensea.io** so we can address it responsibly.
+If you've found a security vulnerability, please do not open a public issue. Report it through OpenSea's Bugcrowd program at **https://bugcrowd.com/engagements/opensea**, which is where reports get triaged and tracked. See [SECURITY.md](SECURITY.md) for what to include and what not to test against.
 
 ## Thank you
 

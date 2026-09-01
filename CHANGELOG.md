@@ -1,5 +1,11 @@
 # @opensea/skill
 
+## 2.21.0
+
+### Minor Changes
+
+- b68b01e: Add executable Solana order-action workflows for creating offers, fulfilling listings and offers, and cancelling orders, including exact-byte partial-signature handling, sponsored fee payers, and Jito bundles.
+
 ## 2.20.0
 
 ### Minor Changes

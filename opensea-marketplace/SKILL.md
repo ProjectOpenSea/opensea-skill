@@ -1,6 +1,6 @@
 ---
 name: opensea-marketplace
-description: Buy and sell NFTs on OpenSea's Seaport marketplace. Fulfill listings, accept offers, create new orders, cross-chain purchases, and sweep multiple listings. Requires wallet signing; for read-only queries use opensea-api instead.
+description: Buy and sell NFTs through OpenSea on EVM chains and Solana. Fulfill listings, accept or create offers, cancel orders, make cross-chain purchases, and sweep listings. Requires wallet signing; for read-only queries use opensea-api instead.
 homepage: https://github.com/ProjectOpenSea/opensea-skill
 repository: https://github.com/ProjectOpenSea/opensea-skill
 license: MIT
@@ -12,7 +12,7 @@ env:
 dependencies:
   - node >= 18.0.0
   - curl
-  - jq (recommended)
+  - jq
 ---
 
 <!-- Wallet provider env vars (Privy/Turnkey/Fireblocks/Bankr/PRIVATE_KEY) are documented in the opensea-wallet skill. -->
@@ -20,7 +20,7 @@ dependencies:
 
 # OpenSea Marketplace
 
-Buy and sell NFTs on OpenSea's Seaport marketplace. Fulfill listings, accept offers, create new orders, cross-chain purchases, and sweep multiple listings.
+Buy and sell NFTs through OpenSea on EVM chains and Solana. Fulfill listings, accept or create offers, cancel orders, make cross-chain purchases, and sweep multiple listings.
 
 ## When to use this skill (`scope_in`)
 
@@ -29,6 +29,7 @@ Use `opensea-marketplace` when you need to **execute trades**:
 - Buy an NFT (fulfill a listing)
 - Sell an NFT (accept an offer)
 - Create a new Seaport listing or offer
+- Create, fulfill, or cancel a Solana order
 - Cross-chain NFT purchases (pay with tokens from a different chain)
 - Sweep multiple listings in one transaction
 
@@ -112,7 +113,25 @@ opensea listings cross-chain-fulfill \
 
 ## Creating listings/offers
 
-Creating new listings and offers requires wallet signatures. Use `../opensea-api/scripts/opensea-post.sh` with the Seaport order structure (see `references/marketplace-api.md` for full details).
+Creating new listings and offers requires wallet signatures. For EVM Seaport orders, use `../opensea-api/scripts/opensea-post.sh` with the Seaport order structure. To create an offer through the action API, including on Solana:
+
+```bash
+./scripts/opensea-create-offer-actions.sh \
+  solana <mint> <token_id> <maker> 1 1.5 <payment_mint>
+```
+
+See `references/marketplace-api.md` for request shapes and signing rules.
+
+## Solana order actions
+
+The four action endpoints return ordered `steps` for creating an offer, fulfilling a listing, fulfilling an offer, or cancelling an order. When starting from a Solana listing or offer response:
+
+- use `svm_order.id` as the order identifier, not `order_hash`;
+- use the returned `protocol_address` rather than an EVM Seaport constant;
+- preserve every base58 address exactly, including case;
+- execute steps in order.
+
+The Solana action variants are `svmCreateOfferAction`, `svmBuyItemsAction`, `svmAcceptOfferAction`, and `svmCancelOrdersAction`. Read `references/marketplace-api.md` → **Solana transaction submission** before signing or broadcasting one.
 
 ## Marketplace action scripts
 
@@ -121,11 +140,17 @@ Creating new listings and offers requires wallet signatures. Use `../opensea-api
 | Get fulfillment data (buy NFT) | `opensea-fulfill-listing.sh <chain> <order_hash> <buyer>` |
 | Get cross-chain fulfillment data | `opensea-cross-chain-fulfill.sh [--recipient <addr>] <fulfiller> <payment_chain> <payment_token> <listing_chain> <protocol_address> <hash1> [hash2 ...]` |
 | Get fulfillment data (accept offer) | `opensea-fulfill-offer.sh <chain> <order_hash> <seller> <contract> <token_id>` |
+| Get offer-creation actions | `opensea-create-offer-actions.sh [options] <chain> <contract> <token_id> <maker> <quantity> <amount> <currency>` |
+| Get listing-fulfillment actions | `opensea-fulfill-listing-actions.sh [options] <chain> <order_identifier> <protocol_address> <fulfiller>` |
+| Get offer-fulfillment actions | `opensea-fulfill-offer-actions.sh [options] <chain> <order_identifier> <protocol_address> <fulfiller>` |
+| Get cancellation actions | `opensea-cancel-order-actions.sh <chain> <protocol_address> <order_identifier> <maker>` |
 | Generic POST request | `../opensea-api/scripts/opensea-post.sh <path> <json_body>` |
 
 ## Signing transactions
 
 All transaction signing uses managed wallet providers through the `WalletAdapter` interface. See the [`opensea-wallet`](../opensea-wallet/SKILL.md) skill for supported providers, env vars, setup walkthroughs, and signing-policy configuration. The CLI auto-detects which provider to use based on environment variables, or you can specify one explicitly with `--wallet-provider`.
+
+The action scripts only request steps; they do not sign or broadcast them. Solana responses may require a precomposed transaction or a Jito bundle, so follow the response-specific rules in `references/marketplace-api.md`.
 
 ## References
 

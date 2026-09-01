@@ -127,6 +127,10 @@ Do **not** publish five separate ClawHub slugs.
 
 The vercel-labs/skills CLI discovers both root `SKILL.md` and `skills/` subdirectories. With the router at root, `npx skills add ProjectOpenSea/opensea-skill` installs the router plus all sub-skills as a single directory tree. Verify this with `--dry-run` after any structural changes.
 
+## Security
+
+Found a vulnerability? Report it through OpenSea's Bugcrowd program at https://bugcrowd.com/engagements/opensea rather than opening a public issue. See [SECURITY.md](SECURITY.md).
+
 ## License
 
 MIT

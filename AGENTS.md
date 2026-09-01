@@ -9,6 +9,9 @@ There is no build or test step. Validate shell scripts and docs manually.
 ```bash
 # Syntax-check scripts (they live in per-domain subdirectories)
 find . -name '*.sh' -exec bash -n {} +
+# What CI runs: shellcheck, plus every opensea-*/scripts/*.sh must be executable
+shellcheck $(find . -name '*.sh')
+find . -name '*.sh' ! -perm -u+x
 # Run the skill sync check
 ../../scripts/check-skill-sync.sh
 ```

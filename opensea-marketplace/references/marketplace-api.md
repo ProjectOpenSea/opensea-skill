@@ -4,7 +4,7 @@ This reference covers the marketplace endpoints for buying and selling NFTs and 
 
 ## Overview
 
-OpenSea uses the **Seaport protocol** for all marketplace orders. The API provides endpoints to:
+OpenSea uses **Seaport** for EVM marketplace orders and supports Solana-native order protocols through the action APIs. The API provides endpoints to:
 - Query existing listings and offers
 - Build new listings and offers (returns unsigned Seaport orders)
 - Fulfill orders (accept listings or offers)
@@ -479,6 +479,61 @@ opensea listings best-for-nft boredapeyachtclub 1234
 1. **View offers** (opensea-api): `opensea offers all <slug> --limit 50`
 2. **Get fulfillment data** (this skill): POST to `/api/v2/offers/fulfillment_data`
 3. **Execute**: submit the returned transaction
+
+---
+
+## Order Action Endpoints (EVM and Solana)
+
+These endpoints return ordered `steps` instead of assuming a Seaport calldata response:
+
+| Operation | Endpoint | Action script |
+|---|---|---|
+| Create offer | `POST /api/v2/offers/actions` | `opensea-create-offer-actions.sh` |
+| Fulfill listing | `POST /api/v2/listings/fulfillment/actions` | `opensea-fulfill-listing-actions.sh` |
+| Fulfill offer | `POST /api/v2/offers/fulfillment/actions` | `opensea-fulfill-offer-actions.sh` |
+| Cancel order | `POST /api/v2/orders/chain/{chain}/protocol/{protocol_address}/{order_identifier}/cancel/actions` | `opensea-cancel-order-actions.sh` |
+
+The CLI exposes the same endpoints:
+
+```bash
+opensea offers actions --body create-offer.json
+opensea listings fulfillment-actions --body fulfill-listing.json
+opensea offers fulfillment-actions --body fulfill-offer.json
+opensea orders cancel-actions solana <protocol_address> <order_identifier> --body cancel.json
+```
+
+Request bodies use the API's JSON field names. Example Solana listing fulfillment:
+
+```json
+{
+  "listing": {
+    "hash": "<svm_order.id>",
+    "chain": "solana",
+    "protocol_address": "<protocol_address from the listing>"
+  },
+  "fulfiller": { "address": "<buyer base58 address>" },
+  "include_optional_creator_fees": false
+}
+```
+
+For a Solana listing or offer, use `svm_order.id` wherever the request calls for the order identifier. Do not substitute `order_hash`, and do not hardcode the Seaport address: pass through the order's returned `protocol_address`. Base58 identifiers are case-sensitive.
+
+### Solana transaction submission
+
+Process `steps` in array order. The Solana variants are:
+
+- `svmCreateOfferAction` for offer creation;
+- `svmBuyItemsAction` for listing fulfillment;
+- `svmAcceptOfferAction` for offer fulfillment;
+- `svmCancelOrdersAction` for cancellation.
+
+Each action carries `transaction` submission data. Follow these fields literally:
+
+- If `partiallySignedTransaction` is present, base64-decode and deserialize those exact transaction bytes, append the wallet's signature to the existing transaction, and broadcast it. Do not rebuild the message from `instructions`; rebuilding invalidates the existing cosigner signature.
+- If `partiallySignedTransaction` is absent, build the transaction from `instructions`, `addressLookupTableAddresses`, and the requested wallet as signer.
+- If `sponsoredFeePayer` is present, the OpenSea relayer pays network fees and rent; the wallet is a cosigner. If absent, the wallet pays.
+- If `requiresJitoBundle` is `true`, submit through a Jito bundle. Do not send the transaction through public RPC, which would pay the tip without receiving the intended bundle protection.
+- A successful partial fill increments the filled quantity but can leave the offer live. Do not assume fulfillment consumed the entire offer; inspect the requested quantity and re-query the order.
 
 ---
 
