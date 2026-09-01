@@ -2,7 +2,8 @@
 set -euo pipefail
 
 usage() {
-  echo "Usage: opensea-create-offer-actions.sh [--start-time <iso>] [--end-time <iso>] [--use-creator-fee] <chain> <contract> <token_id> <maker> <quantity> <amount> <currency>" >&2
+  echo "Usage: opensea-create-offer-actions.sh [--start-time <iso>] [--end-time <iso>] [--use-creator-fee] <chain> <contract> <token_id> <maker> <quantity> <amount> <currency_address>" >&2
+  echo "  currency_address is a token mint/contract address, not a symbol; native SOL uses 11111111111111111111111111111111" >&2
   exit 1
 }
 
@@ -37,7 +38,7 @@ token_id="$3"
 maker="$4"
 quantity="$5"
 amount="$6"
-currency="$7"
+currency_address="$7"
 
 [[ "$chain" =~ ^[a-z0-9_]+$ ]] || {
   echo "opensea-create-offer-actions.sh: invalid chain '$chain'" >&2
@@ -65,7 +66,7 @@ body=$(jq -n \
   --arg maker "$maker" \
   --argjson quantity "$quantity" \
   --arg amount "$amount" \
-  --arg currency "$currency" \
+  --arg currency "$currency_address" \
   --arg start_time "$start_time" \
   --arg end_time "$end_time" \
   --argjson use_creator_fee "$use_creator_fee" \

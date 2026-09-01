@@ -117,8 +117,11 @@ Creating new listings and offers requires wallet signatures. For EVM Seaport ord
 
 ```bash
 ./scripts/opensea-create-offer-actions.sh \
-  solana <mint> <token_id> <maker> 1 1.5 <payment_mint>
+  solana <mint> <token_id> <maker> 1 0.001 11111111111111111111111111111111
 ```
+
+The final argument is the payment token's mint/contract address, not its ticker symbol. Use
+`11111111111111111111111111111111` for native SOL; passing `SOL` is invalid.
 
 See `references/marketplace-api.md` for request shapes and signing rules.
 
@@ -140,7 +143,7 @@ The Solana action variants are `svmCreateOfferAction`, `svmBuyItemsAction`, `svm
 | Get fulfillment data (buy NFT) | `opensea-fulfill-listing.sh <chain> <order_hash> <buyer>` |
 | Get cross-chain fulfillment data | `opensea-cross-chain-fulfill.sh [--recipient <addr>] <fulfiller> <payment_chain> <payment_token> <listing_chain> <protocol_address> <hash1> [hash2 ...]` |
 | Get fulfillment data (accept offer) | `opensea-fulfill-offer.sh <chain> <order_hash> <seller> <contract> <token_id>` |
-| Get offer-creation actions | `opensea-create-offer-actions.sh [options] <chain> <contract> <token_id> <maker> <quantity> <amount> <currency>` |
+| Get offer-creation actions | `opensea-create-offer-actions.sh [options] <chain> <contract> <token_id> <maker> <quantity> <amount> <currency_address>` |
 | Get listing-fulfillment actions | `opensea-fulfill-listing-actions.sh [options] <chain> <order_identifier> <protocol_address> <fulfiller>` |
 | Get offer-fulfillment actions | `opensea-fulfill-offer-actions.sh [options] <chain> <order_identifier> <protocol_address> <fulfiller>` |
 | Get cancellation actions | `opensea-cancel-order-actions.sh <chain> <protocol_address> <order_identifier> <maker>` |

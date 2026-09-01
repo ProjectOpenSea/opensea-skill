@@ -502,6 +502,20 @@ opensea offers fulfillment-actions --body fulfill-offer.json
 opensea orders cancel-actions solana <protocol_address> <order_identifier> --body cancel.json
 ```
 
+The create-offer request's `price.currency` is a token mint/contract address, not a ticker symbol.
+For native SOL, pass the system-program address:
+
+```json
+{
+  "item": {"chain": "solana", "contract": "<asset_id>", "token_id": "<asset_id>"},
+  "address": "<maker>",
+  "quantity": 1,
+  "price": {"amount": "0.001", "currency": "11111111111111111111111111111111"}
+}
+```
+
+Passing `"SOL"` as `price.currency` is invalid.
+
 Request bodies use the API's JSON field names. Example Solana listing fulfillment:
 
 ```json

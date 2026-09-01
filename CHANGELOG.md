@@ -1,5 +1,11 @@
 # @opensea/skill
 
+## 2.21.1
+
+### Patch Changes
+
+- Clarify that offer-action creation requires a payment token mint or contract address, and document the native SOL address instead of suggesting the `SOL` ticker symbol.
+
 ## 2.21.0
 
 ### Minor Changes
