@@ -18,10 +18,10 @@ set -euo pipefail
 #     Bankr:            BANKR_API_KEY
 #     Private Key:      PRIVATE_KEY, RPC_URL, WALLET_ADDRESS
 
-TO_TOKEN="${1:?Usage: $0 <to_token_address> <amount> [chain] [from_token] [wallet_provider]}"
+TO_TOKEN_ADDRESS="${1:?Usage: $0 <to_token_address> <amount> [chain] [from_token] [wallet_provider]}"
 AMOUNT="${2:?Amount required}"
 CHAIN="${3:-base}"
-FROM_TOKEN="${4:-0x0000000000000000000000000000000000000000}"
+FROM_TOKEN_ADDRESS="${4:-0x0000000000000000000000000000000000000000}"
 WALLET_PROVIDER="${5:-}"
 
 if [ -z "${OPENSEA_API_KEY:-}" ]; then
@@ -98,7 +98,7 @@ esac
 exec opensea swaps execute \
   --wallet-provider "$WALLET_PROVIDER" \
   --from-chain "$CHAIN" \
-  --from-address "$FROM_TOKEN" \
+  --from-address "$FROM_TOKEN_ADDRESS" \
   --to-chain "$CHAIN" \
-  --to-address "$TO_TOKEN" \
+  --to-address "$TO_TOKEN_ADDRESS" \
   --quantity "$AMOUNT"

@@ -123,7 +123,7 @@ else
   api_key=$(curl -s -X POST https://api.opensea.io/api/v2/auth/keys | jq -r '.api_key')  # 3. fetch
   mkdir -p "$(dirname "$KEY_FILE")"
   (umask 077; printf '%s\n' "$api_key" > "$KEY_FILE")  # 4. SAVE before using it
-  export OPENSEA_API_KEY="$api_key"
+  export OPENSEA_API_KEY="${api_key}"
 fi
 ```
 

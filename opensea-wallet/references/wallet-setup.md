@@ -292,7 +292,7 @@ const account = await createBankrAccount(process.env.BANKR_API_KEY);
 
 ```bash
 export OPENSEA_API_KEY="your-opensea-api-key"
-export PRIVATE_KEY="0xYourHexPrivateKey"
+export PRIVATE_KEY="<local-dev-private-key>"
 export RPC_URL="http://127.0.0.1:8545"  # local dev node only (Hardhat/Anvil/Ganache)
 export WALLET_ADDRESS="0xYourWalletAddress"
 ```

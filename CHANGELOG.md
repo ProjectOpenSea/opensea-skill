@@ -1,5 +1,11 @@
 # @opensea/skill
 
+## 2.21.2
+
+### Patch Changes
+
+- Pin the public release actions, include the MIT license text, and clarify credential and token-address examples so security scanners distinguish runtime values from embedded secrets.
+
 ## 2.21.1
 
 ### Patch Changes
