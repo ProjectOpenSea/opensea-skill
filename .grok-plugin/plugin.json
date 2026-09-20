@@ -1,0 +1,17 @@
+{
+  "name": "opensea",
+  "version": "2.22.0",
+  "description": "OpenSea agent skills and MCP server: query NFT and token data, trade on Seaport, swap tokens, set up wallet signing, and build ERC-8257 agent tools.",
+  "author": { "name": "OpenSea" },
+  "homepage": "https://github.com/ProjectOpenSea/opensea-skill",
+  "repository": "https://github.com/ProjectOpenSea/opensea-skill",
+  "license": "MIT",
+  "skills": [
+    "./opensea-api",
+    "./opensea-marketplace",
+    "./opensea-swaps",
+    "./opensea-wallet",
+    "./opensea-tool-sdk"
+  ],
+  "mcpServers": ".mcp.json"
+}

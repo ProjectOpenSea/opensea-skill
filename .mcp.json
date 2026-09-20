@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "opensea": {
+      "type": "http",
+      "url": "https://mcp.opensea.io/mcp",
+      "note": "Official OpenSea MCP server (hosted, streamable HTTP). Read-only public data needs an API key in X-API-KEY: mint a free 7-day key with the get_instant_api_key tool or POST https://api.opensea.io/api/v2/auth/keys, or create one at https://opensea.io/settings/developer. Wallet-scoped tools also require OAuth 2.1 via https://auth.opensea.io. Never echo the key into chat or logs."
+    }
+  }
+}

@@ -1,5 +1,11 @@
 # @opensea/skill
 
+## 2.22.0
+
+### Minor Changes
+
+- Add a `.grok-plugin/plugin.json` manifest and `.mcp.json` so plugin marketplaces (xAI Grok Build) can index the five sub-skills and the hosted OpenSea MCP server.
+
 ## 2.21.2
 
 ### Patch Changes
