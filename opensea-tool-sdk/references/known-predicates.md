@@ -426,14 +426,14 @@ const terms = await composite.getTerms(toolId) // [{ predicate, negate }]
 
 ## WalletStateAttestationPredicate
 
-Gates access based on offchain-signed wallet-state attestations. Designed for cross-chain wallet state that cannot be evaluated natively in EVM (e.g., Solana, XRPL, Bitcoin holdings). An offchain issuer evaluates conditions against the relevant chain, signs a verdict, and the onchain predicate verifies the signature via the RIP-7212 P-256 precompile.
+Gates access based on offchain-signed wallet-state attestations. An offchain issuer evaluates a condition against wallet state that may live on a different chain from the registry, signs a verdict, and the onchain predicate verifies the signature via the P-256 precompile (RIP-7212 / EIP-7951).
 
 | Field | Value |
 |-------|-------|
 | Requirement `kind` | `0x7a111640` (`IWalletStateAttestation` interface ID) |
 | Requirement `data` (getRequirements) | `abi.encode(string issuerJWKSURI, bytes32 conditionHash)` |
-| Proof `data` (hasAccess) | `abi.encode(bool pass, address wallet, bytes32 conditionHash, uint256 blockNumber, bytes32 r, bytes32 s, bytes32 messageHash)` |
-| Signature verification | ECDSA P-256 via RIP-7212 precompile (~3,450 gas) |
+| Proof `data` (hasAccess) | Issuer-defined. The reference implementation takes the issuer's compact JWT (ES256) as ASCII bytes, unchanged, and reads the wallet, verdict, condition hash and expiry from its signed payload. |
+| Signature verification | ECDSA P-256 via the P-256 precompile; about 130,000 gas per check in the reference implementation |
 
 This is a third-party predicate type. No canonical deployment exists; each issuer deploys their own instance. The `IWalletStateAttestation` marker interface is not pinned in `IRequirementTypes.sol` but is a valid extension per the spec's open `kind` namespace.
 

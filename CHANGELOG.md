@@ -1,5 +1,17 @@
 # @opensea/skill
 
+## 2.23.1
+
+### Patch Changes
+
+- Correct the `WalletStateAttestationPredicate` entry in `opensea-tool-sdk/references/known-predicates.md`: the reference implementation's `hasAccess` takes the issuer's compact JWT as `data`, and a check costs about 130,000 gas.
+
+## 2.23.0
+
+### Minor Changes
+
+- Document endpoint-bound predicate authentication and the optional shared replay guard for single-use identity authorizations.
+
 ## 2.22.0
 
 ### Minor Changes

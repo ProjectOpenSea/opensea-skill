@@ -1,6 +1,6 @@
 # Predicate-Gated Tools (402 Challenge + 403 Access Control)
 
-Predicate gating restricts tool access based on onchain state (NFT ownership, subscriptions, composite logic). When `operatorAddress` is configured, the gate uses the same 402 challenge flow as x402: the server returns `HTTP 402` with `PaymentRequirements` (`maxAmountRequired: "0"`), and the caller replays with a zero-value `X-Payment` header. The server recovers the caller's address from the `X-Payment` signature and checks the configured `IAccessPredicate` contract via the ToolRegistry.
+Predicate gating restricts tool access based on onchain state (NFT ownership, subscriptions, composite logic). The gate uses the same 402 challenge flow as x402: the server returns `HTTP 402` with `PaymentRequirements` (`maxAmountRequired: "0"`), and the caller retries with a zero-value `X-Payment` header. The signed `to` address is derived from the endpoint URL, tool ID, and operator so an authorization captured by another endpoint cannot be replayed here. The server recovers the caller's address from the signature and checks the configured `IAccessPredicate` contract via the ToolRegistry.
 
 ## How predicate gating works
 
@@ -10,11 +10,12 @@ Agent                        Tool Server                   ToolRegistry (onchain
   |    (no auth headers)       |                                |
   |                            |  (no X-Payment → 402)          |
   |<-- 402 + PaymentReqs ------|                                |
-  |    {payTo: operator,       |                                |
+  |    {payTo: boundRecipient, |                                |
   |     maxAmountRequired: "0"}|                                |
   |                            |                                |
   |  (sign X-Payment with      |                                |
-  |   to=operator, value=0)    |                                |
+  |   to=boundRecipient,       |                                |
+  |   value=0)                 |                                |
   |                            |                                |
   |--- POST /api ------------->|                                |
   |    X-Payment: <base64>     |                                |
@@ -29,8 +30,8 @@ Agent                        Tool Server                   ToolRegistry (onchain
 ```
 
 1. Agent sends a bare request (no auth headers)
-2. Server returns `402` with `PaymentRequirements` (`payTo`=operator, `maxAmountRequired`=`"0"`, `scheme`=`"exact"`)
-3. Agent signs a zero-value `X-Payment` (EIP-3009 `TransferWithAuthorization` with `to`=operator, `value`=0)
+2. Server returns `402` with `PaymentRequirements` whose `payTo` is derived from the endpoint URL, tool ID, and operator
+3. Agent verifies that binding, then signs a zero-value `X-Payment` (EIP-3009 `TransferWithAuthorization` with `to`=bound recipient, `value`=0)
 4. Agent retries the request with the `X-Payment` header
 5. Server recovers the caller's address via `ecrecover` on the EIP-712 typed data (no RPC call needed)
 6. Server calls `ToolRegistry.tryHasAccess(toolId, callerAddress, data)` which delegates to the tool's configured `IAccessPredicate`
@@ -73,7 +74,8 @@ export const toolHandler = createToolHandler({
   gates: [
     predicateGate({
       toolId: 1n,  // your onchain tool ID from registration
-      operatorAddress: "0xYOUR_OPERATOR_ADDRESS",  // receives the zero-value authorization
+      operatorAddress: "0xYOUR_OPERATOR_ADDRESS",  // included in the signed audience binding
+      // audience: "https://my-tool.example.com/api", // set only if a proxy rewrites request.url
       // chain: base,
       // rpcUrl: "https://mainnet.base.org",
     }),
@@ -84,6 +86,8 @@ export const toolHandler = createToolHandler({
   },
 })
 ```
+
+For single-use identity proofs, configure `replayGuard` with an atomic shared store. The same interface is used by the paid gates; see [x402.md](x402.md#enforce-single-use-authorizations-with-replayguard) for a Redis example. Without a replay guard, the endpoint binding stops cross-tool replay, while the same header can still be reused against the intended endpoint until it expires.
 
 ## Call a predicate-gated tool (agent/client side)
 
@@ -112,11 +116,12 @@ const res = await eip3009AuthenticatedFetch("https://my-tool.example.com/api", {
   method: "POST",
   headers: { "Content-Type": "application/json" },
   body: JSON.stringify({ query: "hello" }),
-  allowedRecipients: ["0xOPERATOR_ADDRESS"],  // optional: restrict which payTo addresses to sign for
 })
 
 const data = await res.json()
 ```
+
+The client verifies the challenge's endpoint, tool ID, and operator binding before it signs. Same-origin redirects are allowed; cross-origin redirects fail before signing. A zero-value challenge from an older server without this metadata is rejected.
 
 ### Check access before calling (preview)
 
