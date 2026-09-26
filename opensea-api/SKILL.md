@@ -247,8 +247,21 @@ Event types: `sale`, `transfer`, `mint`, `listing`, `offer`, `trait_offer`, `col
 | Get drop details and stages | `opensea drops get <slug>` | `drops/opensea-drop.sh <slug>` |
 | Build mint transaction | `opensea drops mint <slug> --minter <address> [--quantity <n>]` | `drops/opensea-drop-mint.sh <slug> <minter> [quantity]` |
 | Build cross-chain mint transactions | `opensea drops cross-chain-mint <slug> --payer <address> --minter <address> --payment-chain <chain> --payment-token <address> [--quantity <n>]` | `drops/opensea-drop-cross-chain-mint.sh <slug> <payer> <minter> <payment_chain> <payment_token> [quantity]` |
+| Build or send the publish transaction (owner wallet, `write:drops`) | `opensea drops publish <slug> [--send] [--wallet-provider <provider>]` | |
+| Build or send the unpublish transaction | `opensea drops unpublish <slug> [--send] [--wallet-provider <provider>]` | |
+| Upload drop media and metadata to IPFS | `opensea drops upload-metadata-ipfs <slug> [--wait] [--interval <s>] [--wait-timeout <s>]` | |
+| Check IPFS upload progress | `opensea drops metadata-ipfs-status <slug> <workflow-execution-id>` | |
+| Request a metadata manifest CSV upload | `opensea drops create-manifest-upload <slug>` | |
+| Upload a file to an upload context | `opensea drops upload-file --context <path\|-> --file <path> [--index <n>]` | |
 | Deploy a new SeaDrop contract | | `deploy_seadrop_contract` (MCP) |
 | Check deployment status | | `get_deploy_receipt` (MCP) |
+
+`publish --send` signs with the configured EVM wallet and refuses one that is
+not the transaction's `from` (the contract's onchain owner), since a
+transaction from any other address reverts. `upload-file` takes a single upload
+context; for the array `create-item-media-upload` returns, pass `--index <n>` or
+pipe one element with `jq '.[0]'`. `upload-metadata-ipfs --wait` exits 1 when
+the upload fails, is not found, or outlasts `--wait-timeout`.
 
 For a cross-chain mint, submit every returned transaction in order. Save the
 returned `receipt_request` object exactly as received, then poll it until the

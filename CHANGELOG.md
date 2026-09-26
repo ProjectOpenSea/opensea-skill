@@ -1,5 +1,11 @@
 # @opensea/skill
 
+## 2.24.0
+
+### Minor Changes
+
+- Document the drop publish flow in `opensea-api`: `opensea drops publish` and `unpublish` (with `--send`), `upload-metadata-ipfs --wait`, `metadata-ipfs-status`, `create-manifest-upload` and `upload-file`, and the endpoints behind them.
+
 ## 2.23.1
 
 ### Patch Changes

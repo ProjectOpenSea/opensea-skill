@@ -101,6 +101,11 @@ opensea-get.sh "/api/v2/chains"
 | `/api/v2/drops/eligibility/{slug}` | GET | Check drop eligibility (requires `read:eligibility` scope + Bearer token) |
 | `/api/v2/drops/deploy` | POST | Build deploy-contract transaction for a new drop |
 | `/api/v2/drops/deploy/{chain}/{tx_hash}/receipt` | GET | Receipt for a previously submitted deploy transaction |
+| `/api/v2/drops/{slug}/publish` | POST | Build the publish transaction; send it from the returned `from` (requires `write:drops`, contract owner) |
+| `/api/v2/drops/{slug}/unpublish` | POST | Build the unpublish transaction (same rules as publish) |
+| `/api/v2/drops/{slug}/metadata/ipfs` | POST | Start uploading item media and metadata to IPFS; returns `workflow_execution_id` (requires `write:drops`) |
+| `/api/v2/drops/{slug}/metadata/ipfs/{workflow_execution_id}` | GET | IPFS upload progress: `running`, `completed`, `failed` or `not_found` (requires `write:drops`) |
+| `/api/v2/drops/{slug}/items/manifest` | POST | Upload context for the metadata manifest CSV (requires `write:drops`) |
 
 ### Accounts
 
