@@ -287,8 +287,21 @@ except `creator-fee-enforcement`, which needs only the API key.
 
 `get-metadata` returns the page in the `update-metadata` body shape. To keep a
 saved image or video, send its url back as the token; a `mux_video` has no url,
-so leave out the field that holds it. Sending `overview` replaces every saved
-module, and a hero slot sent as `{}` is cleared. Placements are `hero_desktop`,
+so leave out the field that holds it. A field you leave out keeps what is saved.
+To clear, send it empty:
+
+| Clear | Send |
+|-------|------|
+| Preview media | `"about": {"preview_media": []}` |
+| All about sections | `"about": {"sections": []}` |
+| One about section's image | the section with its `id` and `"media": []` (leaving `media` out keeps it) |
+| A hero slot | `"hero": {"desktop_hero_media": {}}` |
+| Every overview module | `"overview": {"modules": {}}` (sending `overview` replaces every module) |
+| Description, website, Telegram, banner, logo | `""` in `opensea collections modify` |
+
+A cleared logo falls back to the contract's image. `GET /collections/{slug}`
+can trail a `modify` by a minute or more, so read page content back with
+`get-metadata`, which is fresh. Placements are `hero_desktop`,
 `hero_mobile`, `about_preview`, `about_section`, `overview`,
 `overview_background` and `team`. Pass an upload token as
 `{ "image": { "token": ... } }` or `{ "video": { "token": ... } }`, matching the

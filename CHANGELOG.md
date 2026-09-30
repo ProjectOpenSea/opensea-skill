@@ -1,5 +1,11 @@
 # @opensea/skill
 
+## 2.26.1
+
+### Patch Changes
+
+- Document how to clear collection page content in `opensea-api`: an empty `preview_media`, `sections` or section `media` list, `{}` for a hero slot, `modules: {}` for the overview, and `""` for description, website, Telegram, banner and logo. Note that a cleared logo falls back to the contract image and that `GET /collections/{slug}` can trail a modify, while `get-metadata` reads fresh.
+
 ## 2.26.0
 
 ### Minor Changes
