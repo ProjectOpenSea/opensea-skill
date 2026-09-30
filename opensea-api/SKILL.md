@@ -245,6 +245,7 @@ Event types: `sale`, `transfer`, `mint`, `listing`, `offer`, `trait_offer`, `col
 |------|------------|-------------|
 | List drops (featured/upcoming/recent) | `opensea drops list [--type <type>] [--chains <chains>]` | `drops/opensea-drops.sh [type] [limit] [chains]` |
 | Get drop details and stages | `opensea drops get <slug>` | `drops/opensea-drop.sh <slug>` |
+| List a drop's saved items, a draft's included (`write:drops`) | `opensea drops items <slug> [--limit <n>] [--next <cursor>]` | |
 | Build mint transaction | `opensea drops mint <slug> --minter <address> [--quantity <n>]` | `drops/opensea-drop-mint.sh <slug> <minter> [quantity]` |
 | Build cross-chain mint transactions | `opensea drops cross-chain-mint <slug> --payer <address> --minter <address> --payment-chain <chain> --payment-token <address> [--quantity <n>]` | `drops/opensea-drop-cross-chain-mint.sh <slug> <payer> <minter> <payment_chain> <payment_token> [quantity]` |
 | Build or send the publish transaction (owner wallet, `write:drops`) | `opensea drops publish <slug> [--send] [--wallet-provider <provider>]` | |
@@ -253,6 +254,8 @@ Event types: `sale`, `transfer`, `mint`, `listing`, `offer`, `trait_offer`, `col
 | Check IPFS upload progress | `opensea drops metadata-ipfs-status <slug> <workflow-execution-id>` | |
 | Request a metadata manifest CSV upload | `opensea drops create-manifest-upload <slug>` | |
 | Upload a file to an upload context | `opensea drops upload-file --context <path\|-> --file <path> [--index <n>]` | |
+| Upload a folder of item media and save it as the drop's items | `opensea drops upload-items <slug> <dir> [--manifest <path>] [--concurrency <n>]` | |
+| Save an upload batch by filename | `opensea drops save-item-media-batch <slug> (--body <path> \| --upload-batch-id <uuid> --dir <path>)` | |
 | Deploy a new SeaDrop contract | | `deploy_seadrop_contract` (MCP) |
 | Check deployment status | | `get_deploy_receipt` (MCP) |
 
@@ -261,7 +264,36 @@ not the transaction's `from` (the contract's onchain owner), since a
 transaction from any other address reverts. `upload-file` takes a single upload
 context; for the array `create-item-media-upload` returns, pass `--index <n>` or
 pipe one element with `jq '.[0]'`. `upload-metadata-ipfs --wait` exits 1 when
-the upload fails, is not found, or outlasts `--wait-timeout`.
+the upload fails, is not found, or outlasts `--wait-timeout`. `upload-items`
+replaces the drop's items: it uploads the folder under one upload batch id, 50
+files per request, then saves the batch by filename (natural filename order
+without a manifest). `save-item-media`, which saves by media token, is
+deprecated.
+
+### Collection pages
+
+These need a wallet token with `write:collections` from a collection editor,
+except `creator-fee-enforcement`, which needs only the API key.
+
+| Task | CLI Command |
+|------|------------|
+| Read the saved page (hero, about, overview) and its preview URL | `opensea collections get-metadata <slug>` |
+| Update the page | `opensea collections update-metadata <slug> --body <path>` |
+| Upload a page image or MP4 video and get its token | `opensea collections upload-page-media <slug> <placement> --content-type <mime> [--file <path>]` |
+| Price secondary sales in USDG or the native currency | `opensea collections set-pricing-currency <slug> --stablecoin <true\|false>` |
+| Check creator fee enforcement | `opensea collections creator-fee-enforcement <slug>` |
+| Turn creator fee enforcement on or off (owner wallet) | `opensea collections set-creator-fee-enforcement <slug> --enabled <true\|false> [--send]` |
+| Refresh collection metadata from the contract | `opensea collections refresh <slug>` |
+
+`get-metadata` returns the page in the `update-metadata` body shape. To keep a
+saved image or video, send its url back as the token; a `mux_video` has no url,
+so leave out the field that holds it. Sending `overview` replaces every saved
+module, and a hero slot sent as `{}` is cleared. Placements are `hero_desktop`,
+`hero_mobile`, `about_preview`, `about_section`, `overview`,
+`overview_background` and `team`. Pass an upload token as
+`{ "image": { "token": ... } }` or `{ "video": { "token": ... } }`, matching the
+file. `set-creator-fee-enforcement --send` signs every returned transaction in
+order and refuses a wallet that is not the contract owner.
 
 For a cross-chain mint, submit every returned transaction in order. Save the
 returned `receipt_request` object exactly as received, then poll it until the
@@ -443,7 +475,7 @@ opensea collections get mfers
 
 | Command | Description |
 |---|---|
-| `collections` | Get, list, stats, and traits for NFT collections |
+| `collections` | Get, list, stats, and traits for NFT collections; manage a collection page, its pricing currency and creator fee enforcement |
 | `nfts` | Get, list, refresh metadata, and contract details for NFTs |
 | `listings` | Get all, best, or best-for-nft listings |
 | `offers` | Get all, collection, best-for-nft, and trait offers |

@@ -40,6 +40,13 @@ opensea-get.sh "/api/v2/chains"
 | `/api/v2/collections/{slug}/offer_aggregates` | GET | Top offers grouped by price level |
 | `/api/v2/collections/{slug}/holders` | GET | Holders ranked by quantity owned |
 | `/api/v2/collections/{slug}/floor_prices` | GET | Floor-price history |
+| `/api/v2/collections/{slug}/metadata` | GET | Saved page (hero, about, overview) in the PATCH body shape, with a preview URL (requires `write:collections`, collection editor) |
+| `/api/v2/collections/{slug}/metadata` | PATCH | Update the page; omitted fields keep what is saved, `overview` replaces every module (requires `write:collections`) |
+| `/api/v2/collections/{slug}/media/{placement}` | POST | Upload context for a page image or MP4 video; pass the token in the metadata PATCH (requires `write:collections`) |
+| `/api/v2/collections/{slug}/pricing_currency` | POST | Price secondary sales in the chain's USD stablecoin or native currency (requires `write:collections`) |
+| `/api/v2/collections/{slug}/creator_fee_enforcement` | GET | Whether creator fees are enforced onchain and whether the contract supports it |
+| `/api/v2/collections/{slug}/creator_fee_enforcement` | POST | Build the transactions that turn enforcement on or off; send them from each one's `from` (requires `write:collections`) |
+| `/api/v2/collections/{slug}/refresh` | POST | Queue a collection metadata refresh from the contract (requires `write:collections`) |
 
 ### NFTs
 
@@ -96,6 +103,7 @@ opensea-get.sh "/api/v2/chains"
 |----------|--------|-------------|
 | `/api/v2/drops` | GET | List drops (featured, upcoming, recently_minted) |
 | `/api/v2/drops/{slug}` | GET | Detailed drop info with stages and supply |
+| `/api/v2/drops/{slug}/items` | GET | A drop's saved items, a draft's included (requires `write:drops`, collection editor) |
 | `/api/v2/drops/{slug}/mint` | POST | Build mint transaction data |
 | `/api/v2/drops/{slug}/cross_chain_mint` | POST | Build ordered transactions to pay on one chain and mint on another |
 | `/api/v2/drops/eligibility/{slug}` | GET | Check drop eligibility (requires `read:eligibility` scope + Bearer token) |
@@ -106,6 +114,9 @@ opensea-get.sh "/api/v2/chains"
 | `/api/v2/drops/{slug}/metadata/ipfs` | POST | Start uploading item media and metadata to IPFS; returns `workflow_execution_id` (requires `write:drops`) |
 | `/api/v2/drops/{slug}/metadata/ipfs/{workflow_execution_id}` | GET | IPFS upload progress: `running`, `completed`, `failed` or `not_found` (requires `write:drops`) |
 | `/api/v2/drops/{slug}/items/manifest` | POST | Upload context for the metadata manifest CSV (requires `write:drops`) |
+| `/api/v2/drops/{slug}/items/media` | POST | Upload contexts for up to 50 item media files; pass one `upload_batch_id` on every request for a set (requires `write:drops`) |
+| `/api/v2/drops/{slug}/items/media/save-batch` | POST | Save an upload batch as the drop's items by filename, up to 15,000 (requires `write:drops`) |
+| `/api/v2/drops/{slug}/items/media/save` | POST | Deprecated: save items by media token; use `save-batch` (requires `write:drops`) |
 
 ### Accounts
 

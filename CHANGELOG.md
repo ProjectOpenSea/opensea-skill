@@ -1,5 +1,17 @@
 # @opensea/skill
 
+## 2.26.0
+
+### Minor Changes
+
+- Document collection page management in `opensea-api`: `opensea collections get-metadata`, `upload-page-media`, `set-pricing-currency`, `creator-fee-enforcement`, `set-creator-fee-enforcement` and `refresh`, `opensea drops items`, and the `metadata`, `media/{placement}`, `pricing_currency`, `creator_fee_enforcement`, `refresh` and `drops/{slug}/items` endpoints.
+
+## 2.25.0
+
+### Minor Changes
+
+- Document the drop item upload batch flow in `opensea-api`: `opensea drops upload-items`, which uploads a folder under one upload batch id and saves it by filename, `save-item-media-batch`, and the `items/media`, `items/media/save-batch` and deprecated `items/media/save` endpoints.
+
 ## 2.24.0
 
 ### Minor Changes
