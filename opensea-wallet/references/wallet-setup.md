@@ -12,7 +12,7 @@ Transaction signing in the OpenSea CLI and SDK uses wallet providers through the
 
 Managed providers (Privy, Turnkey, Fireblocks) are **strongly recommended** over raw private keys. They provide spending limits, destination allowlists, and policy enforcement that raw keys cannot.
 
-The CLI auto-detects the provider based on which environment variables are set. You can also specify one explicitly with `--wallet-provider privy|turnkey|fireblocks|private-key`.
+The CLI auto-detects the provider based on which environment variables are set. You can also specify one explicitly with `--wallet-provider privy|turnkey|fireblocks|bankr|private-key`.
 
 ---
 
