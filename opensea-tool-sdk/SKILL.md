@@ -386,7 +386,7 @@ const account = await createBankrAccount("your-bankr-api-key")
 | `configure-erc20-gate` | Configure ERC20BalancePredicate gate (token, minBalance) for a tool |
 | `get-erc20-config` | Read ERC-20 balance gating configuration for a tool |
 
-All CLI commands accept `--wallet-provider privy|turnkey|fireblocks|private-key` or auto-detect from env vars.
+All CLI commands accept `--wallet-provider privy|turnkey|fireblocks|bankr|private-key` or auto-detect from env vars.
 
 **The manifest is hashed as served (ERC-8257 §2).** The registry hash is the JCS keccak256 of the full manifest document, including any namespaced extension fields. Nothing is stripped and no defaults are injected before hashing, so a hash computed by any RFC 8785 implementation agrees with the SDK and the backend. The schema is open: extension fields MUST be namespaced (reverse-DNS, e.g. `io.opensea.paymentHint`, or the legacy `x-` prefix); `validate`, `hash`, and `register` warn about bare un-namespaced extension fields, since those risk colliding with future normative fields.
 

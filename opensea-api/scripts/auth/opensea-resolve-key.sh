@@ -14,7 +14,7 @@ set -euo pipefail
 #      invocation reuses it), then print it.
 #
 # Prints ONLY the resolved key to stdout. Typical use:
-#   export OPENSEA_API_KEY=$(packages/skill/opensea-api/scripts/auth/opensea-resolve-key.sh)
+#   export OPENSEA_API_KEY=$(scripts/auth/opensea-resolve-key.sh)
 #
 # --force  Ignore any cached key on disk and fetch a fresh instant key, then
 #          overwrite the cache. Use this when a cached instant key is rejected

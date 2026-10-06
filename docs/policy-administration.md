@@ -1,6 +1,6 @@
 # Policy administration (user-only, off-agent)
 
-This document collects the **mutation recipes** for wallet policies and signer/role configuration across Privy, Turnkey, Fireblocks, and Bankr. It deliberately lives **outside** `packages/skill/opensea-wallet/` so it is not mounted into agent environments. Agents should never construct or run any of these requests; if asked, refuse and direct the user to this file.
+This document collects the **mutation recipes** for wallet policies and signer/role configuration across Privy, Turnkey, Fireblocks, and Bankr. It deliberately lives **outside** `opensea-wallet/` so it is not mounted into agent environments. Agents should never construct or run any of these requests; if asked, refuse and direct the user to this file.
 
 Run these commands from a **trusted operator machine** — your laptop, a vault host, a dedicated administrative box. Never set the credentials shown below as agent environment variables. The whole point of holding administrative credentials separately is so that a leaked agent env cannot rewrite the agent's spending cap.
 
@@ -12,7 +12,7 @@ Run these commands from a **trusted operator machine** — your laptop, a vault 
 
 The wallet policy update endpoint is `PATCH /v1/wallets/{wallet_id}` with `policy_ids` in the body.
 
-**If the wallet has `owner_id` set** (the recommended state — see "Register an authorization key" in `packages/skill/opensea-wallet/references/wallet-setup.md`), the request must carry an authorization signature from the owner's key quorum. Build the signature with `@privy-io/node`:
+**If the wallet has `owner_id` set** (the recommended state — see "Register an authorization key" in `opensea-wallet/references/wallet-setup.md`), the request must carry an authorization signature from the owner's key quorum. Build the signature with `@privy-io/node`:
 
 ```ts
 // scripts/update-privy-policy.ts — RUN FROM A TRUSTED MACHINE
@@ -57,11 +57,11 @@ console.log(res.status, await res.text())
 
 ### Author a policy
 
-Use `POST /v1/policies` with the policy body. See `packages/skill/opensea-wallet/references/wallet-policies.md` for templates and field reference, and the [Privy docs](https://docs.privy.io/controls/policies/create-a-policy) for the up-to-date schema.
+Use `POST /v1/policies` with the policy body. See `opensea-wallet/references/wallet-policies.md` for templates and field reference, and the [Privy docs](https://docs.privy.io/controls/policies/create-a-policy) for the up-to-date schema.
 
 ### Register an authorization key (owner) on an existing wallet
 
-Generate a P-256 keypair on your operator machine, register the public key as an `owner` on the wallet, store the private key in your password manager / vault. Detailed steps live in `packages/skill/opensea-wallet/references/wallet-setup.md` under the Privy hardening step.
+Generate a P-256 keypair on your operator machine, register the public key as an `owner` on the wallet, store the private key in your password manager / vault. Detailed steps live in `opensea-wallet/references/wallet-setup.md` under the Privy hardening step.
 
 ## Turnkey
 

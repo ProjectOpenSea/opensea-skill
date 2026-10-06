@@ -1,5 +1,11 @@
 # @opensea/skill
 
+## 2.26.2
+
+### Patch Changes
+
+- `opensea-wallet` and `opensea-tool-sdk` list `bankr` among the `--wallet-provider` values, which the CLI and tool-sdk already accept. The `opensea-resolve-key.sh` usage comment and the paths in `docs/policy-administration.md` no longer name the internal `packages/skill/` prefix, which does not exist in this repository.
+
 ## 2.26.1
 
 ### Patch Changes
