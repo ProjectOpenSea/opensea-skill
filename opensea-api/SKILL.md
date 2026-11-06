@@ -35,6 +35,7 @@ Use `opensea-api` for:
 - Events and activity monitoring (including real-time WebSocket streams)
 - Drops and mint eligibility
 - Account lookups and ENS resolution
+- Reading public OpenSea signals about a currency, NFT, or collection, and posting or deleting your own
 - Authenticated profile, collection settings, watchlist, drop, order-cancellation, and wallet-linking operations described in `references/authentication.md`
 - Headless SIWE, scoped PAT creation, short-lived JWT exchange, and wallet-authenticated REST or MCP
 
@@ -158,7 +159,7 @@ you use those, you must save the key yourself per step 4 above.
 | Get collection stats | `opensea collections stats <slug>` | `collections/opensea-collection-stats.sh <slug>` |
 | Get trending collections | `opensea collections trending [--timeframe <tf>] [--chains <chains>]` | `collections/opensea-collections-trending.sh [timeframe] [limit] [chains] [category]` |
 | Get top collections | `opensea collections top [--sort-by <field>] [--chains <chains>]` | `collections/opensea-collections-top.sh [sort_by] [limit] [chains] [category]` |
-| List NFTs in collection | `opensea nfts list-by-collection <slug> [--limit <n>] [--traits <json>]` | `collections/opensea-collection-nfts.sh <slug> [limit] [next]` |
+| List NFTs in collection | `opensea nfts list-by-collection <slug> [--limit <n>] [--traits <json>] [--has-agent-binding <true\|false>]` | `collections/opensea-collection-nfts.sh <slug> [limit] [next]` |
 | Get single NFT | `opensea nfts get <chain> <contract> <token_id>` | `nfts/opensea-nft.sh <chain> <contract> <token_id>` |
 | List NFTs by wallet | `opensea nfts list-by-account <chain> <address> [--limit <n>]` | `accounts/opensea-account-nfts.sh <chain> <address> [limit]` |
 | List NFTs by contract | `opensea nfts list-by-contract <chain> <contract> [--limit <n>]` | |
@@ -170,8 +171,8 @@ you use those, you must save the key yourself per step 4 above.
 
 | Task | CLI Command | Alternative |
 |------|------------|-------------|
-| Get trending tokens | `opensea tokens trending [--chains <chains>] [--limit <n>]` | `get_trending_tokens` (MCP) |
-| Get top tokens by volume | `opensea tokens top [--chains <chains>] [--limit <n>]` | `get_top_tokens` (MCP) |
+| Get trending tokens | `opensea tokens trending [--chains <chains>] [--sort-by <field>] [--sort-direction <asc\|desc>] [--limit <n>]` | `get_trending_tokens` (MCP) |
+| Get top tokens by volume | `opensea tokens top [--chains <chains>] [--sort-by <field>] [--sort-direction <asc\|desc>] [--limit <n>]` | `get_top_tokens` (MCP) |
 | Get token details | `opensea tokens get <chain> <address>` | `get_tokens` (MCP) |
 | Get token swap activity | `opensea tokens activity <chain> <address> [--limit <n>] [--next <cursor>]` | `tokens/opensea-token-activity.sh` |
 | Get account token activity | `opensea tokens account-activity <address> [--chains <chains>] [--tokens <tokens>] [--type <types>] [--limit <n>] [--next <cursor>]` | |
@@ -188,13 +189,13 @@ Read the [`wallet authentication` reference](references/authentication.md) befor
 
 | Task | CLI Command | Alternative |
 |------|------------|-------------|
-| Get best listings for collection | `opensea listings best <slug> [--limit <n>] [--traits <json>]` | `listings/opensea-best-listing.sh <slug> <token_id>` |
-| Get best listing for specific NFT | `opensea listings best-for-nft <slug> <token_id>` | `listings/opensea-best-listing.sh <slug> <token_id>` |
+| Get best listings for collection | `opensea listings best <slug> [--limit <n>] [--traits <json>] [--include-private-listings]` | `listings/opensea-best-listing.sh <slug> <token_id>` |
+| Get best listing for specific NFT | `opensea listings best-for-nft <slug> <token_id> [--include-private-listings]` | `listings/opensea-best-listing.sh <slug> <token_id>` |
 | Get best offer for NFT | `opensea offers best-for-nft <slug> <token_id>` | `offers/opensea-best-offer.sh <slug> <token_id>` |
-| List all collection listings | `opensea listings all <slug> [--limit <n>]` | `listings/opensea-listings-collection.sh <slug> [limit]` |
+| List all collection listings | `opensea listings all <slug> [--limit <n>] [--maker <address>] [--include-private-listings]` | `listings/opensea-listings-collection.sh <slug> [limit]` |
 | List all collection offers | `opensea offers all <slug> [--limit <n>]` | `offers/opensea-offers-collection.sh <slug> [limit]` |
 | Get collection offers | `opensea offers collection <slug> [--limit <n>]` | `offers/opensea-offers-collection.sh <slug> [limit]` |
-| Get trait offers | `opensea offers traits <slug> --type <type> --value <value>` | |
+| Get trait offers | `opensea offers traits <slug> --type <type> --value <value>` (numeric: `--type <type> --min-value <n> --max-value <n>`; multi-trait: `--traits <json>`) | |
 | Get order by hash | | `orders/opensea-order.sh <chain> <order_hash>` |
 
 ### Server-side trait filtering
@@ -267,8 +268,7 @@ pipe one element with `jq '.[0]'`. `upload-metadata-ipfs --wait` exits 1 when
 the upload fails, is not found, or outlasts `--wait-timeout`. `upload-items`
 replaces the drop's items: it uploads the folder under one upload batch id, 50
 files per request, then saves the batch by filename (natural filename order
-without a manifest). `save-item-media`, which saves by media token, is
-deprecated.
+without a manifest).
 
 ### Collection pages
 
@@ -326,14 +326,38 @@ opensea transactions receipt --request receipt-request.json
 | Get closed (realized) positions | `opensea accounts closed-positions <address> [--limit <n>] [--sort-by <field>] [--next <cursor>]` | `accounts/opensea-account-closed-positions.sh <address>` |
 | Get position token transfers | `opensea accounts token-transfers <address> --contract-address <addr> --chain <chain>` | `accounts/opensea-account-token-transfers.sh <address> <contract_address> <chain>` |
 
+### Signals
+
+Signals are public posts on OpenSea about one subject: a currency (`--chain` and `--contract`), an NFT (add `--token-id`, a decimal on EVM chains and the mint address on Solana), or a collection (`--collection` alone). Reading needs only the API key. Posting and deleting need a wallet JWT with the `write:posts` scope, which is in preview: `opensea auth scopes` does not list it yet and browser OAuth login rejects it, so sign in with `--private-key`.
+
+| Task | CLI Command | Alternative |
+|---|---|---|
+| Get a signal | `opensea signals get <signal_id>` | `opensea-get.sh "/api/v2/signals/<signal_id>"` |
+| List signals about a subject | `opensea signals list (--chain <chain> --contract <address> [--token-id <id>] \| --collection <slug>) [--limit <n>] [--next <cursor>]` | `opensea-get.sh "/api/v2/signals" "collection=<slug>&limit=50"` |
+| Post a signal | `opensea signals create --text <text> (--chain <chain> --contract <address> [--token-id <id>] \| --collection <slug>) [--author-address <address>]` | `opensea api request POST /api/v2/signals --body signal.json` |
+| Delete your signal | `opensea signals delete <signal_id>` | `opensea api request DELETE /api/v2/signals/<signal_id>` |
+
+```bash
+# Read: newest first. A page can be empty while next is set, so keep paging until next is null.
+opensea signals list --collection doodles-official --limit 50
+opensea signals list --chain base --contract 0x4200000000000000000000000000000000000006
+
+# Post and delete
+opensea auth login --private-key --scopes write:posts
+opensea signals create --text "Floor looks thin" --collection doodles-official
+opensea signals delete sig_v1_...
+```
+
+Signal IDs are opaque `sig_v1_...` strings; pass them back unchanged. `create` is not idempotent: retrying after an unknown outcome can post twice once the per-subject cooldown passes, and a post inside the cooldown returns 422. Signals cannot be edited.
+
 ### Tool discovery [Beta]
 
 Search for verified registered AI agent tools (ERC-8257) by name, tags, creator, or other criteria.
 
 | Task | CLI Command | Alternative |
 |------|------------|-------------|
-| List registered tools | `opensea tools list [--sort-by <sort>] [--type <type>]` | `opensea-get.sh "/api/v2/tools" "sort_by=newest&limit=10"` |
-| Search registered tools | `opensea tools search [--query <text>] [--tags <tags>]` | `opensea-get.sh "/api/v2/tools/search" "query=<text>"` |
+| List registered tools | `opensea tools list [--sort-by <sort>] [--type <type>] [--source <source>]` | `opensea-get.sh "/api/v2/tools" "sort_by=newest&limit=10"` |
+| Search registered tools | `opensea tools search [--query <text>] [--tags <tags>] [--source <source>] [--collection <slug>] [--include-details <true\|false>]` | `opensea-get.sh "/api/v2/tools/search" "query=<text>"` |
 | Get a registered tool | `opensea tools get <chain> <registry_addr> <tool_id>` | `opensea-get.sh "/api/v2/tools/<chain>/<registry_address>/<tool_id>"` |
 | Get tool activity | `opensea tools activity <registry_chain> <registry_addr> <tool_id> [--include-creator-payments] [--limit <n>] [--offset <offset>]` | |
 
@@ -509,7 +533,8 @@ Global options: `--api-key`, `--chain` (default: ethereum), `--format` (json/tab
 
 ### Pagination
 
-All list commands support cursor-based pagination with `--limit` and `--next`:
+Cursor-paginated commands such as `collections list` use `--limit` and `--next`.
+`tools activity` uses `--limit` and `--offset` instead. Check each command's `--help` for its pagination options:
 
 ```bash
 opensea collections list --limit 5

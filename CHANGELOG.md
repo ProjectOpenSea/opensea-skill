@@ -1,5 +1,24 @@
 # @opensea/skill
 
+## 2.28.0
+
+### Minor Changes
+
+- `opensea-api` documents OpenSea signals: `opensea signals get`, `list`, `create` and `delete`, and the matching `/api/v2/signals` endpoints in `references/rest-api.md`. Posting and deleting need the `write:posts` scope, which is in preview, so the docs sign in with `--private-key`.
+
+## 2.27.1
+
+### Patch Changes
+
+- Correct the NFT metadata refresh, account event and drop eligibility paths in the REST API reference. List the general events endpoint and supported REST event filters, and direct order invalidation/revalidation monitoring to the Stream API. Clarify endpoint-specific pagination, timestamp formats and token amount units.
+
+## 2.27.0
+
+### Minor Changes
+
+- `opensea-api` documents the new CLI flags that close API parity gaps: `tokens trending`/`top` `--sort-by`/`--sort-direction`, `listings all`/`best`/`best-for-nft` `--include-private-listings`, `nfts list-by-collection --has-agent-binding`, numeric-range and multi-trait `offers traits`, and `tools list`/`search` `--source`, `--collection`, `--include-details`. `references/rest-api.md` lists the matching query params.
+- `opensea-api` no longer documents `POST /api/v2/drops/{slug}/items/media/save` or the CLI's `save-item-media`. The API removed the endpoint (ProjectOpenSea/os2-core#67914). Save a drop's items with `save-item-media-batch`, or `upload-items` for a folder.
+
 ## 2.26.2
 
 ### Patch Changes

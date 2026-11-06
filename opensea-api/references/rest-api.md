@@ -13,9 +13,12 @@ See [authentication.md](authentication.md) for the full auth flow and scope refe
 
 ## Pagination
 
-List endpoints support cursor-based pagination:
-- `limit`: Page size (default varies, max 100)
-- `next`: Cursor token from previous response
+Pagination parameters vary by endpoint:
+- `limit`: Page size; the default and maximum vary by endpoint
+- `next` or `cursor`: Cursor token from the previous response, using the request parameter documented for that endpoint
+- `after`: A cursor for profile offers/listings, but a Unix timestamp in seconds for events; event `before` also uses Unix seconds
+
+The tool activity endpoint uses `offset` rather than a cursor.
 
 ## Supported Chains
 
@@ -53,10 +56,10 @@ opensea-get.sh "/api/v2/chains"
 | Endpoint | Method | Description |
 |----------|--------|-------------|
 | `/api/v2/chain/{chain}/contract/{contract}/nfts/{token_id}` | GET | Single NFT details |
-| `/api/v2/collection/{slug}/nfts` | GET | NFTs by collection |
+| `/api/v2/collection/{slug}/nfts` | GET | NFTs by collection (`traits`, `has_agent_binding`, `limit`, `next`) |
 | `/api/v2/chain/{chain}/account/{address}/nfts` | GET | NFTs by wallet |
 | `/api/v2/chain/{chain}/contract/{contract}/nfts` | GET | NFTs by contract |
-| `/api/v2/nft/{contract}/{token_id}/refresh` | POST | Refresh NFT metadata |
+| `/api/v2/chain/{chain}/contract/{address}/nfts/{identifier}/refresh` | POST | Refresh NFT metadata |
 | `/api/v2/nfts/batch` | POST | Fetch multiple NFTs in one request |
 | `/api/v2/chain/{chain}/contract/{contract}/nfts/{token_id}/owners` | GET | Owners of an NFT (paginated for ERC-1155s) |
 | `/api/v2/chain/{chain}/contract/{contract}/nfts/{token_id}/analytics` | GET | Historical sale points for an NFT |
@@ -93,9 +96,10 @@ opensea-get.sh "/api/v2/chains"
 
 | Endpoint | Method | Description |
 |----------|--------|-------------|
+| `/api/v2/events` | GET | Recent marketplace events |
 | `/api/v2/events/collection/{slug}` | GET | Events by collection |
 | `/api/v2/events/chain/{chain}/contract/{contract}/nfts/{token_id}` | GET | Events by NFT |
-| `/api/v2/events/chain/{chain}/account/{address}` | GET | Events by account |
+| `/api/v2/events/accounts/{address}` | GET | Events by account |
 
 ### Drops
 
@@ -106,7 +110,7 @@ opensea-get.sh "/api/v2/chains"
 | `/api/v2/drops/{slug}/items` | GET | A drop's saved items, a draft's included (requires `write:drops`, collection editor) |
 | `/api/v2/drops/{slug}/mint` | POST | Build mint transaction data |
 | `/api/v2/drops/{slug}/cross_chain_mint` | POST | Build ordered transactions to pay on one chain and mint on another |
-| `/api/v2/drops/eligibility/{slug}` | GET | Check drop eligibility (requires `read:eligibility` scope + Bearer token) |
+| `/api/v2/drops/{slug}/eligibility` | GET | Check drop eligibility (requires `read:eligibility` scope + Bearer token) |
 | `/api/v2/drops/deploy` | POST | Build deploy-contract transaction for a new drop |
 | `/api/v2/drops/deploy/{chain}/{tx_hash}/receipt` | GET | Receipt for a previously submitted deploy transaction |
 | `/api/v2/drops/{slug}/publish` | POST | Build the publish transaction; send it from the returned `from` (requires `write:drops`, contract owner) |
@@ -116,7 +120,6 @@ opensea-get.sh "/api/v2/chains"
 | `/api/v2/drops/{slug}/items/manifest` | POST | Upload context for the metadata manifest CSV (requires `write:drops`) |
 | `/api/v2/drops/{slug}/items/media` | POST | Upload contexts for up to 50 item media files; pass one `upload_batch_id` on every request for a set (requires `write:drops`) |
 | `/api/v2/drops/{slug}/items/media/save-batch` | POST | Save an upload batch as the drop's items by filename, up to 15,000 (requires `write:drops`) |
-| `/api/v2/drops/{slug}/items/media/save` | POST | Deprecated: save items by media token; use `save-batch` (requires `write:drops`) |
 
 ### Accounts
 
@@ -194,12 +197,21 @@ relationship. Only confirmed relationships appear on a public profile.
 | `/api/v2/chain/{chain}/token/{address}/holders` | GET | Paginated holders + aggregate distribution health |
 | `/api/v2/chain/{chain}/token/{address}/liquidity-pools` | GET | Liquidity pools for a token |
 
+### Signals
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/v2/signals` | GET | Public signals about one subject, newest first: `chain` + `contract` (currency), plus `token_id` (NFT), or `collection` alone; `limit` 1-100, `cursor`. A page can be empty while `next` is set |
+| `/api/v2/signals/{signal_id}` | GET | One public signal; `signal_id` is an opaque `sig_v1_...` string |
+| `/api/v2/signals` | POST | Post a signal: `text` (up to 3000 characters), the subject fields, optional `author_address`. Requires the `write:posts` scope; not idempotent; 422 during the cooldown |
+| `/api/v2/signals/{signal_id}` | DELETE | Delete your own signal (204). Requires the `write:posts` scope |
+
 ### Tools
 
 | Endpoint | Method | Description |
 |----------|--------|-------------|
-| `/api/v2/tools` | GET | List registered tools (sort by newest/oldest, filter by type) |
-| `/api/v2/tools/search` | GET | Search tools by keyword, tags, creator, access type |
+| `/api/v2/tools` | GET | List registered tools (sort by newest/oldest, filter by `type`, `source`) |
+| `/api/v2/tools/search` | GET | Search tools by keyword, tags, creator, access type, `source`, gating `collection`; `include_details=false` for a lighter response |
 | `/api/v2/tools/{registry_chain}/{registry_addr}/{tool_id}` | GET | Get a specific registered tool |
 
 ### Assets
@@ -221,10 +233,13 @@ relationship. Only confirmed relationships appear on a public profile.
 For the events endpoint, filter with `event_type`:
 - `sale` - NFT sold
 - `transfer` - NFT transferred
+- `mint` - NFT minted
 - `listing` - New listing created
 - `offer` - New offer made
-- `cancel` - Order cancelled
-- `redemption` - NFT redeemed
+- `trait_offer` - New trait offer made
+- `collection_offer` - New collection offer made
+
+Use the Stream API for order invalidation and revalidation events, or the Get Order endpoint to check an order's status.
 
 ## Rate Limits
 
@@ -268,6 +283,6 @@ A `429` response includes these headers:
 
 1. Use collection slugs (not addresses) for collection endpoints
 2. Use chain identifiers for NFT/account endpoints
-3. All timestamps are Unix epoch seconds
-4. Prices are in wei (divide by 10^18 for ETH)
+3. Timestamp formats vary: event `after`/`before` use Unix seconds, while token price-history `start_time`/`end_time` use ISO 8601
+4. Token amounts use the documented base units (wei for ETH); USD-valued prices are not wei
 5. Use `jq` to parse JSON responses: `./script.sh | jq '.nft.name'`
