@@ -1,5 +1,11 @@
 # @opensea/skill
 
+## 2.29.0
+
+### Minor Changes
+
+- `opensea-tool-sdk` documents `paidFetch`'s `idempotencyKey` in `references/x402.md`: a retried purchase with the same key settles at most once, because the EIP-3009 nonce is derived from the key, and it requires `allowedAssets` pinned to one USDC contract on its own network.
+
 ## 2.28.0
 
 ### Minor Changes
