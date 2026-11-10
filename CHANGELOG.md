@@ -1,5 +1,12 @@
 # @opensea/skill
 
+## 2.31.1
+
+### Patch Changes
+
+- `opensea-wallet/references/wallet-setup.md` describes the private-key adapter as it works: it signs EIP-1559 transactions locally and broadcasts them with `eth_sendRawTransaction`, so it works with public RPCs such as `https://mainnet.base.org`. `PRIVATE_KEY` is the only required variable; `RPC_URL` is needed to send, and `WALLET_ADDRESS` is optional and never changes who signs. `.env.example` matches.
+- `opensea-swap.sh` no longer requires `WALLET_ADDRESS`.
+
 ## 2.31.0
 
 ### Minor Changes

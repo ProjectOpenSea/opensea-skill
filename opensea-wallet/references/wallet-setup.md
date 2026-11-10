@@ -292,10 +292,12 @@ const account = await createBankrAccount(process.env.BANKR_API_KEY);
 
 ```bash
 export OPENSEA_API_KEY="your-opensea-api-key"
-export PRIVATE_KEY="<local-dev-private-key>"
-export RPC_URL="http://127.0.0.1:8545"  # local dev node only (Hardhat/Anvil/Ganache)
-export WALLET_ADDRESS="0xYourWalletAddress"
+export PRIVATE_KEY="<dev-private-key>"          # required: 64 hex characters, 0x prefix optional
+export RPC_URL="https://mainnet.base.org"      # required to send: an RPC for the chain you transact on
+# export WALLET_ADDRESS="0xYourWalletAddress"  # optional: skips address derivation; leave unset
 ```
+
+`PRIVATE_KEY` is the only variable the adapter requires. `RPC_URL` is needed only to send transactions: without it, signing messages and typed data still works, and `sendTransaction` throws `RPC_URL is required for sending transactions`. `WALLET_ADDRESS` is optional. When set, the adapter reports it as the wallet address and uses it for nonce and gas lookups instead of deriving the address from the key, without checking that the two match. It never changes who sends: the transaction is signed with `PRIVATE_KEY`, so it always comes from the key's account. A mismatched value makes those lookups use the wrong account, and the outcome is unpredictable: the send can fail, sit pending behind a nonce gap, or still go through and spend from the key's account while the adapter reports the other address. Leave it unset, or set it only to the address derived from `PRIVATE_KEY`.
 
 ### Execute a Swap
 
@@ -309,7 +311,7 @@ opensea swaps execute \
   --quantity 0.001
 ```
 
-**Note:** The private-key adapter uses `eth_sendTransaction` on the RPC node, which requires the node to manage the imported key (e.g. Hardhat, Anvil, Ganache). The `PRIVATE_KEY` env var is validated to confirm intent but is not used for signing; the RPC node signs server-side. This adapter does **not** work with production RPC providers like Infura or Alchemy. Use a managed wallet instead.
+The private-key adapter signs locally. It reads the nonce (`eth_getTransactionCount`, pending), estimates gas (`eth_estimateGas`, plus a 20% buffer) and reads fees (`eth_feeHistory`) from `RPC_URL`, builds an EIP-1559 transaction, signs it with `PRIVATE_KEY`, and broadcasts it with `eth_sendRawTransaction`. The RPC node never sees the key, so any standard public or provider RPC works (for example `https://mainnet.base.org`), as long as it serves the chain the transaction targets. The adapter does not check the RPC's chain ID against the transaction's.
 
 ---
 
@@ -388,6 +390,6 @@ const results = await sdk.swaps.execute({
 | `Fireblocks transaction ended with status: REJECTED` | Policy rejection | Review Fireblocks TAP rules |
 | `BANKR_API_KEY environment variable is required` | Missing Bankr env var | Set `BANKR_API_KEY` |
 | `Bankr signing failed (401)` | Bad Bankr API key | Verify the key at [bankr.bot](https://bankr.bot) |
-| `PRIVATE_KEY environment variable is required` | Missing private key env var | Set `PRIVATE_KEY`, `RPC_URL`, and `WALLET_ADDRESS` |
-| `RPC_URL environment variable is required` | Missing RPC URL | Set `RPC_URL` for the target chain |
+| `PRIVATE_KEY environment variable is required` | Missing private key env var | Set `PRIVATE_KEY`, plus `RPC_URL` to send transactions |
+| `RPC_URL is required for sending transactions` | Missing RPC URL (private-key adapter) | Set `RPC_URL` to an RPC for the target chain |
 | `insufficient funds` | Wallet not funded | Send ETH to the wallet address |

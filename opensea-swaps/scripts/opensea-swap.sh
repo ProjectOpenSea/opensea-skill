@@ -17,7 +17,7 @@ set -euo pipefail
 #     Turnkey:          TURNKEY_API_PUBLIC_KEY, TURNKEY_API_PRIVATE_KEY, TURNKEY_ORGANIZATION_ID, TURNKEY_WALLET_ADDRESS, TURNKEY_RPC_URL
 #     Fireblocks:       FIREBLOCKS_API_KEY, FIREBLOCKS_API_SECRET, FIREBLOCKS_VAULT_ID
 #     Bankr:            BANKR_API_KEY
-#     Private Key:      PRIVATE_KEY, RPC_URL, WALLET_ADDRESS
+#     Private Key:      PRIVATE_KEY, RPC_URL (WALLET_ADDRESS optional)
 
 TO_TOKEN_ADDRESS="${1:?Usage: $0 <to_token_address> <amount> [chain] [from_token] [wallet_provider]}"
 AMOUNT="${2:?Amount required}"
@@ -66,7 +66,7 @@ case "$WALLET_PROVIDER" in
     fi
     ;;
   private-key)
-    for var in PRIVATE_KEY RPC_URL WALLET_ADDRESS; do
+    for var in PRIVATE_KEY RPC_URL; do
       if [ -z "${!var:-}" ]; then
         echo "${var} environment variable is required for Private Key provider" >&2
         exit 1
