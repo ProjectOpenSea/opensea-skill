@@ -371,6 +371,17 @@ opensea listings best-for-nft boredapeyachtclub 1234
 
 ---
 
+## Running steps yourself
+
+`--send` on the action commands runs these steps for you. Run them by hand only for what it refuses (Solana, bulk orders, swap routes, collection offers). Each step is an object with one key naming the action:
+
+- A transaction step (`buyItemAction`, `acceptOfferAction`, `cancelOrdersAction`, `itemApprovalAction`, `paymentApprovalAction`) holds `transaction.to.value`, `data`, `value` and `chainIdentifier.chainId`, ready to send from `transaction.from.value`.
+- A creation step (`createListingsAction`, `createOfferAction`, `createOffersAction`) holds `signatureRequest.message`, a JSON string with the EIP-712 `domain`, `types`, `primaryType` and `message`. Parse it without rounding large integers (the `counter` can exceed 2^53), sign it, then post `{protocol_address, parameters, signature}` with `opensea listings post <chain>` or `opensea offers post <chain>`. `parameters` is the signed `message` plus `totalOriginalConsiderationItems`.
+
+Check every transaction the way `--send` does. A non-approval transaction must call Seaport on its chain, with a fulfillment function selector for a buy or sale, or `cancel` for a cancel. An approval must be sent to the token or NFT contract it approves, and its spender must be Seaport or OpenSea's conduit on that chain; a conduit is never a valid `to`. Refuse a domain whose `verifyingContract` is not Seaport on the order's chain, and an order whose NFT, quantity, currency, total, fees (more than 11% to anyone but the offerer) or end time differ from what you requested. The API's ERC-20 approvals are for max uint256; approve only what the order spends unless the user agrees to more.
+
+---
+
 ## Order Action Endpoints (EVM and Solana)
 
 These endpoints return ordered `steps` instead of assuming a Seaport calldata response:

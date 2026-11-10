@@ -6,7 +6,7 @@ repository: https://github.com/ProjectOpenSea/opensea-skill
 license: MIT
 env:
   OPENSEA_API_KEY:
-    description: API key for all OpenSea services (REST API, CLI, SDK, and MCP server)
+    description: API key for all OpenSea services (REST API, CLI, SDK, and MCP server). The SDK and MCP server need it set; the CLI and scripts fall back to the key cached in ~/.opensea/api_key
     required: true
     obtain: https://docs.opensea.io/reference/api-keys#instant-api-key-for-agents
   OPENSEA_PRIVATE_KEY:
@@ -32,17 +32,15 @@ Read NFT, token, collection, drop, account and event data on every chain OpenSea
 ## Setup
 
 ```bash
-npm install -g @opensea/cli          # or prefix commands with: npx @opensea/cli
-export OPENSEA_API_KEY=$(scripts/auth/opensea-resolve-key.sh)
+npm install -g @opensea/cli                  # or prefix commands with: npx @opensea/cli
+opensea auth request-key --save --if-missing
 ```
 
-Script paths are relative to this skill's directory. `opensea-resolve-key.sh` prints a key in this order:
+`request-key --save --if-missing` caches an instant key in `~/.opensea/api_key` (mode 600; `$OPENSEA_CONFIG_DIR` overrides the directory) and never prints it. It does nothing when `OPENSEA_API_KEY` is set or a key is already saved, so running it again reuses the key. A user's `OPENSEA_API_KEY` always wins and is never overwritten. The CLI uses `--api-key`, then `OPENSEA_API_KEY`, then that file, and the shell scripts fall back to the same file.
 
-1. `OPENSEA_API_KEY` from the environment, if set. Never overwrite a user's key.
-2. The cached key in `~/.opensea/api_key` (`$OPENSEA_CONFIG_DIR` overrides the directory).
-3. A new instant key from `POST /api/v2/auth/keys`, saved to that file (mode 600) before it is printed.
+Without Node, run `scripts/auth/opensea-resolve-key.sh >/dev/null` from this skill's directory (`opensea-api/`) instead. It does the same: env key, else the cached key, else a new key saved to that file.
 
-Always reuse a fetched key: fetching again on every request wastes the rate limit and can leave you with none. Instant keys expire after 7 days. On a 401 or 403 with a cached key, run `opensea-resolve-key.sh --force` once. On a 429 from the key endpoint, wait instead of looping. For higher limits, create a key at [Settings → Developer](https://docs.opensea.io/reference/api-keys). `opensea auth request-key` returns a key but does not save it.
+Always reuse a fetched key: fetching again on every request wastes the rate limit and can leave you with none. Instant keys expire after 7 days. On a 401 or 403 with a cached key, run `opensea auth request-key --save` once to replace it (without Node, `scripts/auth/opensea-resolve-key.sh --force >/dev/null`). On a 429 from the key endpoint, wait instead of looping. For higher limits, create a key at [Settings → Developer](https://docs.opensea.io/reference/api-keys).
 
 ## Working rules
 
@@ -88,7 +86,7 @@ Always reuse a fetched key: fetching again on every request wastes the rate limi
 
 Event types: `sale`, `transfer`, `mint`, `listing`, `offer`, `trait_offer`, `collection_offer`. `--traits` takes a JSON array of `{"traitType": "...", "value": "..."}`, AND-combined.
 
-Without Node, use `scripts/opensea-get.sh <path> [query]` and `scripts/opensea-post.sh <path> <json>`. They need only curl and the API key (plus `OPENSEA_AUTH_TOKEN` for wallet-scoped paths), exit non-zero on HTTP errors, and retry 429 twice. Response bodies go to stdout, wrapped in `--- BEGIN/END OPENSEA API RESPONSE ---` markers on stderr. One-endpoint wrappers are listed in [references/scripts.md](references/scripts.md).
+Without Node, use `scripts/opensea-get.sh <path> [query]` and `scripts/opensea-post.sh <path> <json>` (paths relative to this skill's directory). They need only curl and the API key (`OPENSEA_API_KEY`, else the cached key). They exit non-zero on HTTP errors and retry 429 twice. Response bodies go to stdout, wrapped in `--- BEGIN/END OPENSEA API RESPONSE ---` markers on stderr. One-endpoint wrappers are listed in [references/scripts.md](references/scripts.md).
 
 ## Wallet-authenticated calls
 
@@ -101,7 +99,7 @@ opensea auth scopes                                    # list scopes
 opensea auth revoke                                    # when done
 ```
 
-Request the smallest scope set. A 403 means a missing scope: log in again with it instead of retrying. Flows, SDK usage and recovery rules are in [references/authentication.md](references/authentication.md).
+Call wallet-scoped endpoints with `opensea api request <METHOD> <path>`: it sends the stored JWT and refreshes it when expired. The CLI does not export that JWT, by design. Request the smallest scope set. A 403 means a missing scope: log in again with it instead of retrying. Flows, SDK usage and recovery rules are in [references/authentication.md](references/authentication.md).
 
 ## More
 

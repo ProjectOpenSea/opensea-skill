@@ -1,5 +1,15 @@
 # @opensea/skill
 
+## 2.31.0
+
+### Minor Changes
+
+- `opensea-marketplace` uses the CLI's new `--dry-run` and `--send` on the order action commands: run `--dry-run`, show the user the summary and plan digest, then `--send --yes --expect-plan <digest>` only after they approve. The manual EIP-712 and transaction steps move to `references/marketplace-api.md` under "Running steps yourself". Requires `@opensea/cli` 4.1.0.
+- `opensea-swaps` saves the approved quote with `opensea swaps quote --out quote.json` and executes exactly that quote with `opensea swaps execute --quote quote.json`, which refuses an expired, edited or other-wallet quote. Requires `@opensea/cli` 4.1.0.
+- `opensea-api` Setup caches a key with `opensea auth request-key --save --if-missing` instead of exporting `OPENSEA_API_KEY`, and the CLI and every skill script fall back to the cached key in `~/.opensea/api_key`. The scripts reference says the CLI never exports its wallet token: use `opensea api request` for wallet-scoped endpoints, and set `OPENSEA_AUTH_TOKEN` only from a token obtained outside the CLI.
+- The MCP reference lists `view_social_graph`, `manage_social_graph`, `list_saved_tools`, `save_tool` and `unsave_tool`, which the server now serves.
+- ClawHub shows the skill as "OpenSea Skill".
+
 ## 2.30.0
 
 ### Minor Changes

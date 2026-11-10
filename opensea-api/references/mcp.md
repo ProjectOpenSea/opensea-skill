@@ -42,14 +42,18 @@ The server takes the wallet from the verified JWT and enforces the scope. Never 
 |---|---|
 | `read:eligibility` | `check_drop_eligibility` |
 | `read:favorites` | `get_favorites` |
+| `read:social` | `view_social_graph` |
+| `read:tools` | `list_saved_tools` |
 | `read:wallets` | `get_agent_relationships` |
 | `write:favorites` | `manage_watchlist` |
 | `write:orders` | `cancel_orders` |
 | `write:drops` | `manage_drops` |
 | `write:collections` | `manage_collections` |
 | `write:profile` | `manage_profile` |
+| `write:social` | `manage_social_graph` |
+| `write:tools` | `save_tool`, `unsave_tool` |
 | `write:wallets` | `manage_wallets`, `manage_agent_account` |
 
-Social graph (`read:social`, `write:social`) and saved tools (`read:tools`, `write:tools`) have no MCP tools. Use the CLI commands in [social-and-agents.md](social-and-agents.md).
+`view_social_graph` and `manage_social_graph` cover following and watching profiles. `list_saved_tools`, `save_tool` and `unsave_tool` take the `registry_chain`, `registry_addr` and `tool_id` that `search_tools` and `get_tool` return. The CLI equivalents are in [social-and-agents.md](social-and-agents.md).
 
 `Wallet identity required` means the `Authorization` header is missing, holds an API key or PAT instead of a JWT, or the JWT expired. A scope error means log in again with that scope; an unchanged retry will fail the same way.

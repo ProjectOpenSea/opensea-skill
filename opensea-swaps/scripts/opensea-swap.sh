@@ -10,7 +10,7 @@ set -euo pipefail
 #   ./opensea-swap.sh 0xToToken 100 base 0x0000000000000000000000000000000000000000 turnkey
 #
 # Required env vars:
-#   OPENSEA_API_KEY    OpenSea API key
+#   OPENSEA_API_KEY    OpenSea API key (or a key cached in ~/.opensea/api_key)
 #   Plus one wallet provider's credentials. Without [wallet_provider], the CLI
 #   picks one from env vars (see the opensea-wallet skill):
 #     Privy (default):  PRIVY_APP_ID, PRIVY_APP_SECRET, PRIVY_WALLET_ID
@@ -25,8 +25,9 @@ CHAIN="${3:-base}"
 FROM_TOKEN_ADDRESS="${4:-0x0000000000000000000000000000000000000000}"
 WALLET_PROVIDER="${5:-}"
 
-if [ -z "${OPENSEA_API_KEY:-}" ]; then
-  echo "OPENSEA_API_KEY environment variable is required" >&2
+key_file="${OPENSEA_CONFIG_DIR:-${HOME:-}/.opensea}/api_key"
+if [ -z "${OPENSEA_API_KEY:-}" ] && [ ! -s "$key_file" ]; then
+  echo "OPENSEA_API_KEY is required (or a key cached in ~/.opensea/api_key)" >&2
   exit 1
 fi
 

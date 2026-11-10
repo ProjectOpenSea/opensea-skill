@@ -6,7 +6,7 @@ repository: https://github.com/ProjectOpenSea/opensea-skill
 license: MIT
 env:
   OPENSEA_API_KEY:
-    description: API key for all OpenSea services
+    description: API key for all OpenSea services. The SDK and MCP server need it set; the CLI and scripts fall back to the key cached in ~/.opensea/api_key
     required: true
     obtain: https://docs.opensea.io/reference/api-keys#instant-api-key-for-agents
 dependencies:

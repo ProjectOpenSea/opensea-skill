@@ -14,9 +14,13 @@ if [[ ! "$slug" =~ ^[a-zA-Z0-9*-]+$ ]]; then
 fi
 
 key="${OPENSEA_API_KEY:-}"
+key_file="${OPENSEA_CONFIG_DIR:-${HOME:-}/.opensea}/api_key"
+if [ -z "$key" ] && [ -r "$key_file" ]; then
+  key=$(tr -d '[:space:]' <"$key_file")
+fi
 
 if [ -z "$key" ]; then
-  echo "OPENSEA_API_KEY is required" >&2
+  echo "OPENSEA_API_KEY is required (or a key cached in ~/.opensea/api_key)" >&2
   exit 1
 fi
 

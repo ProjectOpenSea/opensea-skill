@@ -54,7 +54,7 @@ Keep the same `OpenSeaAuth` instance through cleanup: it holds the SIWE session 
 
 ## REST
 
-Send the application key and short-lived wallet JWT:
+Send the application key and a short-lived wallet JWT from your own SIWE or OAuth flow. The CLI does not export its stored JWT; with the CLI, use `opensea api request` instead.
 
 ```bash
 curl "https://api.opensea.io/api/v2/account/0xYOUR_WALLET/favorites?limit=1" \
@@ -82,7 +82,7 @@ Every data tool needs the application key. Wallet-scoped tools also need the wal
 }
 ```
 
-Keep the resolved values in the client's secret store, not committed configuration. The CLI intentionally does not print stored tokens; use an OAuth-capable MCP client or obtain a JWT with `OpenSeaAuth` and pass it to an in-process client. Reconnect after replacing an expired JWT. The server derives the wallet from the verified JWT; do not pass an arbitrary wallet as a substitute for authentication.
+Keep the resolved values in the client's secret store, not committed configuration. The CLI does not export its stored JWT, by design; use an OAuth-capable MCP client or obtain a JWT with `OpenSeaAuth` and pass it to an in-process client. Reconnect after replacing an expired JWT. The server derives the wallet from the verified JWT; do not pass an arbitrary wallet as a substitute for authentication.
 
 ## Recovery and safety
 

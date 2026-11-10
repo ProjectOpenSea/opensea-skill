@@ -57,5 +57,6 @@ jobs:
           echo "Publishing opensea/opensea-marketplace@${VERSION}"
           clawhub publish . \
             --slug opensea-marketplace \
+            --name "OpenSea Skill" \
             --owner opensea \
             --version "$VERSION"
