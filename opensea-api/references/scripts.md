@@ -24,6 +24,7 @@ Prefer the CLI when Node is available: it covers every endpoint here and more. F
 | `assets/opensea-assets-transfer.sh` | `<body_json>` |
 | `auth/opensea-auth-request-key.sh` | `(no arguments)` |
 | `auth/opensea-resolve-key.sh` | `[--force]` |
+| `bounty/opensea-bounty-discover.sh` | `<store_url_or_domain>` (no API key; see [bounty.md](bounty.md)) |
 | `collections/opensea-collection-floor-prices.sh` | `<collection_slug> [timeframe] [resolution]` |
 | `collections/opensea-collection-holders.sh` | `<collection_slug> [limit] [cursor] [sort_direction] [owned_by]` |
 | `collections/opensea-collection-nfts.sh` | `<collection_slug> [limit] [next]` |

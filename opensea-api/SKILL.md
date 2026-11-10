@@ -112,6 +112,7 @@ Call wallet-scoped endpoints with `opensea api request <METHOD> <path>`: it send
 | REST endpoints by family | [rest-api.md](references/rest-api.md) |
 | Real-time WebSocket events | [stream-api.md](references/stream-api.md) |
 | Shell script index | [scripts.md](references/scripts.md) |
+| What a store says a purchase earns (Open Bounty) | [bounty.md](references/bounty.md) |
 | Tool registry REST parameters | [`opensea-tool-sdk`](../opensea-tool-sdk/SKILL.md#tool-discovery-beta) |
 | Live OpenAPI spec | `https://api.opensea.io/api/v2/openapi.json` |
 
