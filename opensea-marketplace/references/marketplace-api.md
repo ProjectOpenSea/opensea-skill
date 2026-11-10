@@ -25,124 +25,15 @@ The set of supported chains changes as new chains launch. Fetch the current list
 
 ---
 
-## Read Operations (GET)
+## Read Operations
 
-### Get Best Listing for NFT
-
-Returns the lowest-priced active listing for an NFT.
-
-```bash
-GET /api/v2/listings/collection/{collection_slug}/nfts/{identifier}/best
-```
-
-**Parameters:**
-- `collection_slug`: Collection slug (e.g., `boredapeyachtclub`)
-- `identifier`: NFT identifier (token ID)
-
-**Example:**
-```bash
-opensea listings best-for-nft boredapeyachtclub 1234
-```
-
-### Get Best Offer for NFT
-
-Returns the highest active offer for an NFT.
-
-```bash
-GET /api/v2/offers/collection/{collection_slug}/nfts/{identifier}/best
-```
-
-**Example:**
-```bash
-opensea offers best-for-nft boredapeyachtclub 1234
-```
-
-### Get All Listings for Collection
-
-Returns all active listings for a collection.
-
-```bash
-GET /api/v2/listings/collection/{collection_slug}/all
-```
-
-**Query parameters:**
-- `limit`: Page size (default 50, max 100)
-- `next`: Cursor for pagination
-
-**Example:**
-```bash
-opensea listings all boredapeyachtclub --limit 50
-```
-
-### Get All Offers for Collection
-
-Returns all active offers for a collection.
-
-```bash
-GET /api/v2/offers/collection/{collection_slug}/all
-```
-
-**Example:**
-```bash
-opensea offers all boredapeyachtclub --limit 50
-```
-
-### Get Best Listing for Specific NFT
-
-```bash
-GET /api/v2/listings/collection/{slug}/nfts/{token_id}/best
-```
-
-**Example:**
-```bash
-curl "https://api.opensea.io/api/v2/listings/collection/boredapeyachtclub/nfts/1234/best" \
-  -H "x-api-key: $OPENSEA_API_KEY"
-```
-
-For all listings on a collection (optionally filtered by maker), use `GET /api/v2/listings/collection/{slug}/all?maker=0x...`. There is no per-NFT all-listings endpoint — the best-listing endpoint returns a single result.
-
-### Get Offers for Specific NFT
-
-```bash
-GET /api/v2/offers/collection/{slug}/nfts/{token_id}
-```
-
-**Query parameters:**
-- `limit`, `next`: Pagination
-
-**Example:**
-```bash
-curl "https://api.opensea.io/api/v2/offers/collection/boredapeyachtclub/nfts/1234" \
-  -H "x-api-key: $OPENSEA_API_KEY"
-```
-
-For just the best offer, use `GET /api/v2/offers/collection/{slug}/nfts/{token_id}/best`. For collection-wide offers filtered by maker, use `GET /api/v2/offers/collection/{slug}/all?maker=0x...`.
-
-### Get Order by Hash
-
-Retrieve details of a specific order.
-
-```bash
-GET /api/v2/orders/chain/{chain}/protocol/{protocol_address}/{order_hash}
-```
-
-**Example:**
-```bash
-curl "https://api.opensea.io/api/v2/orders/chain/ethereum/protocol/0x0000000000000068F116a894984e2DB1123eB395/0xORDER_HASH" \
-  -H "x-api-key: $OPENSEA_API_KEY"
-```
-
----
+Finding listings, offers and orders is covered by the `opensea-api` skill (`opensea listings best-for-nft`, `opensea offers best-for-nft`, `opensea orders get`). Each order response carries the `order_hash` (or `svm_order.id` on Solana) and `protocol_address` the write endpoints below need.
 
 ## Write Operations (POST)
 
-### Build a Listing
+### Submit a signed listing
 
-Creates an unsigned Seaport listing order. Returns order parameters to sign.
-
-```bash
-POST /api/v2/orders/{chain}/seaport/listings
-```
+`POST /api/v2/orders/{chain}/seaport/listings` (CLI: `opensea listings post <chain> --body signed.json`) submits an order you have already signed. Get the order to sign from `POST /api/v2/listings/actions` (`opensea listings actions`), or build it by hand as below.
 
 **Request body:**
 ```json
@@ -204,9 +95,9 @@ curl -X POST "https://api.opensea.io/api/v2/orders/ethereum/seaport/listings" \
   -d '{"protocol_address": "0x0000000000000068f116a894984e2db1123eb395", "parameters": {...}, "signature": "0x..."}'
 ```
 
-### Build an Offer
+### Submit a signed offer
 
-Creates an unsigned Seaport offer order.
+`POST /api/v2/orders/{chain}/seaport/offers` (CLI: `opensea offers post <chain> --body signed.json`) submits a signed offer. Get the order to sign from `POST /api/v2/offers/actions` (`opensea offers actions`).
 
 ```bash
 POST /api/v2/orders/{chain}/seaport/offers
@@ -247,7 +138,7 @@ POST /api/v2/orders/{chain}/seaport/offers
 }
 ```
 
-Field requirements and notes are identical to **Build a Listing** (see above).
+Field requirements and notes are identical to **Submit a signed listing** (see above).
 
 ### Signing Orders (EIP-712)
 
@@ -436,7 +327,7 @@ Cancel an active listing or offer.
 POST /api/v2/orders/chain/{chain}/protocol/{protocol_address}/{order_hash}/cancel
 ```
 
-**Note:** Cancellation requires an onchain transaction. The API returns the transaction data to execute.
+This endpoint is an offchain cancel for orders protected by OpenSea's SignedZone and needs a wallet JWT with `write:orders`. A fulfillment signature issued before the cancel stays valid for up to 5 minutes, so the order can still fill in that window. For an onchain cancel, use `POST /api/v2/orders/chain/{chain}/protocol/{protocol_address}/{order_hash}/cancel/actions` and execute the returned steps.
 
 ---
 
@@ -460,19 +351,17 @@ opensea listings best-for-nft boredapeyachtclub 1234
 ./scripts/opensea-fulfill-listing.sh ethereum 0x_order_hash 0x_your_wallet
 ```
 
-## Workflow: Selling an NFT (Creating a Listing)
+## Workflow: Creating a Listing
 
-1. **Build the listing** - POST to `/api/v2/orders/{chain}/seaport/listings`
-2. **Sign the order** - Use wallet to sign the Seaport order
-3. **Submit signed order** - POST again with signature
-4. **Monitor** - Check listing via `/api/v2/listings/collection/{slug}/all`
+1. **Get actions** - `POST /api/v2/listings/actions` returns any approval transactions plus the order to sign
+2. **Send approvals** - Execute approval steps in order
+3. **Sign the order** - EIP-712, see **Signing Orders** above
+4. **Submit** - `POST /api/v2/orders/{chain}/seaport/listings` with `protocol_address`, `parameters` and `signature`
 
 ## Workflow: Making an Offer
 
-1. **Ensure WETH approval** - Buyer needs WETH allowance for Seaport
-2. **Build the offer** - POST to `/api/v2/orders/{chain}/seaport/offers`
-3. **Sign the order** - Wallet signature required
-4. **Submit** - POST with signature
+1. **Get actions** - `POST /api/v2/offers/actions` returns any WETH approval plus the order to sign
+2. **Send approvals**, **sign**, then **submit** to `/api/v2/orders/{chain}/seaport/offers`
 
 ## Workflow: Accepting an Offer
 
@@ -575,7 +464,9 @@ Fulfillment endpoints (`/api/v2/listings/fulfillment_data`, `/api/v2/offers/fulf
 
 | Chain | Seaport 1.6 Address |
 |-------|---------------------|
-| All chains | `0x0000000000000068F116a894984e2DB1123eB395` |
+| All EVM chains | `0x0000000000000068F116a894984e2DB1123eB395` |
+
+Legacy Seaport 1.5: `0x00000000000000ADc04C56Bf30aC9d3c0aAF14dC`. Conduit controller: `0x00000000F9490004C11Cef243f5400493c00Ad63`.
 
 ---
 

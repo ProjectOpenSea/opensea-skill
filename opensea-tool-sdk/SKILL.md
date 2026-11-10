@@ -82,79 +82,21 @@ Canonical v0.2 deployments — identical CREATE2 address on every supported chai
 
 ## Tool Discovery [Beta]
 
-Search or look up registered tools via the OpenSea REST API. Requires `OPENSEA_API_KEY`.
+Find registered tools through the OpenSea REST API with an `OPENSEA_API_KEY`. If you have none, the `opensea-api` skill's `opensea-resolve-key.sh` fetches a free instant key and caches it in `~/.opensea/api_key`; reuse that key instead of fetching a new one per request.
+
+With the OpenSea CLI: `opensea tools search --query <text>`, `opensea tools list`, `opensea tools get <chain_id> <registry> <tool_id>`, `opensea tools activity <chain_id> <registry> <tool_id>`.
+
+| Endpoint | Parameters |
+|---|---|
+| `GET /api/v2/tools` ([docs](https://docs.opensea.io/reference/list_tools)) | `sort_by` (`newest` default, `oldest`), `type` (`open`, `nft_gated`, `token_gated`, `subscription`, `gated`), `source` (`onchain`, `x402_bazaar`, `x402_bankr`; all when omitted), `limit` (1-200), `cursor` |
+| `GET /api/v2/tools/search` ([docs](https://docs.opensea.io/reference/search_tools)) | `query`, `registry_chain`, `tags`, `access_type` (`open`, `nft_gated`, `subscription`), `creator`, `source`, `collection`, `include_details` (default true), `sort_by` (`relevance` default, `newest`, `most_used`), `limit` (1-200), `cursor` |
+| `GET /api/v2/tools/{registry_chain}/{registry_addr}/{tool_id}` ([docs](https://docs.opensea.io/reference/get_tool)) | Path only. `registry_chain` is the chain ID (`1`, `8453`) |
+| `GET /api/v2/tools/{registry_chain}/{registry_addr}/{tool_id}/activity` | `include_creator_payments` (default false), `limit` (default 25), `offset` |
 
 ```bash
-# Reuse OPENSEA_API_KEY if already set; otherwise fetch an instant free-tier key
-# (no signup — 600/h read, 30/h write, 7-day expiry) and SAVE it for reuse.
-if [ -z "${OPENSEA_API_KEY:-}" ]; then
-  KEY_FILE="${OPENSEA_CONFIG_DIR:-$HOME/.opensea}/api_key"
-  if [ -s "$KEY_FILE" ]; then
-    export OPENSEA_API_KEY=$(cat "$KEY_FILE")          # reuse cached key
-  else
-    api_key=$(curl -s -X POST https://api.opensea.io/api/v2/auth/keys | jq -r '.api_key')
-    mkdir -p "$(dirname "$KEY_FILE")"
-    (umask 077; printf '%s\n' "$api_key" > "$KEY_FILE")  # save before using it
-    export OPENSEA_API_KEY="${api_key}"
-  fi
-fi
-```
-
-Always save a fetched instant key and reuse it rather than re-fetching. The
-`opensea-api` skill ships an
-`auth/opensea-resolve-key.sh` helper that does this (env → cached file → fetch +
-save); see its "API key resolution" section. For higher rate limits, create a
-full key at [Settings → Developer](https://docs.opensea.io/reference/api-keys).
-
-**List tools:** `GET /api/v2/tools` ([docs](https://docs.opensea.io/reference/list_tools))
-
-| Parameter | Required | Description |
-|-----------|----------|-------------|
-| `sort_by` | No | Sort by: `newest` (default), `oldest` |
-| `type` | No | Filter by access type: `open`, `nft_gated`, `token_gated`, `subscription`, `gated` |
-| `limit` | No | Results per page (1–100) |
-| `cursor` | No | Pagination cursor |
-
-**Search tools:** `GET /api/v2/tools/search` ([docs](https://docs.opensea.io/reference/search_tools))
-
-| Parameter | Required | Description |
-|-----------|----------|-------------|
-| `query` | No | Search query text |
-| `registry_chain` | No | Filter by registry chain ID |
-| `tags` | No | Filter by tags |
-| `access_type` | No | Filter by access type: `open`, `nft_gated`, `subscription` |
-| `creator` | No | Filter by creator address |
-| `sort_by` | No | Sort by: `relevance` (default), `newest`, `most_used` |
-| `limit` | No | Results per page (1–200) |
-| `cursor.value` | No | Pagination cursor |
-
-**Get a tool:** `GET /api/v2/tools/{registry_chain}/{registry_addr}/{tool_id}` ([docs](https://docs.opensea.io/reference/get_tool))
-
-| Parameter | Required | Description |
-|-----------|----------|-------------|
-| `registry_chain` | Yes | Registry chain ID (e.g. `1`, `8453`) |
-| `registry_addr` | Yes | Registry contract address |
-| `tool_id` | Yes | Numeric tool ID |
-
-```bash
-# List tools sorted by newest
-curl -s "https://api.opensea.io/api/v2/tools?sort_by=newest&limit=10" \
+curl -s "https://api.opensea.io/api/v2/tools/search?query=nft&access_type=open&limit=10" \
   -H "x-api-key: $OPENSEA_API_KEY" | jq
-
-# List tools filtered by type
-curl -s "https://api.opensea.io/api/v2/tools?type=open&sort_by=oldest" \
-  -H "x-api-key: $OPENSEA_API_KEY" | jq
-
-# Search tools by keyword
-curl -s "https://api.opensea.io/api/v2/tools/search?query=nft" \
-  -H "x-api-key: $OPENSEA_API_KEY" | jq
-
-# Get a specific tool on Base
 curl -s "https://api.opensea.io/api/v2/tools/8453/0x265BB2DBFC0A8165C9A1941Eb1372F349baD2cf1/1" \
-  -H "x-api-key: $OPENSEA_API_KEY" | jq
-
-# Filter by access type
-curl -s "https://api.opensea.io/api/v2/tools/search?access_type=open&limit=10" \
   -H "x-api-key: $OPENSEA_API_KEY" | jq
 ```
 
@@ -317,33 +259,15 @@ For deployed predicate addresses, requirement encodings, and SDK helpers like `d
 
 ## 4. Wallet Setup
 
-The SDK supports multiple wallet providers via `@opensea/wallet-adapters`. Set environment variables and the SDK auto-detects the provider. See the [`opensea-wallet`](../opensea-wallet/SKILL.md) skill for the full provider table, env vars, setup walkthroughs, and signing-policy configuration.
+Signing uses `@opensea/wallet-adapters`, the same providers and env vars as the OpenSea CLI: Privy, Fireblocks, Turnkey, Bankr, or a local `PRIVATE_KEY`, auto-detected in that order or chosen with `--wallet-provider`. The full env var table, setup and signing-policy hardening are in the [`opensea-wallet`](../opensea-wallet/SKILL.md) skill.
 
-| Provider | Env vars | Best for |
-|----------|----------|----------|
-| Private Key | `PRIVATE_KEY` | Local dev, scripts |
-| Privy | `PRIVY_APP_ID`, `PRIVY_APP_SECRET`, `PRIVY_WALLET_ID` | Server wallets |
-| Turnkey | `TURNKEY_API_PUBLIC_KEY`, `TURNKEY_API_PRIVATE_KEY`, `TURNKEY_ORGANIZATION_ID` | Enterprise signing |
-| Fireblocks | `FIREBLOCKS_API_KEY`, `FIREBLOCKS_API_SECRET`, `FIREBLOCKS_VAULT_ACCOUNT_ID` | Institutional custody |
-| Bankr | `BANKR_API_KEY` | Agent wallets (via HTTP API) |
-
-For any provider, `RPC_URL` (or the `--rpc-url` flag) sets the RPC endpoint for onchain reads and writes. When neither is set, CLI commands fall back to the network's default public RPC, which can be slow or rate-limited.
+`RPC_URL` (or `--rpc-url`) sets the RPC for onchain reads and writes. Without it, commands use the network's public RPC, which can be slow or rate-limited.
 
 ```typescript
-import { createWalletFromEnv } from "@opensea/tool-sdk"
+import { createWalletFromEnv, createBankrAccount } from "@opensea/tool-sdk"
 
-// Auto-detects: Privy > Fireblocks > Turnkey > Bankr > PrivateKey
-const adapter = createWalletFromEnv()
-const address = await adapter.getAddress()
-```
-
-For Bankr (external signer):
-
-```typescript
-import { createBankrAccount } from "@opensea/tool-sdk"
-
-const account = await createBankrAccount("your-bankr-api-key")
-// Use with eip3009AuthenticatedFetch or paidAuthenticatedFetch
+const adapter = createWalletFromEnv()                 // auto-detected provider
+const account = await createBankrAccount(process.env.BANKR_API_KEY!)   // Bankr as a viem account for eip3009AuthenticatedFetch / paidAuthenticatedFetch
 ```
 
 ## 5. Response Codes
@@ -427,132 +351,31 @@ Reporting is always the service's responsibility (authenticated by `apiKey`), ne
 
 ### onInvocation callback
 
-You can also provide a custom `onInvocation` callback for bespoke analytics. It fires after the handler succeeds and settles, before the response is returned, with an `InvocationEvent` containing caller identity, payment status, and timing:
-
-```typescript
-import { createToolHandler } from "@opensea/tool-sdk"
-import type { InvocationEvent } from "@opensea/tool-sdk"
-
-export const toolHandler = createToolHandler({
-  manifest,
-  inputSchema: InputSchema,
-  outputSchema: OutputSchema,
-  onInvocation: (event: InvocationEvent) => {
-    // event.callerAddress — verified caller wallet
-    // event.paid          — whether x402 payment settled
-    // event.toolName      — resolved tool name from manifest
-    // event.latencyMs     — handler execution time
-    // event.timestamp     — invocation timestamp
-  },
-  handler: async (input) => {
-    return { result: `Processed: ${input.query}` }
-  },
-})
-```
+For custom analytics, pass `onInvocation: (event: InvocationEvent) => {...}` to `createToolHandler`. It fires after the handler succeeds and settles, before the response returns, with `callerAddress` (verified), `paid`, `toolName`, `latencyMs` and `timestamp`.
 
 ## 8. End-to-End Examples
 
-### Example A: Free open-access tool
+A free, open-access tool:
 
 ```bash
-# 1. Scaffold
-npx @opensea/tool-sdk init --runtime vercel
-# 2. Edit src/manifest.ts and src/handler.ts with your logic
-# 3. Deploy
+npx @opensea/tool-sdk init --runtime vercel        # then edit src/manifest.ts and src/handler.ts
 npx @opensea/tool-sdk deploy
-# 4. Register (open access)
-PRIVATE_KEY=0x... npx @opensea/tool-sdk register \
-  --metadata https://my-tool.vercel.app/.well-known/ai-tool/my-tool.json \
-  --network base
-# 5. Call
-curl -X POST https://my-tool.vercel.app/api \
-  -H "Content-Type: application/json" \
-  -d '{"query": "hello"}'
+npx @opensea/tool-sdk register --network base \
+  --metadata https://my-tool.vercel.app/.well-known/ai-tool/my-tool.json
+curl -X POST https://my-tool.vercel.app/api -H "Content-Type: application/json" -d '{"query":"hello"}'
 ```
 
-### Example B: x402 paid tool (pay-per-call only, no identity check)
+Gated variants change the server gate, the registration flags and the call command:
 
-```bash
-# Server: add paywall gate (see references/x402.md)
-# Call via CLI:
-PRIVATE_KEY=0x... npx @opensea/tool-sdk pay \
-  https://my-tool.vercel.app/api \
-  --body '{"query": "hello"}'
-```
+| Gate | Server | Register with | Call with |
+|---|---|---|---|
+| x402 pay-per-call | paywall gate ([x402.md](references/x402.md)) | no predicate | `npx @opensea/tool-sdk pay <url> --body '<json>'` |
+| ERC-721 holders | `predicateGate` ([predicate-gating.md](references/predicate-gating.md)) | `--nft-gate <collection>`, or `set-collections <id> <collection>` later | `npx @opensea/tool-sdk auth <url> --body '<json>'` |
+| Subscription | `predicateGate` | `--access-predicate 0xCBe0cd9B1d99d95Baa9c58f2767246C52e461f25 --predicate-config '{"collection":"0x...","minTier":0}'`, or `configure-subscription` later | `auth` |
+| ERC-20 balance | `predicateGate` | `--erc20-gate <token> --erc20-min-balance <base units>`, or `configure-erc20-gate` later | `auth` |
+| NFT plus payment | `paidPredicateGate` | a predicate as above | `pay` (one 402 round trip carries identity and payment) |
 
-### Example C: NFT-gated tool (identity check, no payment)
-
-```bash
-# Register with ERC721OwnerPredicate
-PRIVATE_KEY=0x... npx @opensea/tool-sdk register \
-  --metadata https://my-tool.vercel.app/.well-known/ai-tool/my-tool.json \
-  --network base \
-  --nft-gate 0xYOUR_COLLECTION_ADDRESS
-
-# Configure which collection(s) gate the tool (if not using --nft-gate):
-npx @opensea/tool-sdk set-collections <TOOL_ID> 0xYOUR_COLLECTION_ADDRESS \
-  --network base
-
-# Server: add predicateGate (see references/predicate-gating.md)
-
-# Call via CLI:
-PRIVATE_KEY=0x... RPC_URL=https://mainnet.base.org \
-  npx @opensea/tool-sdk auth \
-  https://my-tool.vercel.app/api \
-  --body '{"query": "hello"}'
-```
-
-### Example D: Subscription-gated tool
-
-```bash
-# Register with SubscriptionPredicate and configure in one shot:
-PRIVATE_KEY=0x... npx @opensea/tool-sdk register \
-  --metadata https://my-tool.vercel.app/.well-known/ai-tool/my-tool.json \
-  --access-predicate 0xCBe0cd9B1d99d95Baa9c58f2767246C52e461f25 \
-  --predicate-config '{"collection":"0xYOUR_SUBSCRIPTION_NFT","minTier":0}' \
-  --network base
-
-# Or configure after registration:
-npx @opensea/tool-sdk configure-subscription <TOOL_ID> 0xYOUR_SUBSCRIPTION_NFT \
-  --min-tier 0 --network base
-
-# Call via CLI:
-PRIVATE_KEY=0x... RPC_URL=https://mainnet.base.org \
-  npx @opensea/tool-sdk auth \
-  https://my-tool.vercel.app/api \
-  --body '{"query": "hello"}'
-```
-
-### Example E: ERC-20 balance-gated tool
-
-```bash
-# Register with ERC20BalancePredicate and configure in one shot:
-PRIVATE_KEY=0x... npx @opensea/tool-sdk register \
-  --metadata https://my-tool.vercel.app/.well-known/ai-tool/my-tool.json \
-  --network base \
-  --erc20-gate 0xTOKEN_ADDRESS --erc20-min-balance 1000000000000000000
-
-# Or configure after registration:
-npx @opensea/tool-sdk configure-erc20-gate <TOOL_ID> 0xTOKEN_ADDRESS 1000000000000000000 \
-  --network base
-
-# Call via CLI:
-PRIVATE_KEY=0x... RPC_URL=https://mainnet.base.org \
-  npx @opensea/tool-sdk auth \
-  https://my-tool.vercel.app/api \
-  --body '{"query": "hello"}'
-```
-
-### Example F: NFT-gated + paid tool (combined gate, single round trip)
-
-```bash
-# Server: use paidPredicateGate (see references/predicate-gating.md)
-# Single 402: identity proof + payment in one X-Payment signature
-PRIVATE_KEY=0x... RPC_URL=https://mainnet.base.org \
-  npx @opensea/tool-sdk pay \
-  https://my-tool.vercel.app/api \
-  --body '{"query": "hello"}'
-```
+`pay` and `auth` need a wallet (section 4). Predicate checks read the chain through `RPC_URL` when it is set, otherwise the network's public RPC. `pay --max-amount <base units>` caps spend (default 10 USDC).
 
 ## References
 

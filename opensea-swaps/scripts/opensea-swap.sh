@@ -11,7 +11,8 @@ set -euo pipefail
 #
 # Required env vars:
 #   OPENSEA_API_KEY    OpenSea API key
-#   Plus one wallet provider's credentials:
+#   Plus one wallet provider's credentials. Without [wallet_provider], the CLI
+#   picks one from env vars (see the opensea-wallet skill):
 #     Privy (default):  PRIVY_APP_ID, PRIVY_APP_SECRET, PRIVY_WALLET_ID
 #     Turnkey:          TURNKEY_API_PUBLIC_KEY, TURNKEY_API_PRIVATE_KEY, TURNKEY_ORGANIZATION_ID, TURNKEY_WALLET_ADDRESS, TURNKEY_RPC_URL
 #     Fireblocks:       FIREBLOCKS_API_KEY, FIREBLOCKS_API_SECRET, FIREBLOCKS_VAULT_ID
@@ -29,28 +30,10 @@ if [ -z "${OPENSEA_API_KEY:-}" ]; then
   exit 1
 fi
 
-# Detect wallet provider from env vars if not explicitly specified
-# Priority and detection logic matches CLI's createWalletFromEnv: Privy > Fireblocks > Turnkey > Bankr > Private Key
-if [ -z "$WALLET_PROVIDER" ]; then
-  if [ -n "${PRIVY_APP_ID:-}" ] && [ -n "${PRIVY_APP_SECRET:-}" ]; then
-    WALLET_PROVIDER="privy"
-  elif [ -n "${FIREBLOCKS_API_KEY:-}" ] && [ -n "${FIREBLOCKS_VAULT_ID:-}" ]; then
-    WALLET_PROVIDER="fireblocks"
-  elif [ -n "${TURNKEY_API_PUBLIC_KEY:-}" ] && [ -n "${TURNKEY_ORGANIZATION_ID:-}" ]; then
-    WALLET_PROVIDER="turnkey"
-  elif [ -n "${BANKR_API_KEY:-}" ]; then
-    WALLET_PROVIDER="bankr"
-  elif [ -n "${PRIVATE_KEY:-}" ] && [ -n "${RPC_URL:-}" ]; then
-    WALLET_PROVIDER="private-key"
-  else
-    echo "No wallet provider credentials found. Set env vars for one of: Privy, Turnkey, Fireblocks, Bankr, or Private Key." >&2
-    echo "See the opensea-wallet skill (opensea-wallet/references/wallet-setup.md) for details." >&2
-    exit 1
-  fi
-fi
-
 # Validate required env vars for the selected provider
 case "$WALLET_PROVIDER" in
+  "")
+    ;;
   privy)
     for var in PRIVY_APP_ID PRIVY_APP_SECRET PRIVY_WALLET_ID; do
       if [ -z "${!var:-}" ]; then
@@ -95,8 +78,13 @@ case "$WALLET_PROVIDER" in
     ;;
 esac
 
+provider_args=()
+if [ -n "$WALLET_PROVIDER" ]; then
+  provider_args=(--wallet-provider "$WALLET_PROVIDER")
+fi
+
 exec opensea swaps execute \
-  --wallet-provider "$WALLET_PROVIDER" \
+  ${provider_args[@]+"${provider_args[@]}"} \
   --from-chain "$CHAIN" \
   --from-address "$FROM_TOKEN_ADDRESS" \
   --to-chain "$CHAIN" \

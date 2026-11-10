@@ -69,7 +69,7 @@ The tree above covers the common cases. These edge cases catch the easy-to-misro
 | Stream real-time marketplace events (WebSocket) | `opensea-api` |
 | Cross-chain NFT purchase (pay from a different chain) | `opensea-marketplace` |
 | Sweep multiple listings in one transaction | `opensea-marketplace` |
-| Check token balances for a wallet | `opensea-swaps` |
+| Check token balances for a wallet | `opensea-api` |
 | Configure wallet signing policies (caps, allowlists) | `opensea-wallet` |
 | Gate a tool with NFT ownership or x402 payments | `opensea-tool-sdk` |
 
@@ -78,11 +78,11 @@ The tree above covers the common cases. These edge cases catch the easy-to-misro
 All three paths install the router `SKILL.md` plus all five sub-skills:
 
 ```bash
-# Auto-installs all five skills (recommended)
+# Installs the router and all five skills (recommended)
 npx skills add ProjectOpenSea/opensea-skill --yes
 
 # ClawHub (single slug, all skills bundled)
-clawhub install opensea
+clawhub install opensea-marketplace
 
 # Manual (Claude Code / Cursor / Codex)
 git clone https://github.com/ProjectOpenSea/opensea-skill.git ~/.claude/skills/opensea
@@ -109,7 +109,7 @@ The root `SKILL.md` is a thin router that directs agents to the correct sub-skil
 
 ### ClawHub
 
-Register one slug (`opensea`) and publish via `clawhub skill publish .`. The installed layout:
+The bundle is published under one slug, `opensea-marketplace` (owner `opensea`), by `.github/workflows/clawhub-publish.yml` on each release. The slug predates the router and is kept so existing installs keep updating. The installed layout:
 
 ```
 opensea/
@@ -121,7 +121,7 @@ opensea/
 └── opensea-tool-sdk/SKILL.md
 ```
 
-Do **not** publish five separate ClawHub slugs.
+Do not publish five separate ClawHub slugs.
 
 ### `npx skills add` behavior
 

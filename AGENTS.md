@@ -12,8 +12,9 @@ find . -name '*.sh' -exec bash -n {} +
 # What CI runs: shellcheck, plus every opensea-*/scripts/*.sh must be executable
 shellcheck $(find . -name '*.sh')
 find . -name '*.sh' ! -perm -u+x
-# Run the skill sync check
+# Run the skill sync check, and check every `opensea ...` command in the docs exists in the CLI
 ../../scripts/check-skill-sync.sh
+node ../../scripts/check-skill-cli-refs.mjs
 ```
 
 ## Responsibilities
@@ -36,3 +37,5 @@ find . -name '*.sh' ! -perm -u+x
 - Shell scripts use `#!/usr/bin/env bash` and read `OPENSEA_API_KEY`.
 - Scripts output JSON by default (pipe through `jq` when available).
 - SKILL.md frontmatter declares env vars and dependencies.
+- Keep each SKILL.md short enough to read in one pass (roughly 150 lines) and complete for everyday tasks. Move specialized flows to `references/` and link them. Prefer the CLI and its `--help` over restating every flag, and never hand-copy MCP tool parameter schemas: the server publishes them.
+- Bump `.grok-plugin/plugin.json` with `package.json` on release; CI fails when they differ.

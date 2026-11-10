@@ -30,10 +30,4 @@ Entry point for OpenSea agent skills. Pick the sub-skill based on task, then rea
 
 Always read the sub-skill `SKILL.md` before executing. This router intentionally has no operational detail.
 
-## Quick decision guide
-
-- **Read-only queries** (collections, NFTs, tokens, search, stats, events, drops): `opensea-api`
-- **Write operations** (buy, sell, make offers, fulfill listings): `opensea-marketplace`
-- **Token swaps** (ERC20 to ERC20, cross-chain): `opensea-swaps`
-- **Wallet setup** (before any write operation): `opensea-wallet`
-- **Tool building** (register, gate, monetize AI tools): `opensea-tool-sdk`
+Wallet setup comes before any write. Token balances and other reads are `opensea-api`.

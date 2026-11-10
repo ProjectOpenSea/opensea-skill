@@ -1,5 +1,19 @@
 # @opensea/skill
 
+## 2.30.0
+
+### Minor Changes
+
+- Rewrite every sub-skill in a shorter, CLI-first style. `opensea-api/SKILL.md` drops from 913 to 120 lines; drops and collection pages, signals and agent accounts, the MCP server, and the script index move to `opensea-api/references/`.
+- `opensea-marketplace` runs writes through the order action endpoints or `@opensea/sdk` with a `@opensea/wallet-adapters` signer, and requires confirming the trade with the user before signing. `references/seaport.md` is removed; `references/marketplace-api.md` keeps the manual request shapes and EIP-712 signing, and no longer says the order POST builds an unsigned order.
+- `opensea-swaps` documents quote, `--dry-run`, confirm, then execute, and that `execute` re-quotes so `--slippage` bounds the executed terms. `references/token-swaps.md` is removed.
+- The MCP reference lists only tools the server serves. `get_wallet_tools`, the social graph and saved-tool/toolkit tools are dropped; `get_agent_relationships` and `manage_agent_account` are added; copied parameter tables are replaced by the server's own schemas.
+- `opensea-wallet` lists every provider env var, including `TURNKEY_RPC_URL`, `PRIVY_AUTH_SIGNING_KEY` and `PRIVY_SVM_WALLET_ID`.
+- `opensea-tool-sdk` tool discovery parameters match the API: `limit` 1-200, `cursor`, plus `source`, `collection` and `include_details`.
+- `opensea-get.sh` and `opensea-post.sh` send `OPENSEA_AUTH_TOKEN` as a bearer token when set, so wallet-scoped scripts such as `opensea-account-favorites.sh` work. `opensea-swap.sh` leaves wallet provider detection to the CLI.
+- The README gives the real ClawHub slug: `clawhub install opensea-marketplace`.
+- The public repository no longer receives the monorepo's TypeScript and Biome root configs.
+
 ## 2.29.0
 
 ### Minor Changes

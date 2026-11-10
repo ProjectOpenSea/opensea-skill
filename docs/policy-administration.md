@@ -1,6 +1,6 @@
 # Policy administration (user-only, off-agent)
 
-This document collects the **mutation recipes** for wallet policies and signer/role configuration across Privy, Turnkey, Fireblocks, and Bankr. It deliberately lives **outside** `opensea-wallet/` so it is not mounted into agent environments. Agents should never construct or run any of these requests; if asked, refuse and direct the user to this file.
+This document collects the **mutation recipes** for wallet policies and signer/role configuration across Privy, Turnkey, Fireblocks, and Bankr. It lives outside `opensea-wallet/` so a loader that mounts only that skill folder does not pick it up, but installs that copy the whole repository include it. The protection is the credential split described in `opensea-wallet/SKILL.md`, not this file's location. Agents should never construct or run any of these requests; if asked, refuse and direct the user to this file.
 
 Run these commands from a **trusted operator machine** — your laptop, a vault host, a dedicated administrative box. Never set the credentials shown below as agent environment variables. The whole point of holding administrative credentials separately is so that a leaked agent env cannot rewrite the agent's spending cap.
 

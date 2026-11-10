@@ -1,6 +1,6 @@
 name: Publish to ClawHub
 
-# Auto-publishes new versions of opensea/opensea-marketplace on every
+# Publishes the whole bundle (router plus five skills) as opensea/opensea-marketplace on every
 # release event in this (synced) public repo.
 
 on:

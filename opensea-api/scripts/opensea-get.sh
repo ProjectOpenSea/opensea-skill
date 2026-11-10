@@ -25,6 +25,11 @@ if [ -z "$key" ]; then
   exit 1
 fi
 
+auth_args=()
+if [ -n "${OPENSEA_AUTH_TOKEN:-}" ]; then
+  auth_args=(-H "Authorization: Bearer $OPENSEA_AUTH_TOKEN")
+fi
+
 url="$base$path"
 if [ -n "$query" ]; then
   url="$url?$query"
@@ -39,6 +44,7 @@ base_delay=2
 for (( attempt=1; attempt<=max_attempts; attempt++ )); do
   http_code=$(curl -sS --connect-timeout 10 --max-time 30 \
     -H "x-api-key: $key" \
+    ${auth_args[@]+"${auth_args[@]}"} \
     -H "User-Agent: opensea-skill/1.0" \
     -w '%{http_code}' \
     -o "$tmp_body" \
