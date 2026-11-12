@@ -42,7 +42,7 @@ Use `opensea-tool-sdk` when you need to:
 | Swap ERC20 tokens | `opensea-swaps` |
 | Set up wallet signing providers | `opensea-wallet` |
 
-This SDK is for tool *providers and consumers*. To query OpenSea marketplace data (floor prices, listings, trades), use the [`opensea-api`](../opensea-api/SKILL.md) skill instead.
+This SDK is for tool *providers and consumers*. For OpenSea marketplace data (floor prices, listings, trades), use the [`opensea-api`](../opensea-api/SKILL.md) skill.
 
 ## Concepts
 
@@ -56,20 +56,20 @@ This SDK is for tool *providers and consumers*. To query OpenSea marketplace dat
 | **EIP-3009 auth** | Zero-value USDC `TransferWithAuthorization` signature used to authenticate callers for predicate-gated tools |
 | **Facilitator** | Third-party service that verifies and settles x402 payments (PayAI or Coinbase CDP) |
 
-## Important Constraints
+## Constraints
 
-**One tool = one endpoint.** Each tool registration represents a single REST API endpoint with a singular focus and intention. The endpoint URL in your manifest should point to a specific API route that performs one well-defined operation (e.g., `POST /api/price-check` or `POST /api/translate`), not a generic HTML page, documentation site, or multi-purpose URL. Think of each registered tool the same way you think of an individual REST API endpoint. It should accept a specific input, perform a specific action, and return a specific output.
+**One tool = one endpoint.** Each registration is a single REST API endpoint that does one thing. The manifest's endpoint URL should point to a specific API route (e.g., `POST /api/price-check` or `POST /api/translate`), not an HTML page, a documentation site, or a multi-purpose URL. It takes a specific input, performs one action, and returns a specific output.
 
-**Origin binding: manifest and endpoint must share the exact same origin.** Your `.well-known/ai-tool/<slug>.json` manifest and your tool's invocation endpoint must be served from the exact same origin (identical scheme, host, and port per [RFC 6454](https://datatracker.ietf.org/doc/html/rfc6454)). **Subdomains do not count as the same origin.** `example.com` and `api.example.com` are different origins. This is enforced at registration time. If the manifest origin and endpoint origin don't match exactly, the tool will be rejected and marked as deregistered.
+**Origin binding: manifest and endpoint must share the exact same origin.** Serve `.well-known/ai-tool/<slug>.json` and the invocation endpoint from the same scheme, host, and port ([RFC 6454](https://datatracker.ietf.org/doc/html/rfc6454)). **Subdomains are different origins:** `example.com` and `api.example.com` do not match. This is enforced at registration; a tool whose manifest and endpoint origins differ is rejected and marked deregistered.
 
 - Valid: manifest at `https://my-tool.example.com/.well-known/ai-tool/my-tool.json`, endpoint at `https://my-tool.example.com/api/my-tool`
 - Invalid: manifest at `https://example.com/.well-known/ai-tool/my-tool.json`, endpoint at `https://api.example.com/api/my-tool`
 
-If you need your API on a subdomain, serve the manifest from that same subdomain (e.g., both on `api.example.com`).
+To host the API on a subdomain, serve the manifest from that subdomain too (e.g., both on `api.example.com`).
 
-## Deployed Contracts (Ethereum mainnet, Base, Shape, Abstract, Monad, Robinhood Chain)
+## Deployed contracts (Ethereum mainnet, Base, Shape, Abstract, Monad, Robinhood Chain)
 
-Canonical v0.2 deployments — identical CREATE2 address on every supported chain.
+Canonical v0.2 deployments, at the same CREATE2 address on every supported chain.
 
 | Contract | Address |
 |----------|---------|
@@ -100,7 +100,7 @@ curl -s "https://api.opensea.io/api/v2/tools/8453/0x265BB2DBFC0A8165C9A1941Eb137
   -H "x-api-key: $OPENSEA_API_KEY" | jq
 ```
 
-## 1. Create a Tool
+## 1. Create a tool
 
 ### 1a. Scaffold a project
 
@@ -109,11 +109,11 @@ npx @opensea/tool-sdk init --runtime vercel   # or: cloudflare, express
 ```
 
 This generates:
-- `src/manifest.ts` — tool manifest definition
-- `src/handler.ts` — request handler with input/output schemas
-- `api/index.ts` — framework adapter entry point
-- `public/llms.txt` — agent-readable discovery page
-- `api/well-known/[slug].ts` — serves the manifest at `/.well-known/ai-tool/<slug>.json`
+- `src/manifest.ts`: tool manifest definition
+- `src/handler.ts`: request handler with input/output schemas
+- `api/index.ts`: framework adapter entry point
+- `public/llms.txt`: agent-readable discovery page
+- `api/well-known/[slug].ts`: serves the manifest at `/.well-known/ai-tool/<slug>.json`
 
 ### 1b. Define the manifest
 
@@ -188,7 +188,7 @@ import { toolHandler } from "./handler.js"
 export default { fetch: toolHandler }
 ```
 
-## 2. Register a Tool Onchain
+## 2. Register a tool onchain
 
 ### 2a. Via CLI
 
@@ -197,7 +197,7 @@ export default { fetch: toolHandler }
 export PRIVATE_KEY=0x...
 export RPC_URL=https://mainnet.base.org
 
-# Register (open access — no predicate)
+# Register (open access, no predicate)
 npx @opensea/tool-sdk register \
   --metadata https://my-tool.example.com/.well-known/ai-tool/my-tool.json \
   --network base
@@ -213,7 +213,7 @@ npx @opensea/tool-sdk register --metadata ... --network base --dry-run
 ```
 
 The CLI:
-1. Fetches the manifest from `--metadata` URL
+1. Fetches the manifest from the `--metadata` URL
 2. Validates the manifest schema
 3. Verifies `manifest.creatorAddress` matches your wallet
 4. Computes the JCS keccak256 manifest hash
@@ -257,9 +257,9 @@ Tools can be gated three ways:
 
 For deployed predicate addresses, requirement encodings, and SDK helpers like `describeToolAccess` / `decodeRequirement`, see [`references/known-predicates.md`](references/known-predicates.md).
 
-## 4. Wallet Setup
+## 4. Wallet setup
 
-Signing uses `@opensea/wallet-adapters`, the same providers and env vars as the OpenSea CLI: Privy, Fireblocks, Turnkey, Bankr, or a local `PRIVATE_KEY`, auto-detected in that order or chosen with `--wallet-provider`. The full env var table, setup and signing-policy hardening are in the [`opensea-wallet`](../opensea-wallet/SKILL.md) skill.
+Signing uses `@opensea/wallet-adapters`, the same providers and env vars as the OpenSea CLI: Privy, Fireblocks, Turnkey, Bankr, or a local `PRIVATE_KEY`, auto-detected in that order or chosen with `--wallet-provider`. The full env var table, setup, and signing-policy hardening are in the [`opensea-wallet`](../opensea-wallet/SKILL.md) skill.
 
 `RPC_URL` (or `--rpc-url`) sets the RPC for onchain reads and writes. Without it, commands use the network's public RPC, which can be slow or rate-limited.
 
@@ -270,14 +270,14 @@ const adapter = createWalletFromEnv()                 // auto-detected provider
 const account = await createBankrAccount(process.env.BANKR_API_KEY!)   // Bankr as a viem account for eip3009AuthenticatedFetch / paidAuthenticatedFetch
 ```
 
-## 5. Response Codes
+## 5. Response codes
 
 | Code | Meaning | Action |
 |------|---------|--------|
 | 200 | Success | Parse the JSON body per the manifest's `outputs` schema |
 | 400 | Invalid input | Fix request body to match the manifest's `inputs` schema |
 | 401 | Invalid or expired X-Payment signature | Re-sign a fresh zero-value EIP-3009 authorization and retry with the `X-Payment` header |
-| 402 | Payment / identity required | The challenge is in `body.accepts[0]` (x402 v1) or the `PAYMENT-REQUIRED` response header (v2). For predicate gates (amount `"0"`), sign a zero-value authorization; for x402 paywalls, sign the requested amount. Send it back in `X-PAYMENT` (v1) or `PAYMENT-SIGNATURE` (v2) — `pay`/`paidFetch` choose the right header automatically. |
+| 402 | Payment / identity required | The challenge is in `body.accepts[0]` (x402 v1) or the `PAYMENT-REQUIRED` response header (v2). For predicate gates (amount `"0"`), sign a zero-value authorization; for x402 paywalls, sign the requested amount. Send it back in `X-PAYMENT` (v1) or `PAYMENT-SIGNATURE` (v2); `pay`/`paidFetch` pick the header. |
 | 403 | Access denied | Inspect `body.predicate` to discover what's needed; acquire the required token/subscription |
 | 405 | Method not allowed | Use the verb the tool expects. `pay` auto-retries as GET when an unspecified-method POST probe returns 404/405; otherwise pass `--method <verb>`. |
 | 500 | Internal tool error | Retry or contact the tool creator |
@@ -314,13 +314,13 @@ All CLI commands accept `--wallet-provider privy|turnkey|fireblocks|bankr|privat
 
 **The manifest is hashed as served (ERC-8257 §2).** The registry hash is the JCS keccak256 of the full manifest document, including any namespaced extension fields. Nothing is stripped and no defaults are injected before hashing, so a hash computed by any RFC 8785 implementation agrees with the SDK and the backend. The schema is open: extension fields MUST be namespaced (reverse-DNS, e.g. `io.opensea.paymentHint`, or the legacy `x-` prefix); `validate`, `hash`, and `register` warn about bare un-namespaced extension fields, since those risk colliding with future normative fields.
 
-## 7. Usage Tracking
+## 7. Usage tracking
 
-Tool-sdk reports usage to OpenSea's analytics endpoint (`POST /api/v2/tools/usage`) for each successful call. It reports the **verified caller**: the on-chain payer for paid x402 calls, or the caller's own EIP-3009 authorization for `predicateGate`-authenticated calls. A tool server never signs on the caller's behalf.
+Tool-sdk reports each successful call to OpenSea's analytics endpoint (`POST /api/v2/tools/usage`). It reports the **verified caller**: the onchain payer for paid x402 calls, or the caller's own EIP-3009 authorization for calls behind `predicateGate`. A tool server never signs for the caller.
 
 ### usageReporting (recommended)
 
-Pass `usageReporting` to `createToolHandler` and it runs the reporter at the very end of the lifecycle, awaited before the response returns (bounded by `timeoutMs`, default 5s) so it completes even on serverless runtimes that freeze on response flush. Failures are logged, never fatal. No `walletClient` is needed server-side:
+Pass `usageReporting` to `createToolHandler`. The reporter runs last. Where a `waitUntil` exists (detected on Vercel, wired by `toCloudflareHandler`), it runs after the response is sent; otherwise it is awaited before the response returns (bounded by `timeoutMs`, default 5s), so it still completes on runtimes that freeze after the response flushes. Failures are logged, never fatal. The server needs no `walletClient`:
 
 - **Paid x402 calls** → `verification_type: "x402_settlement"` with the payer address and settlement tx hash. The backend verifies the tx directly.
 - **EIP-3009-authenticated calls** (behind `predicateGate`) → `verification_type: "eip3009_authorization"`, **forwarding the caller's original signed authorization**. The caller already signed it to authenticate, so the reported identity is the real caller.
@@ -347,13 +347,13 @@ export const toolHandler = createToolHandler({
 })
 ```
 
-Reporting is always the service's responsibility (authenticated by `apiKey`), never the caller's; there is no caller self-reporting path. To report from a custom pipeline instead of the handler, use the standalone `createEip3009UsageReporter` / `createX402UsageReporter` (see the tool-sdk README "Usage Reporting" section).
+The tool server always reports (authenticated by `apiKey`); callers have no self-reporting path. To report from a custom pipeline instead of the handler, use the standalone `createEip3009UsageReporter` / `createX402UsageReporter` (see the tool-sdk README "Usage Reporting" section).
 
 ### onInvocation callback
 
 For custom analytics, pass `onInvocation: (event: InvocationEvent) => {...}` to `createToolHandler`. It fires after the handler succeeds and settles, before the response returns, with `callerAddress` (verified), `paid`, `toolName`, `latencyMs` and `timestamp`.
 
-## 8. End-to-End Examples
+## 8. End-to-end examples
 
 A free, open-access tool:
 
@@ -365,7 +365,7 @@ npx @opensea/tool-sdk register --network base \
 curl -X POST https://my-tool.vercel.app/api -H "Content-Type: application/json" -d '{"query":"hello"}'
 ```
 
-Gated variants change the server gate, the registration flags and the call command:
+Gated variants change the server gate, the registration flags, and the call command:
 
 | Gate | Server | Register with | Call with |
 |---|---|---|---|

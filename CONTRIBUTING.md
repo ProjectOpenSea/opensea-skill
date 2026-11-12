@@ -1,33 +1,23 @@
 # Contributing to opensea-skill
 
-Thanks for your interest in contributing! We're glad you're here.
-
 ## How this repo works
 
-This repository is a **read-only mirror** synced from a private monorepo maintained by the OpenSea team. Because of this setup, we can't merge pull requests directly into this repo.
+This repository is a read-only mirror of a private monorepo, updated on each release. Pull requests are welcome, and we bring accepted changes into the monorepo. They reach this repo on the next release.
 
-That said, we absolutely read and review every PR and issue that comes in.
+## Ways to contribute
 
-## The best ways to contribute
-
-- **Open an issue.** Bug reports and feature requests filed as issues are the single most helpful thing you can do. They feed directly into our internal planning and prioritization.
-- **Open a PR.** If you have a code fix or improvement, go for it! We'll review the change and, if it looks good, recreate it in our internal monorepo. It will be synced back here on the next release.
+- Open an issue for a bug or a feature request. Issues go straight into our planning.
+- Open a pull request for a fix or improvement. We review it, and if we accept it we apply the change in the monorepo and it ships here with the next release.
 
 ## Bug reports
 
-A good bug report includes:
+Include:
 
-- What you expected to happen
-- What actually happened
-- Steps to reproduce the problem
-- Your environment (package version, Node.js version, OS)
-
-The more detail, the faster we can help.
+- what you expected to happen
+- what actually happened
+- steps to reproduce
+- your environment (package version, Node.js version, OS)
 
 ## Security issues
 
-If you've found a security vulnerability, please do not open a public issue. Report it through OpenSea's Bugcrowd program at **https://bugcrowd.com/engagements/opensea**, which is where reports get triaged and tracked. See [SECURITY.md](SECURITY.md) for what to include and what not to test against.
-
-## Thank you
-
-Every issue filed and every PR opened makes OpenSea's developer tools better for the whole community. We appreciate you!
+Do not open a public issue for a security vulnerability. Report it through OpenSea's Bugcrowd program at https://bugcrowd.com/engagements/opensea. See [SECURITY.md](SECURITY.md) for what to include and what not to test against.

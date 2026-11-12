@@ -1,6 +1,6 @@
-# OpenSea REST API Reference
+# OpenSea REST API reference
 
-## Base URL and Authentication
+## Base URL and authentication
 
 ```
 Base URL: https://api.opensea.io
@@ -9,26 +9,26 @@ API key header: x-api-key: $OPENSEA_API_KEY
 Bearer token header: Authorization: Bearer <token>  (wallet-authenticated endpoints only)
 ```
 
-See [authentication.md](authentication.md) for the full auth flow and scope reference.
+The auth flow and scopes are in [authentication.md](authentication.md).
 
 ## Pagination
 
-Pagination parameters vary by endpoint:
-- `limit`: Page size; the default and maximum vary by endpoint
-- `next` or `cursor`: Cursor token from the previous response, using the request parameter documented for that endpoint
-- `after`: A cursor for profile offers/listings, but a Unix timestamp in seconds for events; event `before` also uses Unix seconds
+Parameters vary by endpoint:
+- `limit`: page size; the default and maximum vary by endpoint.
+- `next` or `cursor`: the cursor from the previous response, sent as whichever parameter that endpoint documents.
+- `after`: a cursor for profile offers and listings, but Unix seconds for events. Event `before` is also Unix seconds.
 
 The tool activity endpoint uses `offset` rather than a cursor.
 
-## Supported Chains
+## Supported chains
 
-The set of supported chains changes as new chains launch. Fetch the current list, including chain identifiers, native symbols, and swap support, from `GET /api/v2/chains`:
+The chain list changes as chains launch. `GET /api/v2/chains` returns the current identifiers, native symbols and swap support:
 
 ```bash
 opensea-get.sh "/api/v2/chains"
 ```
 
-## Endpoint Reference
+## Endpoints
 
 ### Collections
 
@@ -142,10 +142,10 @@ opensea-get.sh "/api/v2/chains"
 ### Agent accounts
 
 An agent is an account, not a flag on a wallet. Ownership is a relationship
-between two accounts that both sides confirm. It is a declaration, not an
-authorization: naming an account as your agent grants it no ability to act for
-you. It is self-reported and OpenSea does not verify it. An agent can have no
-owner at all, and at most one confirmed owner.
+between two accounts that both sides confirm. It is a declaration only:
+naming an account as your agent grants it no ability to act for you. It is
+self-reported and OpenSea does not verify it. An agent has zero or one
+confirmed owner.
 
 | Endpoint | Method | Description |
 |----------|--------|-------------|
@@ -220,34 +220,34 @@ relationship. Only confirmed relationships appear on a public profile.
 |----------|--------|-------------|
 | `/api/v2/assets/transfer` | POST | Build transactions to transfer NFTs or tokens between wallets |
 
-### Swap & Transactions
+### Swaps and transactions
 
 | Endpoint | Method | Description |
 |----------|--------|-------------|
 | `/api/v2/swap/quote` | GET | Get a single-asset swap quote |
 | `/api/v2/swap/execute` | POST | Get executable transactions for a multi-asset swap |
-| `/api/v2/transactions/receipt` | POST | Fetch transaction status (any tx type — sweep, swap, fulfillment) |
+| `/api/v2/transactions/receipt` | POST | Transaction status for any type: sweep, swap, fulfillment |
 
-## Event Types
+## Event types
 
-For the events endpoint, filter with `event_type`:
-- `sale` - NFT sold
-- `transfer` - NFT transferred
-- `mint` - NFT minted
-- `listing` - New listing created
-- `offer` - New offer made
-- `trait_offer` - New trait offer made
-- `collection_offer` - New collection offer made
+Filter the events endpoints with `event_type`:
+- `sale`: NFT sold
+- `transfer`: NFT transferred
+- `mint`: NFT minted
+- `listing`: listing created
+- `offer`: offer made
+- `trait_offer`: trait offer made
+- `collection_offer`: collection offer made
 
-Use the Stream API for order invalidation and revalidation events, or the Get Order endpoint to check an order's status.
+For order invalidation and revalidation, use the [Stream API](stream-api.md), or check an order's status with the get-order endpoint.
 
-## Rate Limits
+## Rate limits
 
-All v2 endpoints require an API key. OpenSea uses a **token bucket** algorithm: your API key has a bucket of request tokens that refills over a fixed time window. Each request consumes one token. When the bucket is empty, the API returns `429 Too Many Requests`.
+Every v2 endpoint needs an API key. Limits use a **token bucket**: the key's bucket refills over a fixed window, each request takes one token, and an empty bucket returns `429 Too Many Requests`.
 
-All API keys under the same account share a single rate limit bucket. Creating multiple API keys will not increase your overall rate limit.
+All API keys on one account share a bucket, so extra keys do not raise the limit.
 
-### Default Rate Limits (Tier 1)
+### Default limits (tier 1)
 
 | Operation | Limit |
 |-----------|-------|
@@ -255,9 +255,9 @@ All API keys under the same account share a single rate limit bucket. Creating m
 | Write (POST) | 60 requests/minute |
 | Fulfillment | 60 requests/minute |
 
-Higher tiers are available for select users. You can apply for a rate limit increase via the [OpenSea Developer Portal](https://opensea.io/settings/developer).
+Higher tiers are available to some users. Apply for an increase in the [OpenSea Developer Portal](https://opensea.io/settings/developer).
 
-### Rate Limit Response Headers
+### Rate limit response headers
 
 A `429` response includes these headers:
 
@@ -268,21 +268,21 @@ A `429` response includes these headers:
 | `X-RateLimit-Remaining` | Requests remaining in the current window |
 | `Retry-After` | Seconds to wait before retrying |
 
-## Error Codes
+## Error codes
 
 | Code | Meaning |
 |------|---------|
-| 400 | Bad request - check parameters |
-| 401 | Unauthorized - missing/invalid API key or Bearer token |
-| 403 | Forbidden - valid auth but insufficient scopes |
+| 400 | Bad request: check parameters |
+| 401 | Unauthorized: missing or invalid API key or Bearer token |
+| 403 | Forbidden: valid auth but missing scope |
 | 404 | Resource not found |
 | 429 | Rate limited |
 | 500 | Server error |
 
 ## Tips
 
-1. Use collection slugs (not addresses) for collection endpoints
-2. Use chain identifiers for NFT/account endpoints
-3. Timestamp formats vary: event `after`/`before` use Unix seconds, while token price-history `start_time`/`end_time` use ISO 8601
-4. Token amounts use the documented base units (wei for ETH); USD-valued prices are not wei
-5. Use `jq` to parse JSON responses: `./script.sh | jq '.nft.name'`
+1. Collection endpoints take slugs, not addresses.
+2. NFT and account endpoints take chain identifiers.
+3. Timestamp formats vary: event `after` and `before` are Unix seconds; token price-history `start_time` and `end_time` are ISO 8601.
+4. Token amounts are in base units (wei for ETH); USD prices are not.
+5. Parse responses with `jq`, for example `./script.sh | jq '.nft.name'`.

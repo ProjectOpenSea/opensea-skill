@@ -1,6 +1,6 @@
-# Wallet Authentication
+# Wallet authentication
 
-Use wallet auth when an operation must act as a wallet. Start with the [public auth guide](https://docs.opensea.io/reference/auth); use the [live OpenAPI document](https://api.opensea.io/api/v2/openapi.json) for current paths, schemas, and scopes.
+Use wallet auth when an operation acts as a wallet. Start with the [public auth guide](https://docs.opensea.io/reference/auth), and take current paths, schemas and scopes from the [live OpenAPI document](https://api.opensea.io/api/v2/openapi.json).
 
 ## Credential model
 
@@ -11,7 +11,7 @@ Use wallet auth when an operation must act as a wallet. Start with the [public a
 | Scoped personal access token (PAT) | Durable credential used only to mint JWTs | Token exchange only |
 | Wallet JWT | Short-lived wallet identity and scopes | `Authorization: Bearer <JWT>` on REST and MCP requests |
 
-Wallet-scoped REST and MCP calls need both the API key and wallet JWT. Never send a PAT to either surface.
+Wallet-scoped REST and MCP calls need both the API key and the wallet JWT. Never send a PAT to either.
 
 ## CLI: wallet-scoped REST
 
@@ -26,7 +26,7 @@ opensea api request GET "/api/v2/account/$WALLET/favorites" --params '{"limit":1
 opensea auth revoke
 ```
 
-The private key signs locally and is not stored. The CLI stores the session, PAT, and JWT in `~/.opensea/auth.json` with mode `0600`; `api request` automatically sends the stored JWT. Use `opensea auth refresh` after the JWT expires and `opensea auth scopes` to discover current scopes. `auth revoke` invalidates the current PAT and removes that wallet login. `auth clear` only deletes local state.
+The private key signs locally and is never stored. The CLI keeps the session, PAT and JWT in `~/.opensea/auth.json` (mode `0600`), and `api request` sends the stored JWT. Run `opensea auth refresh` after the JWT expires and `opensea auth scopes` to list current scopes. `auth revoke` invalidates the current PAT and removes that wallet login; `auth clear` only deletes local state.
 
 ## SDK: REST and in-process MCP
 
@@ -50,7 +50,7 @@ try {
 }
 ```
 
-Keep the same `OpenSeaAuth` instance through cleanup: it holds the SIWE session required to revoke the PAT. Create a new `OpenSeaAPI` with the latest `accessToken` after `getValidToken()` refreshes it. `revoke()` accepts the current JWT as a guard, revokes its backing PAT, and clears the SDK's in-memory auth state.
+Keep the same `OpenSeaAuth` instance through cleanup: it holds the SIWE session needed to revoke the PAT. After `getValidToken()` refreshes the token, create a new `OpenSeaAPI` with the latest `accessToken`. `revoke()` takes the current JWT as a guard, revokes the PAT behind it, and clears the SDK's in-memory auth state.
 
 ## REST
 
@@ -62,7 +62,7 @@ curl "https://api.opensea.io/api/v2/account/0xYOUR_WALLET/favorites?limit=1" \
   -H "Authorization: Bearer $OPENSEA_WALLET_JWT"
 ```
 
-Do not guess paths or scopes. Read them from the live OpenAPI document. If the CLI and SDK are unavailable, follow the public auth guide for the raw SIWE session, PAT creation, and token-exchange flow. PAT management is session-only; a Bearer JWT cannot create, list, rotate, or revoke PATs.
+Do not guess paths or scopes; read them from the live OpenAPI document. Without the CLI or SDK, follow the public auth guide for the raw SIWE session, PAT creation and token exchange. PAT management is session-only; a Bearer JWT cannot create, list, rotate, or revoke PATs.
 
 ## MCP
 
@@ -82,14 +82,14 @@ Every data tool needs the application key. Wallet-scoped tools also need the wal
 }
 ```
 
-Keep the resolved values in the client's secret store, not committed configuration. The CLI does not export its stored JWT, by design; use an OAuth-capable MCP client or obtain a JWT with `OpenSeaAuth` and pass it to an in-process client. Reconnect after replacing an expired JWT. The server derives the wallet from the verified JWT; do not pass an arbitrary wallet as a substitute for authentication.
+Keep the real values in the client's secret store, not in committed configuration. The CLI does not export its stored JWT, by design: use an OAuth-capable MCP client, or get a JWT with `OpenSeaAuth` and pass it to an in-process client. Reconnect after replacing an expired JWT. The server takes the wallet from the verified JWT; never pass a wallet address in place of authentication.
 
 ## Recovery and safety
 
 - `401`: the API key or JWT is missing, invalid, or expired. Check the response, refresh the JWT once, and retry once.
-- If PAT exchange or session refresh fails because the credential expired or was revoked, run SIWE authentication again instead of looping.
-- `403`: the JWT lacks the required scope. Sign in again with that scope; unchanged retries will not help.
-- A read and its matching writes do not always share one scope. Agent relationships are the case to watch: every write takes `write:wallets`, but listing your own relationships takes `read:wallets`. A client that drives the whole handshake needs both, so sign in with `--scopes read:wallets,write:wallets` rather than assuming the write scope covers the read.
+- If PAT exchange or session refresh fails because the credential expired or was revoked, sign in with SIWE again instead of looping.
+- `403`: the JWT lacks the required scope. Sign in again with that scope; an unchanged retry fails the same way.
+- A read and its writes do not always share a scope. Agent relationships are the common case: every write takes `write:wallets`, but listing your own relationships takes `read:wallets`. A client that drives the whole handshake needs both, so sign in with `--scopes read:wallets,write:wallets`.
 - `429`: respect `Retry-After` and back off.
-- Load secrets from environment variables or a secret manager instead of typing them into shell history. Never print or transmit private keys, PATs, JWTs, cookies, signatures, or authorization headers.
-- Request the smallest useful scope set and revoke task-specific PATs when finished.
+- Load secrets from environment variables or a secret manager, not by typing them into shell history. Never print or transmit private keys, PATs, JWTs, cookies, signatures, or authorization headers.
+- Request the smallest scope set that works, and revoke task-specific PATs when done.

@@ -1,47 +1,47 @@
 # Hot/cold wallet pattern for agent budgets
 
-None of the four supported providers (Privy, Turnkey, Fireblocks, Bankr) natively enforce **aggregate** spend caps — they cap per-transaction values and allowlist destinations, but they do not track cumulative ETH/USDC spent over a day or week. This file describes the workable pattern: split the budget across two wallets, with the agent's wallet balance acting as the real aggregate ceiling.
+None of the four managed providers (Privy, Turnkey, Fireblocks, Bankr) enforces an **aggregate** spend cap. They cap single transactions and allowlist destinations, but they do not track how much ETH or USDC left the wallet over a day or a week. The pattern here splits the budget across two wallets so that the agent wallet's balance is the aggregate cap.
 
-## Why the agent's own daily-cap can't be the answer
+## Why a cap the agent tracks itself does not work
 
-A `dailyCapEth` field that the agent self-tracks is **agent honor-system**. A compromised agent or a prompt-injected agent will not respect it. To be a security control, the cap has to be enforced somewhere the agent does not control — either by the provider (which doesn't currently support cumulative caps) or by limiting the funds the agent has access to in the first place.
+A `dailyCapEth` that the agent tracks is an honor system. A compromised or prompt-injected agent ignores it. A cap is a security control only when something outside the agent's control enforces it: the provider (none supports cumulative caps today) or the amount of money the agent can reach.
 
-The wallet balance is that something. If the agent's wallet only holds one budget period's worth of ETH, the worst case for a fully compromised agent is one budget period of loss, not an open-ended drain.
+The wallet balance is that limit. If the agent's wallet holds one budget period of funds, a fully compromised agent can lose one period's budget, not drain an open-ended amount.
 
 ## The pattern
 
 Two wallets:
 
-- **Cold (funding) wallet** — held by the user, on a hardware wallet or held cold. Holds the long-term budget. Never used for signing by the agent. Optionally has its own per-tx policy via the same provider, but the protection here is custody, not policy.
-- **Hot (agent) wallet** — the wallet whose credentials are in the agent's env. Configured with a per-tx Privy/Turnkey/TAP policy. Balance is sized to roughly one budget period.
+- The cold (funding) wallet belongs to the user, on a hardware wallet or other cold storage, and holds the long-term budget. The agent never signs with it. It can have its own per-tx policy with the same provider, but custody is what protects it.
+- The hot (agent) wallet is the one whose credentials are in the agent's env. It has a per-tx Privy, Turnkey or TAP policy, and its balance is about one budget period.
 
-The user replenishes the hot wallet from the cold wallet on a cadence they control. The cadence is the aggregate cap — if the user tops up 0.5 ETH every Monday, the agent cannot spend more than 0.5 ETH per week regardless of what the agent thinks its `dailyCapEth` is.
+The user refills the hot wallet from the cold wallet on a schedule they control, and that schedule is the aggregate cap. If the user adds 0.5 ETH every Monday, the agent cannot spend more than 0.5 ETH a week, whatever its `dailyCapEth` says.
 
-Per-tx caps still matter — they limit single-transaction loss within the period. Aggregate caps are the wallet balance.
+Per-tx caps still limit the loss from a single transaction within the period. The aggregate cap is the wallet balance.
 
 ## Worked example
 
-Goal: agent should be able to swap and buy NFTs for the user, with at most 0.1 ETH per single trade and at most about 0.5 ETH per week.
+Goal: the agent swaps and buys NFTs for the user, at most 0.1 ETH per trade and about 0.5 ETH per week.
 
-1. **Per-tx cap (provider layer):** apply a Privy policy with `value <= 100000000000000000` (0.1 ETH in wei) on the hot wallet. See `references/wallet-policies.md` for the template; apply it via `../../docs/policy-administration.md` (user-only).
-2. **Aggregate cap (wallet float):** keep ~0.5 ETH on the hot wallet. Set a calendar reminder to replenish weekly from the cold wallet. The hot wallet's `address` is what `opensea wallet info` prints; send from the cold wallet to that address.
-3. **Verify:** run `opensea wallet info`. The output should show `policyIds: ["pol_..."]` (per-tx cap is in place). The wallet balance you can verify on a block explorer or via your provider's dashboard — the CLI does not surface it.
+1. Per-tx cap, at the provider: apply a Privy policy with `value <= 100000000000000000` (0.1 ETH in wei) to the hot wallet. The template is in [wallet-policies.md](wallet-policies.md); the user applies it with [policy-administration.md](../../docs/policy-administration.md).
+2. Aggregate cap, through the float: keep about 0.5 ETH in the hot wallet and refill it weekly from the cold wallet. `opensea wallet info` prints the hot wallet's `address` to send to.
+3. Verify: `opensea wallet info` should show `policyIds: ["pol_..."]`, which confirms the per-tx cap. The CLI does not show the balance; check it on a block explorer or in the provider's dashboard.
 
-If the agent attempts to spend 0.4 ETH on a single transaction, the per-tx Privy policy denies it before signing. If a compromised agent tries to drain the wallet via 5 × 0.1 ETH transactions in succession, it succeeds — and that's the bound. Five transactions of 0.1 ETH each is the period's budget, by construction.
+A single 0.4 ETH transaction is denied by the Privy policy before signing. A compromised agent that sends five 0.1 ETH transactions in a row succeeds, and that is the bound: five 0.1 ETH transactions are the period's budget.
 
 ## Sizing the float
 
-Pick the float to be slightly above one budget period, not many periods. The whole point is that the float is the cap — making it 10× larger means the cap is 10× larger.
+Keep the float slightly above one budget period, not several. The float is the cap, so a float 10x larger is a cap 10x larger.
 
-A reasonable default: 1.5× one period's expected spend. Enough that you don't have to top up mid-period for routine use; small enough that a worst-case loss is bounded.
+A reasonable default is 1.5x one period's expected spend: enough to avoid mid-period top-ups for routine use, small enough to bound the worst case.
 
-## Provider-specific notes
+## Provider notes
 
-- **Privy:** the hot wallet must have its own `policy_ids` and (recommended) `owner_id` so the agent's env credentials cannot raise the cap. See `references/wallet-setup.md` Privy section.
-- **Turnkey:** scope the agent's API user to sign-only activities for the hot wallet's address; the cold wallet should belong to a different sub-org or be gated by a different policy.
-- **Fireblocks:** put the cold wallet in a separate vault. The agent's API key (Signer role) only has signing access to the hot vault.
-- **Bankr:** the hot wallet's API key should have `allowedRecipients` configured to the destinations the agent legitimately needs. The cold wallet is a separate Bankr account or a normal EOA the user controls.
+- Privy: the hot wallet needs its own `policy_ids` and, as recommended, an `owner_id`, so the agent's env credentials cannot raise the cap. See the Privy section of [wallet-setup.md](wallet-setup.md).
+- Turnkey: scope the agent's API user to sign-only activities for the hot wallet's address. Put the cold wallet in a different sub-org or behind a different policy.
+- Fireblocks: put the cold wallet in a separate vault. The agent's Signer-role API key can sign only for the hot vault.
+- Bankr: set the hot wallet key's `allowedRecipients` to the destinations the agent needs. The cold wallet is a separate Bankr account or an ordinary EOA the user controls.
 
-## When a stateful approval webhook lands
+## If a stateful approval webhook ships
 
-If your provider adds a transaction-approval webhook (e.g., Privy's planned support for stateful policy callbacks), you can implement aggregate caps directly: the webhook reads recent on-chain transfers from the wallet, sums them against the cap, allows or denies. Until that exists, wallet float is the answer.
+If your provider adds a transaction-approval webhook (for example, Privy's planned stateful policy callbacks), it can enforce an aggregate cap directly: the webhook sums the wallet's recent onchain transfers against the cap and allows or denies. Until then, use the wallet float.

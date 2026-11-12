@@ -3,23 +3,20 @@ set -euo pipefail
 
 # Usage: opensea-resolve-key.sh [--force]
 #
-# Resolves an OpenSea API key using a deterministic, persistent flow so an
-# instant key fetched once is reused on every later request instead of being
-# re-fetched (or lost):
+# Resolves an OpenSea API key so an instant key fetched once is reused instead
+# of fetched again on every request:
 #
-#   1. If OPENSEA_API_KEY is set in the environment, print it and stop.
-#      User-supplied keys always win — they are never overwritten or re-fetched.
-#   2. Else if a key is cached on disk, print it.
-#   3. Else fetch a fresh instant free-tier key, SAVE it to disk (so the next
-#      invocation reuses it), then print it.
+#   1. If OPENSEA_API_KEY is set, print it and stop. A user-supplied key is
+#      never overwritten or replaced.
+#   2. Else, if a key is cached on disk, print it.
+#   3. Else fetch a new instant free-tier key, save it to disk, and print it.
 #
-# Prints ONLY the resolved key to stdout. Typical use:
+# Prints only the key to stdout. Typical use:
 #   export OPENSEA_API_KEY=$(scripts/auth/opensea-resolve-key.sh)
 #
-# --force  Ignore any cached key on disk and fetch a fresh instant key, then
-#          overwrite the cache. Use this when a cached instant key is rejected
-#          (HTTP 401/403 -> invalid or expired). It does NOT override a key set
-#          via the OPENSEA_API_KEY environment variable.
+# --force  Skip the cached key, fetch a new instant key and overwrite the
+#          cache. Use it when the cached key is rejected (HTTP 401/403: invalid
+#          or expired). It never overrides OPENSEA_API_KEY.
 #
 # Storage location: ${OPENSEA_CONFIG_DIR:-$HOME/.opensea}/api_key (mode 600).
 

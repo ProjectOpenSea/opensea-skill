@@ -1,4 +1,4 @@
-# Known Predicates
+# Known predicates
 
 These predicates are deployed on Ethereum mainnet, Base, Shape, Abstract, Monad, and Robinhood Chain and available for any tool to use. They are multi-tenant: one deployment serves all tools, configured per `toolId`.
 
@@ -185,11 +185,11 @@ Gates access based on ERC-721 ownership plus an ERC-7496 dynamic trait value. Th
 | Requirement `data` | `abi.encode(address collection, address traitsContract, bytes32 traitKey, bytes32[] allowedValues)` |
 | Logic | `AND` |
 | Max allowed values | 32 per tool |
-| `hasAccess` `data` | `abi.encode(uint256 tokenId)` — must be exactly 32 bytes; empty/malformed data returns `false` |
+| `hasAccess` `data` | `abi.encode(uint256 tokenId)`, exactly 32 bytes; empty/malformed data returns `false` |
 
-**Bytes32 encoding:** Trait keys and values are `bytes32`. ERC-7496 stores values as left-aligned, zero-padded bytes32 (e.g. `bytes32("Rare")` → `0x5261726500...00`). The `allowedValues` you configure **must match exactly** how the traits contract emits them. Use `toHex(value, { size: 32 })` in TypeScript or `bytes32("value")` in Solidity. `bytes32(0)` is rejected as an allowed value — it is the default return for unset traits, so including it would grant access to every holder.
+**Bytes32 encoding:** Trait keys and values are `bytes32`. ERC-7496 stores values as left-aligned, zero-padded bytes32 (e.g. `bytes32("Rare")` → `0x5261726500...00`). The `allowedValues` you configure **must match exactly** how the traits contract emits them. Use `toHex(value, { size: 32 })` in TypeScript or `bytes32("value")` in Solidity. `bytes32(0)` is rejected as an allowed value: it is the default return for unset traits, so allowing it would admit every holder.
 
-**Important:** If `hasAccess` receives empty or wrong-length `data`, it returns `false` (never reverts).
+If `hasAccess` receives empty or wrong-length `data`, it returns `false` and never reverts.
 
 **Configure via SDK (after registration):**
 
@@ -211,7 +211,7 @@ const legendaryValue = toHex("Legendary", { size: 32 })
 await predicate.configureToolTrait(
   toolId,
   "0xNFT_COLLECTION",        // ERC-721 contract (for ownerOf)
-  "0xTRAITS_CONTRACT",       // ERC-7496 contract (for getTraitValue) — can be the same address
+  "0xTRAITS_CONTRACT",       // ERC-7496 contract (for getTraitValue); can be the same address
   tierKey,
   [rareValue, legendaryValue],
 )
@@ -328,7 +328,7 @@ const access = predicate.toManifestAccess(
 )
 ```
 
-With a custom label (**recommended** — the default renders raw bigint units):
+With a custom label (**recommended**, since the default renders raw bigint units):
 ```typescript
 const access = predicate.toManifestAccess(
   "0xTOKEN_ADDRESS",
@@ -375,7 +375,7 @@ if (decoded.type === "erc20Balance") {
 
 ## CompositePredicate
 
-Combines up to 3 leaf predicates under AND-all or OR-any with optional per-term negation. No canonical deployment — each tool creator deploys their own instance.
+Combines up to 3 leaf predicates under AND-all or OR-any with optional per-term negation. There is no canonical deployment; each tool creator deploys their own instance.
 
 | Field | Value |
 |-------|-------|
@@ -444,8 +444,8 @@ import { decodeRequirement, WALLET_STATE_ATTESTATION_KIND } from "@opensea/tool-
 
 const decoded = decodeRequirement(req)
 if (decoded.type === "walletStateAttestation") {
-  // decoded.issuerJwksUri — URL to fetch the issuer's JWKS public key set
-  // decoded.conditionHash — identifies which condition set the predicate enforces
+  // decoded.issuerJwksUri: URL of the issuer's JWKS public key set
+  // decoded.conditionHash: identifies which condition set the predicate enforces
   console.log(`Issuer JWKS: ${decoded.issuerJwksUri}`)
   console.log(`Condition:   ${decoded.conditionHash}`)
 }

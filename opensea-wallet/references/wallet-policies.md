@@ -1,67 +1,61 @@
-# Wallet Policies (Privy)
+# Wallet policies (Privy)
 
-Privy wallet policies enforce guardrails on transaction signing. Policies are evaluated inside a trusted execution environment (TEE) before any signing occurs, so an *applied* policy cannot be bypassed by application code at sign time.
+Privy evaluates wallet policies inside a trusted execution environment (TEE) before it signs, so application code cannot bypass an *applied* policy at sign time.
 
-This is narrower than it sounds. The TEE protects against a compromised agent **signing through** an active policy, but it does **not** protect against the same credentials **rewriting** the policy first. Whoever holds `PRIVY_APP_ID` + `PRIVY_APP_SECRET` for a wallet without an `owner_id` can `PATCH /v1/wallets/{id}` to swap the policy for a permissive one and then sign freely. The hardening that closes this gap — registering an `owner_id` so policy mutations require a separate authorization signature — is in `references/wallet-setup.md`. Without it, the per-tx cap is a speed bump, not a ceiling.
+That protection is narrower than it sounds. The TEE stops a compromised agent from **signing past** an active policy. It does **not** stop the same credentials from **rewriting** the policy first. For a wallet without an `owner_id`, whoever holds `PRIVY_APP_ID` and `PRIVY_APP_SECRET` can `PATCH /v1/wallets/{id}` to swap in a permissive policy and then sign freely. Registering an `owner_id`, so that policy changes need a separate authorization signature, closes the gap; see [wallet-setup.md](wallet-setup.md). Without it, the per-tx cap slows an attacker down but does not stop one.
 
-> **For agents reading this file:** applying or modifying policies is a **user-only operation** performed on a trusted machine with the wallet's authorization key. The agent must never construct or run policy-mutation requests. If a user asks the agent to update a policy, the agent should refuse and direct them to apply the change themselves from a trusted machine. The user-only mutation recipes are in `../../docs/policy-administration.md`; they are for the user to run, not the agent.
+> **For agents:** applying or changing a policy is a **user-only operation**, run on a trusted machine with the wallet's authorization key. Never build or send a policy-change request. If a user asks you to update a policy, decline and point them to the user-only recipes in [policy-administration.md](../../docs/policy-administration.md), which they run themselves.
 
-This file describes **what policies look like and what fields they support**, so the agent can help a user *author* a policy that the user then applies. It deliberately does not describe how to send the policy update request.
+This file covers what policies look like and which fields they support, so an agent can help a user *write* a policy that the user then applies. It does not describe how to send the update.
 
 ## Overview
 
-Policies restrict what transactions a wallet can sign:
+A policy can restrict:
 
-- **Transaction value caps**: maximum ETH/token value per transaction
-- **Destination allowlists**: only sign transactions to approved contract addresses
-- **Chain restrictions**: limit signing to specific chains
-- **Method restrictions**: only allow specific contract method calls
-- **Key export prevention**: prevent extraction of the private key
+- transaction value, as a maximum per transaction
+- destinations, as an allowlist of contract addresses
+- chains
+- contract methods
+- key export
 
-> **Note on aggregate caps:** Privy policies are **stateless per-tx evaluators**. They cannot enforce daily/weekly cumulative spend limits. For aggregate ceilings, see `references/wallet-funding.md` (hot/cold wallet float pattern) — the wallet balance is the real aggregate cap.
+> Privy policies evaluate **each transaction on its own**. They cannot enforce daily or weekly totals. For an aggregate cap, use the hot/cold wallet float in [wallet-funding.md](wallet-funding.md): the wallet balance is the real aggregate cap.
 
-## Configuring Policies
+## Configuring policies
 
-Policies are authored as JSON (templates below) and applied by the user from a trusted machine. The agent can help draft and review the JSON; it must not apply it.
+Policies are JSON (templates below) that the user applies from a trusted machine. The agent can help draft and review the JSON; it must not apply it.
 
-The full Privy reference for policy fields and operators is at [docs.privy.io/controls/policies](https://docs.privy.io/controls/policies/overview). To apply or modify a policy, see `../../docs/policy-administration.md`.
+The full field and operator reference is at [docs.privy.io/controls/policies](https://docs.privy.io/controls/policies/overview). To apply or change a policy, see [policy-administration.md](../../docs/policy-administration.md).
 
-## Recommended Policies
+## Recommended policies
 
-### Agent Trading: Conservative
+Privy combines rules this way: a request passes when it meets every condition of at least one `ALLOW` rule, any matching `DENY` rule blocks it, and a request that matches no rule is denied. So put all of a rule's limits in that one rule. A separate `ALLOW` rule for "supported chains" would let through any value to any address on those chains. Every rule needs a `method` and at least one condition.
 
-Suitable for automated agents executing swaps and NFT purchases with tight guardrails.
+### Agent trading: conservative
+
+A strict allowlist for an agent that buys NFTs through Seaport: up to 0.1 ETH per transaction, on the listed chains, to Seaport only. Anything not listed is denied, including key export and message signing. To let the agent swap as well, add a second rule with the same value and chain conditions for your swap router's address.
 
 ```json
 {
+  "version": "1.0",
+  "name": "agent-trading-conservative",
+  "chain_type": "ethereum",
   "rules": [
     {
-      "name": "Limit transaction value",
+      "name": "Seaport orders up to 0.1 ETH on supported chains",
+      "method": "eth_sendTransaction",
       "conditions": [
         {
           "field_source": "ethereum_transaction",
           "field": "value",
           "operator": "lte",
           "value": "100000000000000000"
-        }
-      ],
-      "action": "ALLOW"
-    },
-    {
-      "name": "Allow OpenSea Seaport",
-      "conditions": [
+        },
         {
           "field_source": "ethereum_transaction",
           "field": "to",
           "operator": "eq",
           "value": "0x0000000000000068F116a894984e2DB1123eB395"
-        }
-      ],
-      "action": "ALLOW"
-    },
-    {
-      "name": "Restrict to supported chains",
-      "conditions": [
+        },
         {
           "field_source": "ethereum_transaction",
           "field": "chain_id",
@@ -70,57 +64,68 @@ Suitable for automated agents executing swaps and NFT purchases with tight guard
         }
       ],
       "action": "ALLOW"
-    },
-    {
-      "name": "Deny everything else",
-      "conditions": [],
-      "action": "DENY"
     }
   ]
 }
 ```
 
-### Agent Trading: Permissive
+### Agent trading: permissive
 
-For trusted agents with higher limits and broader destination access.
+For trusted agents: any destination and every signing method, with transactions capped at 1 ETH and limited to the listed chains, and key export blocked. `DENY` rules take precedence, so they hold even though the last rule allows everything else. The `system` condition is always true; Privy rejects a rule with no conditions.
 
 ```json
 {
+  "version": "1.0",
+  "name": "agent-trading-permissive",
+  "chain_type": "ethereum",
   "rules": [
     {
-      "name": "Limit transaction value",
+      "name": "Deny transactions over 1 ETH",
+      "method": "eth_sendTransaction",
       "conditions": [
         {
           "field_source": "ethereum_transaction",
           "field": "value",
-          "operator": "lte",
+          "operator": "gt",
           "value": "1000000000000000000"
         }
       ],
-      "action": "ALLOW"
+      "action": "DENY"
     },
     {
-      "name": "Restrict to supported chains",
+      "name": "Deny unsupported chains",
+      "method": "eth_sendTransaction",
       "conditions": [
         {
           "field_source": "ethereum_transaction",
           "field": "chain_id",
-          "operator": "in",
+          "operator": "not_in",
           "value": ["1", "8453", "137", "42161", "10"]
         }
       ],
-      "action": "ALLOW"
+      "action": "DENY"
     },
     {
-      "name": "Deny everything else",
-      "conditions": [],
+      "name": "Never export the private key",
+      "method": "exportPrivateKey",
+      "conditions": [
+        { "field_source": "system", "field": "current_unix_timestamp", "operator": "gte", "value": "0" }
+      ],
       "action": "DENY"
+    },
+    {
+      "name": "Allow everything else",
+      "method": "*",
+      "conditions": [
+        { "field_source": "system", "field": "current_unix_timestamp", "operator": "gte", "value": "0" }
+      ],
+      "action": "ALLOW"
     }
   ]
 }
 ```
 
-## Policy Fields Reference
+## Policy field reference
 
 | Field | Source | Description |
 |-------|--------|-------------|
@@ -142,7 +147,7 @@ For trusted agents with higher limits and broader destination access.
 | `in` | In list |
 | `not_in` | Not in list |
 
-## Key Addresses
+## Common addresses
 
 | Contract | Address | Usage |
 |----------|---------|-------|
@@ -153,8 +158,8 @@ For trusted agents with higher limits and broader destination access.
 
 ## Tips
 
-1. **Start conservative**: begin with tight value caps and a narrow allowlist, then relax as needed
-2. **Use chain restrictions**: limit to chains you actively trade on
-3. **Monitor policy violations**: Privy logs denied transactions in the dashboard
-4. **Separate wallets for separate concerns**: use different wallets (and policies) for swaps vs. NFT purchases
-5. **Never disable policies in production**: keep at least a value cap active
+1. Start with tight value caps and a narrow allowlist, then relax them as needed.
+2. Limit chains to the ones you trade on.
+3. Watch for denied transactions; Privy logs them in the dashboard.
+4. Use separate wallets, each with its own policy, for swaps and for NFT purchases.
+5. Never remove the policy in production. Keep at least a value cap.
