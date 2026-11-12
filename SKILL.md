@@ -27,6 +27,7 @@ Entry point for OpenSea agent skills. Pick the sub-skill based on task, then rea
 | Configure wallet signing (Privy/Turnkey/Fireblocks/Bankr) | [`opensea-wallet/SKILL.md`](opensea-wallet/SKILL.md) |
 | Build/register/gate AI agent tools (ERC-8257) | [`opensea-tool-sdk/SKILL.md`](opensea-tool-sdk/SKILL.md) |
 | Authenticate a wallet for scoped REST or MCP | [`opensea-api/SKILL.md`](opensea-api/SKILL.md) |
+| Read what a store says a purchase earns (Open Bounty) | [`opensea-api/references/bounty.md`](opensea-api/references/bounty.md) |
 
 Always read the sub-skill `SKILL.md` before executing. This router intentionally has no operational detail.
 
