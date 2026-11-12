@@ -1,9 +1,5 @@
 # OpenSea Skills
 
-> **Read-only mirror.** This package is developed in a private monorepo and mirrored to [ProjectOpenSea/opensea-skill](https://github.com/ProjectOpenSea/opensea-skill) when a version is released, so the public code can trail the internal main branch by weeks.
->
-> Pull requests opened on the mirror cannot be merged there. They are read, and a fix worth taking is recreated in the monorepo. Because a fix that has landed internally is not public until the next release, filing an issue before writing a patch is the quickest way to find out whether a bug is already fixed.
-
 Agent Skills for interacting with [OpenSea](https://opensea.io/): query NFT and token data, trade on the Seaport marketplace, swap ERC20 tokens, and build AI agent tools with onchain gating.
 
 This repository follows the [Agent Skills specification](https://agentskills.io/specification).
@@ -126,6 +122,10 @@ Do not publish five separate ClawHub slugs.
 ### `npx skills add` behavior
 
 The vercel-labs/skills CLI discovers both root `SKILL.md` and `skills/` subdirectories. With the router at root, `npx skills add ProjectOpenSea/opensea-skill` installs the router plus all sub-skills as a single directory tree. Verify this with `--dry-run` after any structural changes.
+
+## Contributing
+
+Read-only mirror of a private monorepo, updated on each release. Pull requests are welcome, and we bring accepted changes into the monorepo.
 
 ## Security
 
