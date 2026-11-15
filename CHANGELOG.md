@@ -1,5 +1,11 @@
 # @opensea/skill
 
+## 2.32.0
+
+### Minor Changes
+
+- `opensea-api` documents `--token-id` on `opensea drops mint` and `cross-chain-mint` for ERC-1155 drops, and `mints_remaining` on `opensea drops eligibility`.
+
 ## 2.31.1
 
 ### Patch Changes

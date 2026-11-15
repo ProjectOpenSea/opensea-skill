@@ -79,7 +79,7 @@ Always reuse a fetched key: fetching again on every request wastes the rate limi
 | A wallet's listings, offers, collections | `opensea accounts listings <addr>`, `offers <addr>`, `offers-received <addr>`, `collections <addr>` |
 | Events | `opensea events by-collection <slug> [--event-type <t>]`, `by-nft ...`, `by-account <addr>`, `list` |
 | Drops and stages | `opensea drops list [--type featured\|upcoming\|recently_minted]`, `drops get <slug>` |
-| Build a mint transaction | `opensea drops mint <slug> --minter <addr> [--quantity <n>]` |
+| Build a mint transaction | `opensea drops mint <slug> --minter <addr> [--quantity <n>] [--token-id <id>]` |
 | Signals about a subject | `opensea signals list --collection <slug>` |
 | Registered AI tools | `opensea tools search --query <text>`, `tools list`, `tools get <chain> <registry> <id>` |
 | Any endpoint | `opensea api request GET <path> [--params <json>]` |

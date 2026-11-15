@@ -8,9 +8,9 @@ Creator operations. Writes need a wallet JWT (see [authentication.md](authentica
 |---|---|
 | List drops | `opensea drops list [--type featured\|upcoming\|recently_minted] [--chains <c>]` |
 | Drop details and stages | `opensea drops get <slug>` |
-| Check the logged-in wallet's eligibility | `opensea drops eligibility <slug>` (`read:eligibility`) |
-| Build a mint transaction | `opensea drops mint <slug> --minter <addr> [--quantity <n>]` |
-| Build cross-chain mint transactions | `opensea drops cross-chain-mint <slug> --payer <addr> --minter <addr> --payment-chain <c> --payment-token <addr> [--quantity <n>]` |
+| Check the logged-in wallet's eligibility and per-stage `mints_remaining` | `opensea drops eligibility <slug>` (`read:eligibility`) |
+| Build a mint transaction (`--token-id` for ERC-1155) | `opensea drops mint <slug> --minter <addr> [--quantity <n>] [--token-id <id>]` |
+| Build cross-chain mint transactions | `opensea drops cross-chain-mint <slug> --payer <addr> --minter <addr> --payment-chain <c> --payment-token <addr> [--quantity <n>] [--token-id <id>]` |
 | Deploy a SeaDrop contract, then wait for its collection | `opensea drops deploy --chain <c> --name <n> --symbol <s> --drop-type <t> --token-type <t> --sender <addr> [--send]`, `opensea drops deploy-receipt <chain> <tx_hash> --wait` |
 | List a drop's saved items | `opensea drops items <slug>` |
 | Upload a folder of item media and save it as the items | `opensea drops upload-items <slug> <dir> [--manifest <path>] [--concurrency <n>]` |
