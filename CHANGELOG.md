@@ -1,5 +1,11 @@
 # @opensea/skill
 
+## 2.33.0
+
+### Minor Changes
+
+- Document existing collection NFT filters, collection depth, public wallet expansion, and collection P&L, including indexed-filter and public-wallet limits.
+
 ## 2.32.0
 
 ### Minor Changes

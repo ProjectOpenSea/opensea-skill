@@ -28,6 +28,25 @@ The chain list changes as chains launch. `GET /api/v2/chains` returns the curren
 opensea-get.sh "/api/v2/chains"
 ```
 
+## Indexed discovery and analytics
+
+Use the existing commands with optional filters and expansions:
+
+```bash
+opensea nfts list-by-collection boredapeyachtclub --is-listed true --price-min 1 --sort-by price --sort-direction asc
+opensea nfts list-by-collection COLLECTION --numeric-traits '[{"traitType":"Level","min":1,"max":10}]' --limit 100
+opensea collections offer-aggregates boredapeyachtclub --include-depth
+opensea accounts get ADDRESS --include wallets
+```
+
+Collection NFTs accept listing status, listing-price bounds in payment-token units (no conversion), rarity-rank bounds, and price, rarity, or creation-date sorting. Numeric trait ranges require complete indexed trait data; unsupported collections return 400. Use a page size of at most 100 with numeric ranges. Keep filters and ordering unchanged while following a cursor; restart pagination when they change.
+
+Depth is a capped collection snapshot independent of offer pagination; its prices use the named payment token.
+
+Account `wallets` expansion returns public registered wallets and preserves the requested address or username. It does not disclose private wallets.
+
+The existing account collections response includes cost basis, P&L, coverage, known-basis quantity, and valuation method. Monetary values are decimal strings, unknown values remain null, and P&L percentage is a fraction. SDK responses use camelCase, for example `costBasisUsd`; REST and CLI JSON use `cost_basis_usd`.
+
 ## Endpoints
 
 ### Collections
