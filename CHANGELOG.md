@@ -1,5 +1,11 @@
 # @opensea/skill
 
+## 2.34.0
+
+### Minor Changes
+
+- Document opt-in volume history and catalog identities after backend deployment, including history bucket semantics and unrestricted public catalog gating.
+
 ## 2.33.0
 
 ### Minor Changes
