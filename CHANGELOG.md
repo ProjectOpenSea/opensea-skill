@@ -1,5 +1,11 @@
 # @opensea/skill
 
+## 2.35.0
+
+### Minor Changes
+
+- Document single-transaction swap quotes, serialized Solana transactions for external signing, and raw route amounts and OpenSea fee-transfer metadata. The CLI quote options require @opensea/cli 5.4.0.
+
 ## 2.34.0
 
 ### Minor Changes
